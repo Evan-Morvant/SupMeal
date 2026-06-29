@@ -1,0 +1,991 @@
+openapi: 3.0.3
+info:
+  title: SUPMEAL API
+  version: 1.0.0
+  description: >
+    API REST de SUPMEAL — gestion de recettes, cookbooks partagés, planification de
+    repas, messagerie et commentaires. Conception design-first : ce contrat précède
+    l'implémentation. Authentification par JWT Bearer.
+servers:
+  - url: /api/v1
+    description: Base path
+
+tags:
+  - name: Auth
+  - name: Users
+  - name: Recipes
+  - name: Discovery
+  - name: Comments
+  - name: Reviews
+  - name: Cookbooks
+  - name: CookbookRecipes
+  - name: Members
+  - name: Invitations
+  - name: Messages
+  - name: MealPlan
+  - name: ShoppingLists
+  - name: Catalog
+  - name: ImportExport
+
+security:
+  - bearerAuth: []
+
+paths:
+  # ----------------------------- Auth -----------------------------
+  /auth/register:
+    post:
+      tags: [Auth]
+      summary: Inscription par compte local
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/RegisterInput' }
+      responses:
+        '201': { description: Créé, content: { application/json: { schema: { $ref: '#/components/schemas/AuthTokens' } } } }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '409': { $ref: '#/components/responses/Conflict' }
+  /auth/login:
+    post:
+      tags: [Auth]
+      summary: Connexion locale
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/LoginInput' }
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/AuthTokens' } } } }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+  /auth/refresh:
+    post:
+      tags: [Auth]
+      summary: Renouvelle l'access token
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [refreshToken]
+              properties: { refreshToken: { type: string } }
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/AuthTokens' } } } }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+  /auth/logout:
+    post:
+      tags: [Auth]
+      summary: Invalide le refresh token
+      responses:
+        '204': { description: Déconnecté }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+  /auth/oauth/{provider}:
+    get:
+      tags: [Auth]
+      summary: Démarre le flux OAuth2
+      security: []
+      parameters:
+        - { $ref: '#/components/parameters/Provider' }
+      responses:
+        '302': { description: Redirection vers le fournisseur }
+  /auth/oauth/{provider}/callback:
+    get:
+      tags: [Auth]
+      summary: Callback OAuth2 (échange code → JWT)
+      security: []
+      parameters:
+        - { $ref: '#/components/parameters/Provider' }
+        - { in: query, name: code, schema: { type: string } }
+        - { in: query, name: state, schema: { type: string } }
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/AuthTokens' } } } }
+  /auth/me:
+    get:
+      tags: [Auth]
+      summary: Utilisateur courant
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/User' } } } }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  # ----------------------------- Users -----------------------------
+  /users/me:
+    get:
+      tags: [Users]
+      summary: Profil courant
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/User' } } } }
+    patch:
+      tags: [Users]
+      summary: Modifier le profil
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                displayName: { type: string }
+                avatarUrl: { type: string }
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/User' } } } }
+        '400': { $ref: '#/components/responses/ValidationError' }
+  /users/me/password:
+    patch:
+      tags: [Users]
+      summary: Changer le mot de passe
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [currentPassword, newPassword]
+              properties:
+                currentPassword: { type: string, format: password }
+                newPassword: { type: string, format: password, minLength: 8 }
+      responses:
+        '204': { description: Modifié }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+  /users/me/preferences:
+    get:
+      tags: [Users]
+      summary: Préférences culinaires
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/UserPreferences' } } } }
+    put:
+      tags: [Users]
+      summary: Définir les préférences culinaires
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/UserPreferences' }
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/UserPreferences' } } } }
+  /users/me/oauth:
+    get:
+      tags: [Users]
+      summary: Comptes OAuth2 liés
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { type: array, items: { $ref: '#/components/schemas/OAuthAccount' } }
+  /users/me/oauth/{provider}:
+    post:
+      tags: [Users]
+      summary: Lier un compte OAuth2
+      parameters: [ { $ref: '#/components/parameters/Provider' } ]
+      responses:
+        '302': { description: Redirection vers le fournisseur }
+    delete:
+      tags: [Users]
+      summary: Délier un compte OAuth2
+      parameters: [ { $ref: '#/components/parameters/Provider' } ]
+      responses:
+        '204': { description: Délié }
+
+  # ----------------------------- Recipes -----------------------------
+  /recipes:
+    get:
+      tags: [Recipes]
+      summary: Liste, recherche plein texte et filtrage des recettes
+      parameters:
+        - { in: query, name: q, schema: { type: string }, description: Recherche plein texte }
+        - { in: query, name: cookbookId, schema: { type: string, format: uuid } }
+        - { in: query, name: tags, schema: { type: string }, description: CSV de tags }
+        - { in: query, name: ingredients, schema: { type: string }, description: CSV d'ingrédients }
+        - { in: query, name: maxPrep, schema: { type: integer } }
+        - { in: query, name: maxCook, schema: { type: integer } }
+        - { in: query, name: favorite, schema: { type: boolean } }
+        - { in: query, name: sort, schema: { type: string, enum: [relevance, recent, prepTime] } }
+        - { $ref: '#/components/parameters/Page' }
+        - { $ref: '#/components/parameters/PageSize' }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items: { type: array, items: { $ref: '#/components/schemas/Recipe' } }
+                  total: { type: integer }
+                  page: { type: integer }
+                  pageSize: { type: integer }
+    post:
+      tags: [Recipes]
+      summary: Créer une recette personnelle
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/RecipeInput' }
+      responses:
+        '201': { description: Créé, content: { application/json: { schema: { $ref: '#/components/schemas/Recipe' } } } }
+        '400': { $ref: '#/components/responses/ValidationError' }
+  /recipes/{id}:
+    parameters: [ { $ref: '#/components/parameters/Id' } ]
+    get:
+      tags: [Recipes]
+      summary: Détail d'une recette
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/Recipe' } } } }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    patch:
+      tags: [Recipes]
+      summary: Modifier une recette (créateur ou Éditeur+ d'un cookbook la contenant)
+      requestBody:
+        content: { application/json: { schema: { $ref: '#/components/schemas/RecipeInput' } } }
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/Recipe' } } } }
+        '403': { $ref: '#/components/responses/Forbidden' }
+    delete:
+      tags: [Recipes]
+      summary: Supprimer la recette (créateur uniquement)
+      responses:
+        '204': { description: Supprimé }
+        '403': { $ref: '#/components/responses/Forbidden' }
+  /recipes/{id}/image:
+    parameters: [ { $ref: '#/components/parameters/Id' } ]
+    post:
+      tags: [Recipes]
+      summary: Uploader l'image de la recette
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties: { file: { type: string, format: binary } }
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/Recipe' } } } }
+  /recipes/{id}/favorite:
+    parameters: [ { $ref: '#/components/parameters/Id' } ]
+    post:
+      tags: [Recipes]
+      summary: Marquer comme favori
+      responses: { '204': { description: Ajouté aux favoris } }
+    delete:
+      tags: [Recipes]
+      summary: Retirer des favoris
+      responses: { '204': { description: Retiré } }
+
+  # ----------------------------- Comments (privés au cookbook) -----------------------------
+  /cookbooks/{id}/recipes/{recipeId}/comments:
+    parameters:
+      - { $ref: '#/components/parameters/Id' }
+      - { in: path, name: recipeId, required: true, schema: { type: string, format: uuid } }
+    get:
+      tags: [Comments]
+      summary: Lister le fil de commentaires (privé au cookbook, READER+)
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { type: array, items: { $ref: '#/components/schemas/Comment' } }
+        '403': { $ref: '#/components/responses/Forbidden' }
+    post:
+      tags: [Comments]
+      summary: Commenter (COMMENTER+)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { type: object, required: [content], properties: { content: { type: string } } }
+      responses:
+        '201': { description: Créé, content: { application/json: { schema: { $ref: '#/components/schemas/Comment' } } } }
+        '403': { $ref: '#/components/responses/Forbidden' }
+  /comments/{commentId}:
+    parameters: [ { in: path, name: commentId, required: true, schema: { type: string, format: uuid } } ]
+    patch:
+      tags: [Comments]
+      summary: Modifier son commentaire
+      requestBody:
+        content: { application/json: { schema: { type: object, properties: { content: { type: string } } } } }
+      responses: { '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/Comment' } } } } }
+    delete:
+      tags: [Comments]
+      summary: Supprimer (auteur ou OWNER du cookbook)
+      responses: { '204': { description: Supprimé } }
+
+  # ----------------------------- Reviews (avis publics) -----------------------------
+  /recipes/{id}/reviews:
+    parameters: [ { $ref: '#/components/parameters/Id' } ]
+    get:
+      tags: [Reviews]
+      summary: Lister les avis et la note moyenne
+      security: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  avgRating: { type: number }
+                  reviewCount: { type: integer }
+                  items: { type: array, items: { $ref: '#/components/schemas/Review' } }
+    put:
+      tags: [Reviews]
+      summary: Créer ou mettre à jour son avis (1 par utilisateur)
+      requestBody:
+        required: true
+        content: { application/json: { schema: { $ref: '#/components/schemas/ReviewInput' } } }
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/Review' } } } }
+        '403': { $ref: '#/components/responses/Forbidden' }
+    delete:
+      tags: [Reviews]
+      summary: Supprimer son avis
+      responses: { '204': { description: Supprimé } }
+
+  # ----------------------------- Discovery (public) -----------------------------
+  /discover/recipes:
+    get:
+      tags: [Discovery]
+      summary: Rechercher les recettes publiques
+      security: []
+      parameters:
+        - { in: query, name: q, schema: { type: string } }
+        - { in: query, name: tags, schema: { type: string } }
+        - { in: query, name: sort, schema: { type: string, enum: [relevance, rating, recent] } }
+        - { $ref: '#/components/parameters/Page' }
+        - { $ref: '#/components/parameters/PageSize' }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { type: array, items: { $ref: '#/components/schemas/Recipe' } }
+  /discover/recipes/{id}:
+    parameters: [ { $ref: '#/components/parameters/Id' } ]
+    get:
+      tags: [Discovery]
+      summary: Détail public d'une recette publique
+      security: []
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/Recipe' } } } }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  # ----------------------------- Cookbooks -----------------------------
+  /cookbooks:
+    get:
+      tags: [Cookbooks]
+      summary: Lister mes cookbooks
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { type: array, items: { $ref: '#/components/schemas/Cookbook' } }
+    post:
+      tags: [Cookbooks]
+      summary: Créer un cookbook (créateur = OWNER)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name]
+              properties: { name: { type: string }, description: { type: string } }
+      responses:
+        '201': { description: Créé, content: { application/json: { schema: { $ref: '#/components/schemas/Cookbook' } } } }
+  /cookbooks/{id}:
+    parameters: [ { $ref: '#/components/parameters/Id' } ]
+    get:
+      tags: [Cookbooks]
+      summary: Détail d'un cookbook (membre requis)
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/Cookbook' } } } }
+        '403': { $ref: '#/components/responses/Forbidden' }
+    patch:
+      tags: [Cookbooks]
+      summary: Modifier le cookbook (OWNER)
+      requestBody:
+        content:
+          application/json:
+            schema: { type: object, properties: { name: { type: string }, description: { type: string } } }
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/Cookbook' } } } }
+        '403': { $ref: '#/components/responses/Forbidden' }
+    delete:
+      tags: [Cookbooks]
+      summary: Supprimer le cookbook (OWNER) — n'efface pas les recettes
+      responses:
+        '204': { description: Supprimé }
+        '403': { $ref: '#/components/responses/Forbidden' }
+
+  /cookbooks/{id}/recipes:
+    parameters: [ { $ref: '#/components/parameters/Id' } ]
+    get:
+      tags: [CookbookRecipes]
+      summary: Recettes du cookbook + recherche propre
+      parameters:
+        - { in: query, name: q, schema: { type: string } }
+        - { $ref: '#/components/parameters/Page' }
+        - { $ref: '#/components/parameters/PageSize' }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { type: array, items: { $ref: '#/components/schemas/Recipe' } }
+    post:
+      tags: [CookbookRecipes]
+      summary: Créer une recette directement dans le cookbook (EDITOR+)
+      requestBody:
+        required: true
+        content: { application/json: { schema: { $ref: '#/components/schemas/RecipeInput' } } }
+      responses:
+        '201': { description: Créé, content: { application/json: { schema: { $ref: '#/components/schemas/Recipe' } } } }
+        '403': { $ref: '#/components/responses/Forbidden' }
+  /cookbooks/{id}/recipes/{recipeId}:
+    parameters:
+      - { $ref: '#/components/parameters/Id' }
+      - { in: path, name: recipeId, required: true, schema: { type: string, format: uuid } }
+    put:
+      tags: [CookbookRecipes]
+      summary: Lier une recette existante au cookbook (EDITOR+)
+      responses:
+        '204': { description: Liée }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '409': { $ref: '#/components/responses/Conflict' }
+    delete:
+      tags: [CookbookRecipes]
+      summary: Retirer la recette du cookbook (supprime la liaison, pas la recette)
+      responses:
+        '204': { description: Liaison supprimée }
+        '403': { $ref: '#/components/responses/Forbidden' }
+
+  /cookbooks/{id}/members:
+    parameters: [ { $ref: '#/components/parameters/Id' } ]
+    get:
+      tags: [Members]
+      summary: Lister les membres et leurs rôles
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { type: array, items: { $ref: '#/components/schemas/Membership' } }
+  /cookbooks/{id}/members/{userId}:
+    parameters:
+      - { $ref: '#/components/parameters/Id' }
+      - { in: path, name: userId, required: true, schema: { type: string, format: uuid } }
+    patch:
+      tags: [Members]
+      summary: Changer le rôle d'un membre (OWNER)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { type: object, required: [role], properties: { role: { $ref: '#/components/schemas/Role' } } }
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/Membership' } } } }
+        '403': { $ref: '#/components/responses/Forbidden' }
+    delete:
+      tags: [Members]
+      summary: Retirer un membre (OWNER)
+      responses: { '204': { description: Retiré } }
+
+  /cookbooks/{id}/invitations:
+    parameters: [ { $ref: '#/components/parameters/Id' } ]
+    get:
+      tags: [Invitations]
+      summary: Lister les invitations (OWNER)
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { type: array, items: { $ref: '#/components/schemas/Invitation' } }
+    post:
+      tags: [Invitations]
+      summary: Inviter un membre (OWNER)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, role]
+              properties:
+                email: { type: string, format: email }
+                role: { $ref: '#/components/schemas/Role' }
+      responses:
+        '201': { description: Créé, content: { application/json: { schema: { $ref: '#/components/schemas/Invitation' } } } }
+  /cookbooks/{id}/invitations/{invId}:
+    parameters:
+      - { $ref: '#/components/parameters/Id' }
+      - { in: path, name: invId, required: true, schema: { type: string, format: uuid } }
+    delete:
+      tags: [Invitations]
+      summary: Révoquer une invitation (OWNER)
+      responses: { '204': { description: Révoquée } }
+  /invitations/{token}/accept:
+    parameters: [ { in: path, name: token, required: true, schema: { type: string } } ]
+    post:
+      tags: [Invitations]
+      summary: Accepter une invitation
+      responses: { '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/Membership' } } } } }
+  /invitations/{token}/decline:
+    parameters: [ { in: path, name: token, required: true, schema: { type: string } } ]
+    post:
+      tags: [Invitations]
+      summary: Refuser une invitation
+      responses: { '204': { description: Refusée } }
+
+  /cookbooks/{id}/messages:
+    parameters: [ { $ref: '#/components/parameters/Id' } ]
+    get:
+      tags: [Messages]
+      summary: Historique du chat (COMMENTER+)
+      parameters:
+        - { $ref: '#/components/parameters/Page' }
+        - { $ref: '#/components/parameters/PageSize' }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { type: array, items: { $ref: '#/components/schemas/Message' } }
+    post:
+      tags: [Messages]
+      summary: Envoyer un message (fallback REST, COMMENTER+)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { type: object, required: [content], properties: { content: { type: string } } }
+      responses:
+        '201': { description: Créé, content: { application/json: { schema: { $ref: '#/components/schemas/Message' } } } }
+
+  # ----------------------------- Meal plan -----------------------------
+  /meal-plan:
+    get:
+      tags: [MealPlan]
+      summary: Entrées du planning (personnel ou de groupe)
+      parameters:
+        - { in: query, name: from, schema: { type: string, format: date } }
+        - { in: query, name: to, schema: { type: string, format: date } }
+        - { in: query, name: cookbookId, schema: { type: string, format: uuid } }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { type: array, items: { $ref: '#/components/schemas/MealPlanEntry' } }
+    post:
+      tags: [MealPlan]
+      summary: Ajouter une entrée (EDITOR+ si cookbook)
+      requestBody:
+        required: true
+        content: { application/json: { schema: { $ref: '#/components/schemas/MealPlanEntryInput' } } }
+      responses:
+        '201': { description: Créé, content: { application/json: { schema: { $ref: '#/components/schemas/MealPlanEntry' } } } }
+  /meal-plan/{entryId}:
+    parameters: [ { in: path, name: entryId, required: true, schema: { type: string, format: uuid } } ]
+    patch:
+      tags: [MealPlan]
+      summary: Modifier une entrée
+      requestBody:
+        content: { application/json: { schema: { $ref: '#/components/schemas/MealPlanEntryInput' } } }
+      responses: { '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/MealPlanEntry' } } } } }
+    delete:
+      tags: [MealPlan]
+      summary: Supprimer une entrée
+      responses: { '204': { description: Supprimé } }
+
+  # ----------------------------- Shopping lists -----------------------------
+  /shopping-lists:
+    get:
+      tags: [ShoppingLists]
+      summary: Mes listes de courses
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { type: array, items: { $ref: '#/components/schemas/ShoppingList' } }
+    post:
+      tags: [ShoppingLists]
+      summary: Générer une liste depuis le planning (EDITOR+ si cookbook)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [fromDate, toDate]
+              properties:
+                name: { type: string }
+                fromDate: { type: string, format: date }
+                toDate: { type: string, format: date }
+                cookbookId: { type: string, format: uuid, nullable: true }
+      responses:
+        '201': { description: Créé, content: { application/json: { schema: { $ref: '#/components/schemas/ShoppingList' } } } }
+  /shopping-lists/{id}:
+    parameters: [ { $ref: '#/components/parameters/Id' } ]
+    get:
+      tags: [ShoppingLists]
+      summary: Détail (items agrégés)
+      responses: { '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/ShoppingList' } } } } }
+    delete:
+      tags: [ShoppingLists]
+      summary: Supprimer la liste
+      responses: { '204': { description: Supprimé } }
+  /shopping-lists/{id}/items/{itemId}:
+    parameters:
+      - { $ref: '#/components/parameters/Id' }
+      - { in: path, name: itemId, required: true, schema: { type: string, format: uuid } }
+    patch:
+      tags: [ShoppingLists]
+      summary: Cocher / modifier un item
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                checked: { type: boolean }
+                quantity: { type: number }
+                unit: { type: string }
+      responses: { '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/ShoppingListItem' } } } } }
+
+  # ----------------------------- Catalog -----------------------------
+  /ingredients:
+    get:
+      tags: [Catalog]
+      summary: Recherche d'ingrédients (autocomplétion)
+      parameters: [ { in: query, name: q, schema: { type: string } } ]
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { type: array, items: { $ref: '#/components/schemas/Ingredient' } }
+  /tags:
+    get:
+      tags: [Catalog]
+      summary: Lister les tags
+      parameters: [ { in: query, name: type, schema: { type: string, enum: [cuisine, diet, difficulty, custom] } } ]
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { type: array, items: { $ref: '#/components/schemas/Tag' } }
+
+  # ----------------------------- Import / Export -----------------------------
+  /export:
+    get:
+      tags: [ImportExport]
+      summary: Exporter ses recettes et cookbooks (données en clair)
+      parameters: [ { in: query, name: format, schema: { type: string, enum: [json, csv, mealie] } } ]
+      responses:
+        '200':
+          description: Fichier
+          content:
+            application/json: {}
+            text/csv: {}
+            application/octet-stream: {}
+  /import:
+    post:
+      tags: [ImportExport]
+      summary: Importer un fichier (importeur = créateur)
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file: { type: string, format: binary }
+                format: { type: string, enum: [json, csv, mealie] }
+      responses:
+        '200':
+          description: Rapport d'import
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  created: { type: integer }
+                  skipped: { type: integer }
+                  errors: { type: array, items: { type: string } }
+        '422': { description: Fichier mal formé }
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  parameters:
+    Id:
+      in: path
+      name: id
+      required: true
+      schema: { type: string, format: uuid }
+    Provider:
+      in: path
+      name: provider
+      required: true
+      schema: { type: string, enum: [google, microsoft, github] }
+    Page:
+      in: query
+      name: page
+      schema: { type: integer, default: 1, minimum: 1 }
+    PageSize:
+      in: query
+      name: pageSize
+      schema: { type: integer, default: 20, minimum: 1, maximum: 100 }
+
+  responses:
+    Unauthorized:
+      description: Non authentifié
+      content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } }
+    Forbidden:
+      description: Rôle ou permission insuffisant
+      content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } }
+    NotFound:
+      description: Ressource introuvable
+      content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } }
+    ValidationError:
+      description: Données invalides
+      content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } }
+    Conflict:
+      description: Conflit (doublon)
+      content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } }
+
+  schemas:
+    Error:
+      type: object
+      properties:
+        error:
+          type: object
+          properties:
+            code: { type: string }
+            message: { type: string }
+            details: { type: array, items: { type: object } }
+    Role:
+      type: string
+      enum: [READER, COMMENTER, EDITOR, OWNER]
+    AuthTokens:
+      type: object
+      properties:
+        accessToken: { type: string }
+        refreshToken: { type: string }
+        user: { $ref: '#/components/schemas/User' }
+    RegisterInput:
+      type: object
+      required: [email, password, displayName]
+      properties:
+        email: { type: string, format: email }
+        password: { type: string, format: password, minLength: 8 }
+        displayName: { type: string }
+    LoginInput:
+      type: object
+      required: [email, password]
+      properties:
+        email: { type: string, format: email }
+        password: { type: string, format: password }
+    User:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        email: { type: string, format: email }
+        displayName: { type: string }
+        avatarUrl: { type: string, nullable: true }
+        createdAt: { type: string, format: date-time }
+    OAuthAccount:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        provider: { type: string, enum: [google, microsoft, github] }
+        createdAt: { type: string, format: date-time }
+    UserPreferences:
+      type: object
+      properties:
+        diets: { type: array, items: { type: string } }
+        allergies: { type: array, items: { type: string } }
+        preferredCuisines: { type: array, items: { type: string } }
+        defaultServings: { type: integer }
+    Ingredient:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string }
+    RecipeIngredient:
+      type: object
+      properties:
+        ingredientId: { type: string, format: uuid }
+        name: { type: string }
+        quantity: { type: number }
+        unit: { type: string }
+        note: { type: string, nullable: true }
+        position: { type: integer }
+    RecipeStep:
+      type: object
+      properties:
+        position: { type: integer }
+        instruction: { type: string }
+    Tag:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string }
+        type: { type: string, enum: [cuisine, diet, difficulty, custom] }
+    Recipe:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        ownerId: { type: string, format: uuid }
+        title: { type: string }
+        description: { type: string }
+        prepTimeMin: { type: integer }
+        cookTimeMin: { type: integer }
+        servings: { type: integer }
+        imageUrl: { type: string, nullable: true }
+        source: { type: string, nullable: true }
+        visibility: { type: string, enum: [private, public] }
+        avgRating: { type: number, nullable: true }
+        reviewCount: { type: integer }
+        ingredients: { type: array, items: { $ref: '#/components/schemas/RecipeIngredient' } }
+        steps: { type: array, items: { $ref: '#/components/schemas/RecipeStep' } }
+        tags: { type: array, items: { $ref: '#/components/schemas/Tag' } }
+        isFavorite: { type: boolean }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+    RecipeInput:
+      type: object
+      required: [title]
+      properties:
+        title: { type: string }
+        description: { type: string }
+        prepTimeMin: { type: integer }
+        cookTimeMin: { type: integer }
+        servings: { type: integer }
+        source: { type: string }
+        visibility: { type: string, enum: [private, public], default: private }
+        ingredients:
+          type: array
+          items:
+            type: object
+            required: [name, quantity]
+            properties:
+              name: { type: string }
+              quantity: { type: number }
+              unit: { type: string }
+              note: { type: string }
+        steps:
+          type: array
+          items: { type: string }
+        tags:
+          type: array
+          items: { type: string }
+    Cookbook:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string }
+        description: { type: string, nullable: true }
+        myRole: { $ref: '#/components/schemas/Role' }
+        memberCount: { type: integer }
+        recipeCount: { type: integer }
+        createdAt: { type: string, format: date-time }
+    Membership:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        user: { $ref: '#/components/schemas/User' }
+        role: { $ref: '#/components/schemas/Role' }
+        joinedAt: { type: string, format: date-time }
+    Invitation:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        invitedEmail: { type: string, format: email }
+        role: { $ref: '#/components/schemas/Role' }
+        status: { type: string, enum: [pending, accepted, declined] }
+        createdAt: { type: string, format: date-time }
+    Comment:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        recipeId: { type: string, format: uuid }
+        cookbookId: { type: string, format: uuid }
+        author: { $ref: '#/components/schemas/User' }
+        content: { type: string }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+    Review:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        recipeId: { type: string, format: uuid }
+        author: { $ref: '#/components/schemas/User' }
+        rating: { type: integer, minimum: 1, maximum: 5 }
+        body: { type: string, nullable: true }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+    ReviewInput:
+      type: object
+      required: [rating]
+      properties:
+        rating: { type: integer, minimum: 1, maximum: 5 }
+        body: { type: string }
+    Message:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        cookbookId: { type: string, format: uuid }
+        author: { $ref: '#/components/schemas/User' }
+        content: { type: string }
+        createdAt: { type: string, format: date-time }
+    MealPlanEntry:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        recipe: { $ref: '#/components/schemas/Recipe' }
+        cookbookId: { type: string, format: uuid, nullable: true }
+        date: { type: string, format: date }
+        mealType: { type: string, enum: [breakfast, lunch, dinner, snack] }
+        servings: { type: integer }
+    MealPlanEntryInput:
+      type: object
+      required: [recipeId, date, mealType]
+      properties:
+        recipeId: { type: string, format: uuid }
+        cookbookId: { type: string, format: uuid, nullable: true }
+        date: { type: string, format: date }
+        mealType: { type: string, enum: [breakfast, lunch, dinner, snack] }
+        servings: { type: integer }
+    ShoppingList:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string }
+        cookbookId: { type: string, format: uuid, nullable: true }
+        fromDate: { type: string, format: date }
+        toDate: { type: string, format: date }
+        items: { type: array, items: { $ref: '#/components/schemas/ShoppingListItem' } }
+        createdAt: { type: string, format: date-time }
+    ShoppingListItem:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        ingredient: { $ref: '#/components/schemas/Ingredient' }
+        quantity: { type: number }
+        unit: { type: string }
+        checked: { type: boolean }
