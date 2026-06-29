@@ -1,0 +1,32 @@
+# Dépendances
+node_modules/
+
+# Build
+dist/
+build/
+
+# Secrets & environnement (JAMAIS commités — cf. sujet : malus si secret exposé)
+.env
+.env.*
+!.env.example
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Uploads runtime
+server/uploads/
+
+# Couverture de tests
+coverage/
+
+# OS / éditeurs
+.DS_Store
+Thumbs.db
+.idea/
+*.swp
+.vscode/*
+!.vscode/extensions.json
