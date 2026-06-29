@@ -1,0 +1,7 @@
+Principal : #3B2F92 (Violet profond) — Pour la navigation, les titres importants et l'identité de la marque.
+
+Accent (Action) : #FF6B4A (Orange Corail) — Pour les boutons d'action (CTA).
+
+Fond & Cartes : #F9F8FD (Blanc cassé violacé) — Un fond très clair pour l'application.
+
+Texte : #1A153B (Bleu-violet très sombre) — Pour une lisibilité optimale sans utiliser un noir pur agressif.
