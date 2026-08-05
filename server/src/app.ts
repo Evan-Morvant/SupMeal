@@ -15,7 +15,9 @@ export function createApp(): Application {
   app.use(helmet());
   app.use(cors({ origin: env.CLIENT_ORIGIN, credentials: true }));
   app.use(express.json({ limit: '5mb' }));
-  app.use(morgan(env.NODE_ENV === 'development' ? 'dev' : 'combined'));
+  if (env.NODE_ENV !== 'test') {
+    app.use(morgan(env.NODE_ENV === 'development' ? 'dev' : 'combined'));
+  }
 
   configurePassport();
   app.use(passport.initialize());
