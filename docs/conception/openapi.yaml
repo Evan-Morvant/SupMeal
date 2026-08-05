@@ -741,7 +741,7 @@ components:
       in: path
       name: provider
       required: true
-      schema: { type: string, enum: [google, microsoft, github] }
+      schema: { type: string, enum: [google, github] }
     Page:
       in: query
       name: page
@@ -812,7 +812,7 @@ components:
       type: object
       properties:
         id: { type: string, format: uuid }
-        provider: { type: string, enum: [google, microsoft, github] }
+        provider: { type: string, enum: [google, github] }
         createdAt: { type: string, format: date-time }
     UserPreferences:
       type: object
@@ -960,7 +960,7 @@ components:
         recipe: { $ref: '#/components/schemas/Recipe' }
         cookbookId: { type: string, format: uuid, nullable: true }
         date: { type: string, format: date }
-        mealType: { type: string, enum: [breakfast, lunch, dinner, snack] }
+        mealType: { type: string, enum: [petit-déjeuner, déjeuner, dîner, collation] }
         servings: { type: integer }
     MealPlanEntryInput:
       type: object
@@ -969,7 +969,7 @@ components:
         recipeId: { type: string, format: uuid }
         cookbookId: { type: string, format: uuid, nullable: true }
         date: { type: string, format: date }
-        mealType: { type: string, enum: [breakfast, lunch, dinner, snack] }
+        mealType: { type: string, enum: [petit-déjeuner, déjeuner, dîner, collation] }
         servings: { type: integer }
     ShoppingList:
       type: object

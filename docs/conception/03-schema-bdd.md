@@ -59,7 +59,7 @@ erDiagram
   OAUTH_ACCOUNT {
     uuid id PK
     uuid user_id FK
-    varchar provider "google|microsoft|github"
+    varchar provider "google|github"
     varchar provider_user_id
     timestamptz created_at
   }
@@ -130,7 +130,7 @@ erDiagram
   TAG {
     uuid id PK
     varchar name
-    varchar type "cuisine|diet|difficulty|custom"
+    varchar type "cuisine|diet|difficulty|course|custom"
   }
   RECIPE_TAG {
     uuid recipe_id FK
@@ -148,7 +148,7 @@ erDiagram
     uuid cookbook_id FK "nullable = groupe"
     uuid recipe_id FK
     date date
-    varchar meal_type "breakfast|lunch|dinner|snack"
+    varchar meal_type "petit-déjeuner|déjeuner|dîner|collation"
     int servings
   }
   COMMENT {

@@ -27,7 +27,7 @@ classDiagram
 
   class OAuthAccount {
     +UUID id
-    +enum provider  «google|microsoft|github»
+    +enum provider  «google|github»
     +string providerUserId
     +datetime createdAt
   }
@@ -100,7 +100,7 @@ classDiagram
   class Tag {
     +UUID id
     +string name
-    +enum type  «cuisine|diet|difficulty|custom»
+    +enum type  «cuisine|diet|difficulty|course|custom»
   }
 
   class Favorite {
@@ -111,7 +111,7 @@ classDiagram
   class MealPlanEntry {
     +UUID id
     +date date
-    +enum mealType  «breakfast|lunch|dinner|snack»
+    +enum mealType  «petit-déjeuner|déjeuner|dîner|collation»
     +int servings
     «cookbookId nullable = planning de groupe»
   }
