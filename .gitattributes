@@ -1,0 +1,10 @@
+# Normalise les fins de ligne : LF dans le dépôt pour tous les fichiers texte,
+# quel que soit le système (évite les soucis CRLF/LF entre Windows, Linux et Docker).
+* text=auto eol=lf
+
+# Fichiers binaires : aucune conversion de fin de ligne (évite toute corruption).
+*.jpg  binary
+*.jpeg binary
+*.png  binary
+*.ico  binary
+*.pdf  binary
