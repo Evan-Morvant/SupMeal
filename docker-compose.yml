@@ -17,7 +17,21 @@ services:
       timeout: 5s
       retries: 10
 
+  # Applique les migrations
+  migrate:
+    image: supmeal-api:latest
+    build: ./server
+    command: ["node", "dist/db/migrate.js", "up"]
+    restart: "no"
+    env_file: .env
+    environment:
+      DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+    depends_on:
+      db:
+        condition: service_healthy
+
   api:
+    image: supmeal-api:latest
     build: ./server
     restart: unless-stopped
     env_file: .env
@@ -26,6 +40,8 @@ services:
     depends_on:
       db:
         condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
     ports:
       - "${API_PORT:-4000}:4000"
 
