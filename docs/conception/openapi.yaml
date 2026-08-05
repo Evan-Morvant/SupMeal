@@ -95,14 +95,18 @@ paths:
   /auth/oauth/{provider}/callback:
     get:
       tags: [Auth]
-      summary: Callback OAuth2 (échange code → JWT)
+      summary: Callback OAuth2 (échange code, puis redirige vers le front)
       security: []
       parameters:
         - { $ref: '#/components/parameters/Provider' }
         - { in: query, name: code, schema: { type: string } }
         - { in: query, name: state, schema: { type: string } }
       responses:
-        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/AuthTokens' } } } }
+        '302':
+          description: >-
+            Redirection vers le front (CLIENT_ORIGIN/oauth/callback) avec les
+            tokens dans le fragment (#accessToken=...&refreshToken=...), ou
+            #error=... en cas d'échec.
   /auth/me:
     get:
       tags: [Auth]

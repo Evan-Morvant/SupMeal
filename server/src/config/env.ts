@@ -16,6 +16,13 @@ const schema = z.object({
   JWT_ACCESS_TTL: z.string().default('15m'),
   JWT_REFRESH_TTL: z.string().default('7d'),
   CLIENT_ORIGIN: z.string().default('http://localhost:5173'),
+  // URL publique de l'API, utilisée pour construire les callbacks OAuth.
+  API_PUBLIC_URL: z.string().default('http://localhost:4000'),
+  // Identifiants OAuth2 (vides si le provider n'est pas configuré).
+  GITHUB_CLIENT_ID: z.string().default(''),
+  GITHUB_CLIENT_SECRET: z.string().default(''),
+  GOOGLE_CLIENT_ID: z.string().default(''),
+  GOOGLE_CLIENT_SECRET: z.string().default(''),
 });
 
 export const env = schema.parse(process.env);

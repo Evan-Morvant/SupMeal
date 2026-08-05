@@ -8,6 +8,7 @@ Toutes les clés primaires sont des `UUID`. Les tables d'association portent des
 erDiagram
   USER ||--o| USER_PREFERENCES : "a"
   USER ||--o{ OAUTH_ACCOUNT : "lie"
+  USER ||--o{ REFRESH_TOKEN : "possède"
   USER ||--o{ RECIPE : "crée"
   USER ||--o{ FAVORITE : "marque"
   USER ||--o{ MEAL_PLAN_ENTRY : "planifie"
@@ -61,6 +62,14 @@ erDiagram
     uuid user_id FK
     varchar provider "google|github"
     varchar provider_user_id
+    timestamptz created_at
+  }
+  REFRESH_TOKEN {
+    uuid id PK
+    uuid user_id FK
+    varchar token_hash UK "empreinte HMAC-SHA256"
+    timestamptz expires_at
+    timestamptz revoked_at "nullable (logout/rotation)"
     timestamptz created_at
   }
   COOKBOOK {
@@ -201,6 +210,7 @@ erDiagram
 |---|---|
 | `GIN (search_vector)` sur `RECIPE` | Recherche plein texte rapide (titre + description + ingrédients agrégés). |
 | `UNIQUE (name)` sur `INGREDIENT` | Évite les doublons d'ingrédients, accélère filtrage et agrégation. |
+| `UNIQUE (token_hash)` + index `user_id` sur `REFRESH_TOKEN` | Recherche indexée du refresh token par empreinte HMAC (jamais stocké en clair) ; révocation au logout/rotation sans le supprimer (audit, détection de réutilisation). |
 | `UNIQUE (cookbook_id, recipe_id)` sur `COOKBOOK_RECIPE` | Une recette n'est liée qu'une fois à un cookbook donné. |
 | `UNIQUE (cookbook_id, user_id)` sur `COOKBOOK_MEMBERSHIP` | Un seul rôle par membre et par cookbook. |
 | `UNIQUE (user_id, recipe_id)` sur `FAVORITE` | Un favori unique par couple. |

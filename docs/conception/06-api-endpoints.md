@@ -43,7 +43,7 @@ La spec exécutable correspondante : [`openapi.yaml`](openapi.yaml) (Swagger UI)
 | POST | `/auth/refresh` | Renouvelle l'access token | ❌* | `validate` (refresh token) |
 | POST | `/auth/logout` | Invalide le refresh token | ✅ | `authenticate` |
 | GET | `/auth/oauth/:provider` | Démarre le flux OAuth2 (`google`) | ❌ | — |
-| GET | `/auth/oauth/:provider/callback` | Callback OAuth2 (échange code → JWT) | ❌ | — |
+| GET | `/auth/oauth/:provider/callback` | Callback OAuth2 (échange code, redirige vers le front avec les tokens) | ❌ | — |
 | GET | `/auth/me` | Utilisateur courant (depuis le JWT) | ✅ | `authenticate` |
 
 \* protégé par le refresh token lui-même.

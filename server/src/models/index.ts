@@ -8,6 +8,7 @@ import { sequelize } from '../config/database';
 import { User } from './user.model';
 import { UserPreferences } from './user-preferences.model';
 import { OAuthAccount } from './oauth-account.model';
+import { RefreshToken } from './refresh-token.model';
 import { Cookbook } from './cookbook.model';
 import { CookbookMembership } from './cookbook-membership.model';
 import { CookbookInvitation } from './cookbook-invitation.model';
@@ -34,6 +35,9 @@ UserPreferences.belongsTo(User, { foreignKey: 'userId', as: 'user' });
 
 User.hasMany(OAuthAccount, { foreignKey: 'userId', as: 'oauthAccounts', ...CASCADE });
 OAuthAccount.belongsTo(User, { foreignKey: 'userId', as: 'user' });
+
+User.hasMany(RefreshToken, { foreignKey: 'userId', as: 'refreshTokens', ...CASCADE });
+RefreshToken.belongsTo(User, { foreignKey: 'userId', as: 'user' });
 
 /* --- Cookbook & membres --- */
 Cookbook.hasMany(CookbookMembership, { foreignKey: 'cookbookId', as: 'memberships', ...CASCADE });
@@ -133,6 +137,7 @@ export {
   User,
   UserPreferences,
   OAuthAccount,
+  RefreshToken,
   Cookbook,
   CookbookMembership,
   CookbookInvitation,
