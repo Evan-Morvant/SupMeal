@@ -1,7 +1,8 @@
 import { describe, it, expect } from 'vitest';
 import request from 'supertest';
 import { createApp } from '../src/app';
-import { findOrCreateOAuthUser } from '../src/modules/auth/auth.service';
+import { findOrCreateOAuthUser, linkOAuthAccount } from '../src/modules/auth/auth.service';
+import { signOAuthState } from '../src/common/tokens';
 import { OAuthAccount, User } from '../src/models';
 
 const app = createApp();
@@ -24,6 +25,23 @@ describe('Routes OAuth', () => {
     const res = await request(app).get(base + '/oauth/github/callback?state=bidon&code=x');
     expect(res.status).toBe(302);
     expect(res.headers.location).toContain('/oauth/callback#error=state_invalide');
+  });
+
+  it('démarrage avec un state de liaison signé -> 302 en conservant ce state', async () => {
+    const state = signOAuthState('github', 'e5b3c7de-0000-4000-8000-000000000000');
+    const res = await request(app).get(base + '/oauth/github?state=' + state);
+    expect(res.status).toBe(302);
+    expect(res.headers.location).toContain('state=' + state);
+  });
+
+  it('démarrage avec un state forgé -> 400', async () => {
+    const res = await request(app).get(base + '/oauth/github?state=bidon');
+    expect(res.status).toBe(400);
+  });
+
+  it("démarrage avec le state d'un autre provider -> 400", async () => {
+    const res = await request(app).get(base + '/oauth/github?state=' + signOAuthState('google'));
+    expect(res.status).toBe(400);
   });
 });
 
@@ -78,5 +96,60 @@ describe('findOrCreateOAuthUser', () => {
       avatarUrl: null,
     });
     expect(second.id).toBe(first.id);
+  });
+});
+
+describe('linkOAuthAccount', () => {
+  /** Compte local existant, sur lequel viendra se greffer le provider. */
+  function createLocalUser(email: string) {
+    return User.create({
+      email,
+      passwordHash: 'hash',
+      displayName: 'Local',
+      avatarUrl: null,
+    });
+  }
+
+  const profile = (providerUserId: string) => ({
+    provider: 'google' as const,
+    providerUserId,
+    email: 'peu-importe@test.fr',
+    displayName: 'Peu importe',
+    avatarUrl: null,
+  });
+
+  it('rattache le provider au compte courant sans en créer un autre', async () => {
+    const user = await createLocalUser('lien@test.fr');
+    const linked = await linkOAuthAccount(user.id, profile('go-10'));
+
+    expect(linked.id).toBe(user.id);
+    expect(await User.count()).toBe(1);
+    expect(await OAuthAccount.count({ where: { userId: user.id } })).toBe(1);
+  });
+
+  it('est idempotent si le compte est déjà lié au même utilisateur', async () => {
+    const user = await createLocalUser('idem@test.fr');
+    await linkOAuthAccount(user.id, profile('go-11'));
+    await linkOAuthAccount(user.id, profile('go-11'));
+
+    expect(await OAuthAccount.count({ where: { userId: user.id } })).toBe(1);
+  });
+
+  it('refuse un compte provider déjà lié à un autre utilisateur -> 409', async () => {
+    const premier = await createLocalUser('premier@test.fr');
+    const second = await createLocalUser('second@test.fr');
+    await linkOAuthAccount(premier.id, profile('go-12'));
+
+    await expect(linkOAuthAccount(second.id, profile('go-12'))).rejects.toMatchObject({
+      statusCode: 409,
+      code: 'OAUTH_ACCOUNT_TAKEN',
+    });
+    expect(await OAuthAccount.count({ where: { userId: second.id } })).toBe(0);
+  });
+
+  it('ne conserve pas l email du provider sur le compte lié', async () => {
+    const user = await createLocalUser('inchange@test.fr');
+    const linked = await linkOAuthAccount(user.id, profile('go-13'));
+    expect(linked.email).toBe('inchange@test.fr');
   });
 });

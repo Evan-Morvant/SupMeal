@@ -49,6 +49,7 @@ async function main() {
     NODE_ENV: 'test',
     DATABASE_URL,
     CLIENT_ORIGIN: 'http://localhost:8080',
+    AUTH_RATE_LIMIT_MAX: '1000',
     API_PUBLIC_URL: 'http://localhost:4000',
     GITHUB_CLIENT_ID: 'test_github_id',
     GITHUB_CLIENT_SECRET: 'test_github_secret',

@@ -16,6 +16,8 @@ const schema = z.object({
   JWT_ACCESS_TTL: z.string().default('15m'),
   JWT_REFRESH_TTL: z.string().default('7d'),
   CLIENT_ORIGIN: z.string().default('http://localhost:5173'),
+  // Plafond du limiteur sur les routes d'authentification, par fenêtre et par IP.
+  AUTH_RATE_LIMIT_MAX: z.coerce.number().default(20),
   // URL publique de l'API, utilisée pour construire les callbacks OAuth.
   API_PUBLIC_URL: z.string().default('http://localhost:4000'),
   // Identifiants OAuth2 (vides si le provider n'est pas configuré).
