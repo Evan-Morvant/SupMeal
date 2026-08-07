@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { healthRouter } from './modules/health/health.routes';
 import { authRouter } from './modules/auth/auth.routes';
+import { usersRouter } from './modules/users/users.routes';
 
 /**
  * Routeur racine monté sur /api/v1.
@@ -11,9 +12,9 @@ export const router = Router();
 
 router.use('/health', healthRouter);
 router.use('/auth', authRouter);
+router.use('/users', usersRouter);
 
 // TODO (Phase 2) :
-// router.use('/users', usersRouter);
 // router.use('/recipes', recipesRouter);
 // router.use('/cookbooks', cookbooksRouter);
 // router.use('/meal-plan', mealPlanRouter);

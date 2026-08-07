@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import { serializeUser } from '../../common/serialize';
+import { getUserOrFail } from '../users/users.service';
 import * as authService from './auth.service';
 
 export async function register(req: Request, res: Response): Promise<void> {
@@ -23,6 +24,6 @@ export async function logout(req: Request, res: Response): Promise<void> {
 }
 
 export async function me(req: Request, res: Response): Promise<void> {
-  const user = await authService.getMe(req.user!.id);
+  const user = await getUserOrFail(req.user!.id);
   res.json(serializeUser(user));
 }

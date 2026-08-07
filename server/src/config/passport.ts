@@ -1,8 +1,9 @@
+import { Request } from 'express';
 import passport from 'passport';
 import { Strategy as GitHubStrategy } from 'passport-github2';
 import { Strategy as GoogleStrategy } from 'passport-google-oauth20';
 import { env } from './env';
-import { findOrCreateOAuthUser } from '../modules/auth/auth.service';
+import { findOrCreateOAuthUser, linkOAuthAccount } from '../modules/auth/auth.service';
 import type { OAuthProvider } from '../models/oauth-account.model';
 
 /** Profil OAuth minimal commun aux providers (sous-ensemble structurel). */
@@ -19,23 +20,32 @@ function callbackURL(provider: OAuthProvider): string {
   return env.API_PUBLIC_URL + '/api/v1/auth/oauth/' + provider + '/callback';
 }
 
-/** Mappe un profil provider vers nos données de compte, puis résout l'utilisateur. */
+/**
+ * Mappe un profil provider vers nos données de compte, puis résout l'utilisateur.
+ * `req.oauthLinkUserId`, extrait du `state` signé par le contrôleur, bascule du
+ * flux de connexion vers le flux de liaison à un compte déjà connecté.
+ */
 function verify(provider: OAuthProvider) {
   return (
+    req: Request,
     _accessToken: string,
     _refreshToken: string,
     profile: RawProfile,
     done: (err: unknown, user?: Express.User) => void,
   ): void => {
-    findOrCreateOAuthUser({
+    const data = {
       provider,
       providerUserId: profile.id,
       email: profile.emails?.[0]?.value ?? null,
       displayName: profile.displayName || profile.username || 'Utilisateur ' + provider,
       avatarUrl: profile.photos?.[0]?.value ?? null,
-    })
-      .then((user) => done(null, user))
-      .catch(done);
+    };
+    const linkUserId = req.oauthLinkUserId;
+    const resolve = linkUserId
+      ? linkOAuthAccount(linkUserId, data)
+      : findOrCreateOAuthUser(data);
+
+    resolve.then((user) => done(null, user)).catch(done);
   };
 }
 
@@ -57,6 +67,7 @@ export function configurePassport(): void {
           clientSecret: env.GITHUB_CLIENT_SECRET,
           callbackURL: callbackURL('github'),
           scope: ['user:email'],
+          passReqToCallback: true,
         },
         verify('github'),
       ),
@@ -71,6 +82,7 @@ export function configurePassport(): void {
           clientSecret: env.GOOGLE_CLIENT_SECRET,
           callbackURL: callbackURL('google'),
           scope: ['profile', 'email'],
+          passReqToCallback: true,
         },
         verify('google'),
       ),

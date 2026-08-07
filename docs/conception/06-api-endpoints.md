@@ -54,11 +54,11 @@ La spec exécutable correspondante : [`openapi.yaml`](openapi.yaml) (Swagger UI)
 |---|---|---|:---:|---|
 | GET | `/users/me` | Profil courant | ✅ | `authenticate` |
 | PATCH | `/users/me` | Modifier le profil (nom, avatar) | ✅ | `authenticate`, `validate` |
-| PATCH | `/users/me/password` | Changer le mot de passe | ✅ | `authenticate`, `validate` |
+| PUT | `/users/me/password` | Changer le mot de passe (révoque les sessions) | ✅ | `authenticate`, `validate` |
 | GET | `/users/me/preferences` | Préférences culinaires | ✅ | `authenticate` |
 | PUT | `/users/me/preferences` | Définir préférences (régime, allergies, cuisines, portions) | ✅ | `authenticate`, `validate` |
 | GET | `/users/me/oauth` | Lister les comptes OAuth2 liés | ✅ | `authenticate` |
-| POST | `/users/me/oauth/:provider` | Lier un compte OAuth2 supplémentaire | ✅ | `authenticate` |
+| POST | `/users/me/oauth/:provider` | Renvoie l'URL d'autorisation pour lier un compte OAuth2 | ✅ | `authenticate` |
 | DELETE | `/users/me/oauth/:provider` | Délier un compte OAuth2 | ✅ | `authenticate` |
 
 ## 3. Recettes — `/recipes`

@@ -9,6 +9,7 @@ import {
   signRefreshToken,
   verifyRefreshToken,
 } from '../../common/tokens';
+import { getUserOrFail } from '../users/users.service';
 import type { LoginInput, RegisterInput } from './auth.schemas';
 
 export interface AuthTokens {
@@ -141,11 +142,31 @@ export async function findOrCreateOAuthUser(data: OAuthProfileData): Promise<Use
   return user;
 }
 
-/** Utilisateur courant à partir de son identifiant (issu du JWT). */
-export async function getMe(userId: string): Promise<User> {
-  const user = await User.findByPk(userId);
-  if (!user) {
-    throw new AppError(401, 'UNAUTHORIZED', 'Utilisateur introuvable');
+/**
+ * Rattache un compte provider à un utilisateur déjà connecté (flux de liaison
+ * lancé depuis les paramètres du profil). Ne crée jamais d'utilisateur.
+ */
+export async function linkOAuthAccount(userId: string, data: OAuthProfileData): Promise<User> {
+  const user = await getUserOrFail(userId);
+
+  const existing = await OAuthAccount.findOne({
+    where: { provider: data.provider, providerUserId: data.providerUserId },
+  });
+  if (existing) {
+    if (existing.userId !== userId) {
+      throw new AppError(
+        409,
+        'OAUTH_ACCOUNT_TAKEN',
+        'Ce compte ' + data.provider + ' est déjà lié à un autre utilisateur',
+      );
+    }
+    return user;
   }
+
+  await OAuthAccount.create({
+    userId,
+    provider: data.provider,
+    providerUserId: data.providerUserId,
+  });
   return user;
 }

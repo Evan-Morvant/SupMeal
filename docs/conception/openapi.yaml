@@ -137,16 +137,22 @@ paths:
         '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/User' } } } }
         '400': { $ref: '#/components/responses/ValidationError' }
   /users/me/password:
-    patch:
+    put:
       tags: [Users]
       summary: Changer le mot de passe
+      description: >
+        Remplacement intégral de la ressource, d'où PUT et non PATCH : le corps
+        n'est pas une représentation partielle (`currentPassword` est une preuve
+        d'identité, pas un champ modifiable). `currentPassword` est obligatoire
+        dès qu'un mot de passe existe ; un compte purement OAuth2 s'en définit
+        un premier sans le fournir. Toutes les sessions ouvertes sont révoquées.
       requestBody:
         required: true
         content:
           application/json:
             schema:
               type: object
-              required: [currentPassword, newPassword]
+              required: [newPassword]
               properties:
                 currentPassword: { type: string, format: password }
                 newPassword: { type: string, format: password, minLength: 8 }
@@ -163,6 +169,9 @@ paths:
     put:
       tags: [Users]
       summary: Définir les préférences culinaires
+      description: >
+        Remplacement complet : tout champ omis reprend sa valeur par défaut
+        (tableau vide, 2 portions).
       requestBody:
         required: true
         content:
@@ -170,6 +179,7 @@ paths:
             schema: { $ref: '#/components/schemas/UserPreferences' }
       responses:
         '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/UserPreferences' } } } }
+        '400': { $ref: '#/components/responses/ValidationError' }
   /users/me/oauth:
     get:
       tags: [Users]
@@ -184,15 +194,30 @@ paths:
     post:
       tags: [Users]
       summary: Lier un compte OAuth2
+      description: >
+        Renvoie l'URL d'autorisation à ouvrir dans le navigateur. Pas de 302 :
+        la requête est authentifiée par en-tête, ce qu'une navigation vers le
+        fournisseur ne permet pas. Le `state` signé porte l'utilisateur cible.
       parameters: [ { $ref: '#/components/parameters/Provider' } ]
       responses:
-        '302': { description: Redirection vers le fournisseur }
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  authorizationUrl: { type: string, format: uri }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '503': { description: Fournisseur non configuré }
     delete:
       tags: [Users]
       summary: Délier un compte OAuth2
       parameters: [ { $ref: '#/components/parameters/Provider' } ]
       responses:
         '204': { description: Délié }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { description: Dernier moyen de connexion, déliaison refusée }
 
   # ----------------------------- Recipes -----------------------------
   /recipes:

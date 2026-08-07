@@ -4,14 +4,18 @@ import { AppError } from '../../common/app-error';
 import { signOAuthState, verifyOAuthState } from '../../common/tokens';
 import { env } from '../../config/env';
 import { isProviderConfigured } from '../../config/passport';
-import type { OAuthProvider } from '../../models/oauth-account.model';
+import { isOAuthProvider, type OAuthProvider } from '../../models/oauth-account.model';
 import type { User } from '../../models';
 import { issueTokens } from './auth.service';
 
-const SUPPORTED_PROVIDERS: OAuthProvider[] = ['github', 'google'];
-
-function isSupportedProvider(value: string): value is OAuthProvider {
-  return (SUPPORTED_PROVIDERS as string[]).includes(value);
+declare global {
+  // eslint-disable-next-line @typescript-eslint/no-namespace
+  namespace Express {
+    interface Request {
+      /** Renseigné par le callback OAuth quand le flux est une liaison de compte. */
+      oauthLinkUserId?: string;
+    }
+  }
 }
 
 /** URL de retour vers la SPA, tokens ou erreur transmis dans le fragment. */
@@ -20,8 +24,8 @@ function frontendCallback(fragment: string): string {
 }
 
 /** Vérifie que le provider est supporté et configuré, sinon lève une AppError. */
-function assertProvider(provider: string): asserts provider is OAuthProvider {
-  if (!isSupportedProvider(provider)) {
+export function assertProvider(provider: string): asserts provider is OAuthProvider {
+  if (!isOAuthProvider(provider)) {
     throw new AppError(404, 'UNKNOWN_PROVIDER', 'Provider OAuth inconnu');
   }
   if (!isProviderConfigured(provider)) {
@@ -29,13 +33,38 @@ function assertProvider(provider: string): asserts provider is OAuthProvider {
   }
 }
 
+/**
+ * URL d'autorisation à ouvrir dans le navigateur pour lier un compte au
+ * profil courant. Le `state` signé porte l'utilisateur cible : la SPA ne peut
+ * pas poser d'en-tête `Authorization` sur une navigation vers le provider.
+ */
+export function buildLinkUrl(provider: OAuthProvider, userId: string): string {
+  const state = signOAuthState(provider, userId);
+  return (
+    env.API_PUBLIC_URL + '/api/v1/auth/oauth/' + provider + '?state=' + encodeURIComponent(state)
+  );
+}
+
 /** GET /auth/oauth/:provider — redirige vers le fournisseur avec un state signé. */
 export function start(req: Request, res: Response, next: NextFunction): void {
   const { provider } = req.params;
   assertProvider(provider);
 
+  // Un state déjà signé signale un flux de liaison : on le réutilise tel quel
+  // après vérification, sinon on en émet un nouveau pour une simple connexion.
+  let state = typeof req.query.state === 'string' ? req.query.state : '';
+  if (state) {
+    try {
+      verifyOAuthState(state, provider);
+    } catch {
+      throw new AppError(400, 'INVALID_STATE', 'Paramètre state invalide ou expiré');
+    }
+  } else {
+    state = signOAuthState(provider);
+  }
+
   const options: passport.AuthenticateOptions = { session: false };
-  (options as { state?: string }).state = signOAuthState(provider);
+  (options as { state?: string }).state = state;
   passport.authenticate(provider, options)(req, res, next);
 }
 
@@ -44,21 +73,31 @@ export function callback(req: Request, res: Response, next: NextFunction): void 
   const { provider } = req.params;
   assertProvider(provider);
 
+  let linkUserId: string | undefined;
   try {
-    verifyOAuthState(String(req.query.state ?? ''), provider);
+    linkUserId = verifyOAuthState(String(req.query.state ?? ''), provider).linkUserId;
   } catch {
     res.redirect(frontendCallback('error=state_invalide'));
     return;
   }
+  req.oauthLinkUserId = linkUserId;
 
   passport.authenticate(
     provider,
     { session: false },
     (err: unknown, user?: Express.User | false | null) => {
       if (err || !user) {
-        res.redirect(frontendCallback('error=oauth_echec'));
+        const code = err instanceof AppError ? err.code : 'oauth_echec';
+        res.redirect(frontendCallback('error=' + encodeURIComponent(code)));
         return;
       }
+
+      // Liaison : l'utilisateur est déjà connecté côté SPA, pas de nouveaux tokens.
+      if (linkUserId) {
+        res.redirect(frontendCallback('linked=' + provider));
+        return;
+      }
+
       issueTokens(user as unknown as User)
         .then((tokens) => {
           res.redirect(
