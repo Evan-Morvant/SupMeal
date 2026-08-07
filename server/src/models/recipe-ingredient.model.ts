@@ -4,8 +4,10 @@ import {
   InferAttributes,
   InferCreationAttributes,
   Model,
+  NonAttribute,
 } from 'sequelize';
 import { sequelize } from '../config/database';
+import type { Ingredient } from './ingredient.model';
 
 /** Ligne d'ingrédient d'une recette : quantité, unité, note libre. */
 export class RecipeIngredient extends Model<
@@ -19,6 +21,9 @@ export class RecipeIngredient extends Model<
   declare unit: string | null;
   declare note: string | null;
   declare position: number;
+
+  // Renseigné seulement quand la requête le charge via `include`.
+  declare ingredient?: NonAttribute<Ingredient>;
 }
 
 RecipeIngredient.init(

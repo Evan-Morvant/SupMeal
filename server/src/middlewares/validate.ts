@@ -11,3 +11,14 @@ export const validateBody =
     req.body = schema.parse(req.body);
     next();
   };
+
+/**
+ * Même principe pour la chaîne de requête, où tout arrive en texte : le schéma
+ * se charge des conversions (`z.coerce`) et des valeurs par défaut.
+ */
+export const validateQuery =
+  <T>(schema: ZodSchema<T>) =>
+  (req: Request, _res: Response, next: NextFunction): void => {
+    req.query = schema.parse(req.query) as Request['query'];
+    next();
+  };

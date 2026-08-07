@@ -224,6 +224,11 @@ paths:
     get:
       tags: [Recipes]
       summary: Liste, recherche plein texte et filtrage des recettes
+      description: >
+        Les entrées renvoyées sont des résumés : elles portent les tags mais ni
+        `ingredients` ni `steps`, qu'une liste n'exploite pas et dont le
+        chargement multiplierait les lignes jointes. Le détail complet s'obtient
+        par `GET /recipes/{id}`.
       parameters:
         - { in: query, name: q, schema: { type: string }, description: Recherche plein texte }
         - { in: query, name: cookbookId, schema: { type: string, format: uuid } }
@@ -270,6 +275,12 @@ paths:
     patch:
       tags: [Recipes]
       summary: Modifier une recette (créateur ou Éditeur+ d'un cookbook la contenant)
+      description: >
+        Les champs simples suivent la sémantique PATCH : absent = inchangé.
+        Les collections (`ingredients`, `steps`, `tags`) sont remplacées
+        intégralement lorsqu'elles sont présentes, et conservées lorsqu'elles
+        sont absentes — le client décrit l'état final voulu plutôt qu'un diff.
+        Un tableau vide efface donc la collection. L'écriture est transactionnelle.
       requestBody:
         content: { application/json: { schema: { $ref: '#/components/schemas/RecipeInput' } } }
       responses:
@@ -911,12 +922,17 @@ components:
           type: array
           items:
             type: object
-            required: [name, quantity]
+            required: [name]
+            description: >
+              `quantity` est facultative : « sel », « poivre » ou « quelques
+              feuilles de basilic » n'en ont pas, et l'imposer forcerait une
+              valeur mensongère. Le nom est normalisé (minuscules, espaces
+              réduits) pour mutualiser les ingrédients entre recettes.
             properties:
               name: { type: string }
-              quantity: { type: number }
-              unit: { type: string }
-              note: { type: string }
+              quantity: { type: number, nullable: true }
+              unit: { type: string, nullable: true }
+              note: { type: string, nullable: true }
         steps:
           type: array
           items: { type: string }

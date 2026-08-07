@@ -4,8 +4,12 @@ import {
   InferAttributes,
   InferCreationAttributes,
   Model,
+  NonAttribute,
 } from 'sequelize';
 import { sequelize } from '../config/database';
+import type { RecipeIngredient } from './recipe-ingredient.model';
+import type { RecipeStep } from './recipe-step.model';
+import type { Tag } from './tag.model';
 
 export type RecipeVisibility = 'private' | 'public';
 
@@ -31,6 +35,11 @@ export class Recipe extends Model<
   declare visibility: CreationOptional<RecipeVisibility>;
   declare createdAt: CreationOptional<Date>;
   declare updatedAt: CreationOptional<Date>;
+
+  // Renseignées seulement quand la requête les charge via `include`.
+  declare ingredients?: NonAttribute<RecipeIngredient[]>;
+  declare steps?: NonAttribute<RecipeStep[]>;
+  declare tags?: NonAttribute<Tag[]>;
 }
 
 Recipe.init(
