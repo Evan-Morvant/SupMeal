@@ -230,14 +230,40 @@ paths:
         chargement multiplierait les lignes jointes. Le détail complet s'obtient
         par `GET /recipes/{id}`.
       parameters:
-        - { in: query, name: q, schema: { type: string }, description: Recherche plein texte }
+        - in: query
+          name: q
+          schema: { type: string }
+          description: >
+            Recherche plein texte française sur le titre (poids A), la
+            description (B) et les noms d'ingrédients (C).
         - { in: query, name: cookbookId, schema: { type: string, format: uuid } }
-        - { in: query, name: tags, schema: { type: string }, description: CSV de tags }
-        - { in: query, name: ingredients, schema: { type: string }, description: CSV d'ingrédients }
-        - { in: query, name: maxPrep, schema: { type: integer } }
-        - { in: query, name: maxCook, schema: { type: integer } }
+        - in: query
+          name: tags
+          schema: { type: string }
+          description: >
+            CSV de tags, insensible à la casse. Plusieurs valeurs se cumulent
+            en ET : `tags=dessert,facile` rend les recettes qui sont les deux.
+        - in: query
+          name: ingredients
+          schema: { type: string }
+          description: >
+            CSV d'ingrédients, cumulés en ET — la question posée étant « qu'est-ce
+            que je peux faire avec ce que j'ai ».
+        - in: query
+          name: maxPrep
+          schema: { type: integer }
+          description: Exclut les recettes dont le temps n'est pas renseigné.
+        - in: query
+          name: maxCook
+          schema: { type: integer }
+          description: Exclut les recettes dont le temps n'est pas renseigné.
         - { in: query, name: favorite, schema: { type: boolean } }
-        - { in: query, name: sort, schema: { type: string, enum: [relevance, recent, prepTime] } }
+        - in: query
+          name: sort
+          schema: { type: string, enum: [relevance, recent, prepTime] }
+          description: >
+            Défaut : `relevance` si `q` est fourni, `recent` sinon. `prepTime`
+            classe par temps croissant, les recettes sans temps en dernier.
         - { $ref: '#/components/parameters/Page' }
         - { $ref: '#/components/parameters/PageSize' }
       responses:

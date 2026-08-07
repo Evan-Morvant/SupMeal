@@ -10,7 +10,7 @@ export async function create(req: Request, res: Response): Promise<void> {
 
 export async function list(req: Request, res: Response): Promise<void> {
   const query = req.query as unknown as ListRecipesQuery;
-  const page = await recipesService.listOwnedRecipes(req.user!.id, query);
+  const page = await recipesService.searchRecipes(req.user!.id, query);
   res.json({
     items: page.items.map(serializeRecipeSummary),
     total: page.total,

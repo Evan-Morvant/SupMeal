@@ -45,7 +45,33 @@ export const updateRecipeSchema = z
     message: 'Aucun champ à modifier',
   });
 
+/** Liste séparée par des virgules : « tomate, basilic » -> ['tomate', 'basilic']. */
+const csvSchema = z
+  .string()
+  .max(500)
+  .transform((raw) =>
+    raw
+      .split(',')
+      .map((value) => value.trim())
+      .filter((value) => value.length > 0),
+  )
+  .pipe(z.array(z.string().min(1).max(120)).max(20));
+
+/**
+ * `z.coerce.boolean()` est inutilisable ici : la chaîne "false" est truthy et
+ * serait convertie en `true`. On lit donc les deux valeurs explicitement.
+ */
+const booleanParam = z.enum(['true', 'false']).transform((value) => value === 'true');
+
 export const listRecipesSchema = z.object({
+  q: z.string().min(1).max(200).optional(),
+  cookbookId: z.string().uuid().optional(),
+  tags: csvSchema.optional(),
+  ingredients: csvSchema.optional(),
+  maxPrep: z.coerce.number().int().min(0).max(10000).optional(),
+  maxCook: z.coerce.number().int().min(0).max(10000).optional(),
+  favorite: booleanParam.optional(),
+  sort: z.enum(['relevance', 'recent', 'prepTime']).optional(),
   page: z.coerce.number().int().min(1).default(1),
   pageSize: z.coerce.number().int().min(1).max(100).default(20),
 });

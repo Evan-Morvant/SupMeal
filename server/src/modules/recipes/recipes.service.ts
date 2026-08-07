@@ -9,6 +9,11 @@ import {
   sequelize,
 } from '../../models';
 import { AppError } from '../../common/app-error';
+import {
+  accessibleRecipesCondition,
+  buildRecipeOrder,
+  buildRecipeWhere,
+} from './recipes.filters';
 import type {
   CreateRecipeInput,
   IngredientLineInput,
@@ -175,6 +180,13 @@ async function replaceTags(
   );
 }
 
+export async function isRecipeAccessible(recipeId: string, userId: string): Promise<boolean> {
+  const visible = await Recipe.count({
+    where: { id: recipeId, [Op.and]: [accessibleRecipesCondition(userId)] },
+  });
+  return visible > 0;
+}
+
 /** Recette complète, ou 404. Les collections sont ordonnées côté SQL. */
 export async function findRecipeOrFail(recipeId: string): Promise<Recipe> {
   const recipe = await Recipe.findByPk(recipeId, {
@@ -264,20 +276,33 @@ export interface RecipePage {
   pageSize: number;
 }
 
-/** Recettes dont l'utilisateur est le créateur, les plus récentes d'abord. */
-export async function listOwnedRecipes(
-  ownerId: string,
-  query: ListRecipesQuery,
-): Promise<RecipePage> {
+/**
+ * Recherche paginée dans les recettes accessibles à l'utilisateur.
+ */
+export async function searchRecipes(userId: string, query: ListRecipesQuery): Promise<RecipePage> {
   const { page, pageSize } = query;
   const { rows, count } = await Recipe.findAndCountAll({
-    where: { ownerId },
-    include: [{ model: Tag, as: 'tags', through: { attributes: [] } }],
-    order: [['createdAt', 'DESC']],
+    where: buildRecipeWhere(userId, query),
+    order: buildRecipeOrder(query),
     limit: pageSize,
     offset: (page - 1) * pageSize,
-    distinct: true,
   });
 
-  return { items: rows, total: count, page, pageSize };
+  if (rows.length === 0) {
+    return { items: [], total: count, page, pageSize };
+  }
+
+  const ids = rows.map((recipe) => recipe.id);
+  const withTags = await Recipe.findAll({
+    where: { id: { [Op.in]: ids } },
+    include: [{ model: Tag, as: 'tags', through: { attributes: [] } }],
+  });
+
+  // La seconde requête perd l'ordre du tri : on le réapplique depuis les ids.
+  const byId = new Map(withTags.map((recipe) => [recipe.id, recipe]));
+  const items = ids
+    .map((id) => byId.get(id))
+    .filter((recipe): recipe is Recipe => recipe !== undefined);
+
+  return { items, total: count, page, pageSize };
 }

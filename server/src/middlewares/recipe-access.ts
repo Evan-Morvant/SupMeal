@@ -1,6 +1,6 @@
 import { NextFunction, Request, Response } from 'express';
 import { AppError } from '../common/app-error';
-import { findRecipeOrFail } from '../modules/recipes/recipes.service';
+import { findRecipeOrFail, isRecipeAccessible } from '../modules/recipes/recipes.service';
 import type { Recipe } from '../models';
 
 declare global {
@@ -14,8 +14,10 @@ declare global {
 }
 
 /**
- * Consultation : le créateur, ou n'importe qui si la recette est publique.
- * L'accès par appartenance à un cookbook s'ajoutera ici avec ce module.
+ * Consultation : le créateur, un membre d'un cookbook contenant la recette,
+ * ou n'importe qui si elle est publique. Le périmètre est celui qui filtre la
+ * liste — sans quoi une recette pourrait apparaître dans les résultats sans
+ * pouvoir être ouverte.
  */
 export async function requireRecipeAccess(
   req: Request,
@@ -23,8 +25,10 @@ export async function requireRecipeAccess(
   next: NextFunction,
 ): Promise<void> {
   const recipe = await findRecipeOrFail(req.params.id);
-  const isOwner = recipe.ownerId === req.user?.id;
-  if (!isOwner && recipe.visibility !== 'public') {
+  const allowed =
+    recipe.visibility === 'public' || (await isRecipeAccessible(recipe.id, req.user!.id));
+
+  if (!allowed) {
     throw new AppError(403, 'FORBIDDEN', 'Accès refusé à cette recette');
   }
   req.recipe = recipe;
