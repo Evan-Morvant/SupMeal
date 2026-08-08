@@ -292,10 +292,12 @@ describe('Périmètre de visibilité', () => {
 
     const owner = await User.findOne({ where: { email: 'p3@test.fr' } });
     const invite = await User.findOne({ where: { email: 'p4@test.fr' } });
-    const cookbook = await Cookbook.create({
-      ownerId: owner!.id,
-      name: 'Famille',
-      description: null,
+    // Le créateur d'un cookbook est son membre OWNER : pas de colonne dédiée.
+    const cookbook = await Cookbook.create({ name: 'Famille', description: null });
+    await CookbookMembership.create({
+      cookbookId: cookbook.id,
+      userId: owner!.id,
+      role: 'OWNER',
     });
     await CookbookMembership.create({
       cookbookId: cookbook.id,
@@ -324,11 +326,7 @@ describe('Périmètre de visibilité', () => {
     const recipeId = await createRecipe(proprietaire, { title: 'Fermee' });
 
     const owner = await User.findOne({ where: { email: 'p5@test.fr' } });
-    const cookbook = await Cookbook.create({
-      ownerId: owner!.id,
-      name: 'Prive',
-      description: null,
-    });
+    const cookbook = await Cookbook.create({ name: 'Prive', description: null });
     await CookbookRecipe.create({ cookbookId: cookbook.id, recipeId, addedBy: owner!.id });
 
     const res = await search(etranger, '');
@@ -344,11 +342,7 @@ describe('Périmètre de visibilité', () => {
     const token = await registerUser('p7@test.fr');
     const { tarte } = await seedRecipes(token);
     const user = await User.findOne({ where: { email: 'p7@test.fr' } });
-    const cookbook = await Cookbook.create({
-      ownerId: user!.id,
-      name: 'Desserts',
-      description: null,
-    });
+    const cookbook = await Cookbook.create({ name: 'Desserts', description: null });
     await CookbookMembership.create({
       cookbookId: cookbook.id,
       userId: user!.id,
