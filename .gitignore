@@ -19,6 +19,7 @@ yarn-error.log*
 
 # Uploads runtime
 server/uploads/
+server/test-uploads/
 
 # Couverture de tests
 coverage/

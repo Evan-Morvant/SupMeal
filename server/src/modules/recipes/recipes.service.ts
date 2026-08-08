@@ -1,5 +1,7 @@
+import fs from 'fs/promises';
 import { Op, Transaction, col, fn, where as sqlWhere } from 'sequelize';
 import {
+  Favorite,
   Ingredient,
   Recipe,
   RecipeIngredient,
@@ -9,6 +11,7 @@ import {
   sequelize,
 } from '../../models';
 import { AppError } from '../../common/app-error';
+import { recipeImageDiskPath, recipeImagePath } from '../../common/uploads';
 import {
   accessibleRecipesCondition,
   buildRecipeOrder,
@@ -267,6 +270,55 @@ export async function updateRecipe(recipe: Recipe, input: UpdateRecipeInput): Pr
 /** Suppression. Les lignes filles partent par ON DELETE CASCADE. */
 export async function deleteRecipe(recipe: Recipe): Promise<void> {
   await recipe.destroy();
+}
+
+/**
+ * Associe une image à la recette et supprime la précédente du disque : sans
+ * ça, chaque remplacement laisserait un fichier orphelin.
+ */
+export async function setRecipeImage(recipe: Recipe, filename: string): Promise<Recipe> {
+  const previous = recipe.imageUrl;
+  recipe.imageUrl = recipeImagePath(filename);
+  await recipe.save();
+
+  if (previous) {
+    await fs.rm(recipeImageDiskPath(previous), { force: true });
+  }
+  return findRecipeOrFail(recipe.id);
+}
+
+/** Ajout aux favoris, idempotent : re-cliquer ne doit pas être une erreur. */
+export async function addFavorite(userId: string, recipeId: string): Promise<void> {
+  await Favorite.findOrCreate({ where: { userId, recipeId }, defaults: { userId, recipeId } });
+}
+
+/**
+ * Retrait des favoris, idempotent lui aussi. Volontairement sans contrôle
+ * d'accès à la recette : perdre l'accès à une recette ne doit pas empêcher de
+ * la retirer de ses propres favoris.
+ */
+export async function removeFavorite(userId: string, recipeId: string): Promise<void> {
+  await Favorite.destroy({ where: { userId, recipeId } });
+}
+
+export async function isRecipeFavorite(userId: string, recipeId: string): Promise<boolean> {
+  const count = await Favorite.count({ where: { userId, recipeId } });
+  return count > 0;
+}
+
+/** Favoris d'une page de résultats, en une requête plutôt qu'une par recette. */
+export async function findFavoriteRecipeIds(
+  userId: string,
+  recipeIds: string[],
+): Promise<Set<string>> {
+  if (recipeIds.length === 0) {
+    return new Set();
+  }
+  const favorites = await Favorite.findAll({
+    attributes: ['recipeId'],
+    where: { userId, recipeId: { [Op.in]: recipeIds } },
+  });
+  return new Set(favorites.map((favorite) => favorite.recipeId));
 }
 
 export interface RecipePage {

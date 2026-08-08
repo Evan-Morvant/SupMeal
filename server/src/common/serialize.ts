@@ -1,3 +1,4 @@
+import { env } from '../config/env';
 import { OAuthAccount, Recipe, User, UserPreferences } from '../models';
 
 /** Représentation publique d'un utilisateur. */
@@ -31,8 +32,16 @@ export function serializeOAuthAccount(account: OAuthAccount) {
   };
 }
 
+/**
+ * L'image est stockée en chemin relatif et rendue absolue à la sortie : si
+ * l'URL publique de l'API change, les lignes en base restent valides.
+ */
+function absoluteImageUrl(imageUrl: string | null): string | null {
+  return imageUrl === null ? null : env.API_PUBLIC_URL + imageUrl;
+}
+
 /** Champs propres à la recette, communs au résumé et au détail. */
-function recipeBase(recipe: Recipe) {
+function recipeBase(recipe: Recipe, isFavorite: boolean) {
   return {
     id: recipe.id,
     ownerId: recipe.ownerId,
@@ -41,9 +50,10 @@ function recipeBase(recipe: Recipe) {
     prepTimeMin: recipe.prepTimeMin,
     cookTimeMin: recipe.cookTimeMin,
     servings: recipe.servings,
-    imageUrl: recipe.imageUrl,
+    imageUrl: absoluteImageUrl(recipe.imageUrl),
     source: recipe.source,
     visibility: recipe.visibility,
+    isFavorite,
     tags: (recipe.tags ?? []).map((tag) => ({ id: tag.id, name: tag.name, type: tag.type })),
     createdAt: recipe.createdAt,
     updatedAt: recipe.updatedAt,
@@ -55,9 +65,9 @@ function recipeBase(recipe: Recipe) {
  * renvoie en chaîne pour préserver la précision : on la reconvertit ici pour
  * que le client reçoive bien un nombre JSON.
  */
-export function serializeRecipe(recipe: Recipe) {
+export function serializeRecipe(recipe: Recipe, isFavorite = false) {
   return {
-    ...recipeBase(recipe),
+    ...recipeBase(recipe, isFavorite),
     ingredients: (recipe.ingredients ?? []).map((line) => ({
       name: line.ingredient?.name ?? null,
       quantity: line.quantity === null ? null : Number(line.quantity),
@@ -73,6 +83,6 @@ export function serializeRecipe(recipe: Recipe) {
 }
 
 /** Entrée de liste : sans ingrédients ni étapes, inutiles à ce niveau. */
-export function serializeRecipeSummary(recipe: Recipe) {
-  return recipeBase(recipe);
+export function serializeRecipeSummary(recipe: Recipe, isFavorite = false) {
+  return recipeBase(recipe, isFavorite);
 }

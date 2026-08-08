@@ -1,4 +1,5 @@
 import { spawn, spawnSync } from 'node:child_process';
+import { rmSync } from 'node:fs';
 
 /**
  * Lance un PostgreSQL jetable, exécute Vitest avec les variables
@@ -7,6 +8,8 @@ import { spawn, spawnSync } from 'node:child_process';
 const CONTAINER = 'supmeal-test-db';
 const PORT = '55432';
 const DATABASE_URL = 'postgres://supmeal:test@localhost:' + PORT + '/supmeal_test';
+// Les fichiers envoyés pendant les tests vont dans un dossier jetable.
+const UPLOAD_DIR = './test-uploads';
 
 function docker(args) {
   return spawnSync('docker', args, { encoding: 'utf8' });
@@ -14,6 +17,7 @@ function docker(args) {
 
 function cleanup() {
   docker(['rm', '-f', CONTAINER]);
+  rmSync(UPLOAD_DIR, { recursive: true, force: true });
 }
 
 async function waitReady(timeoutMs) {
@@ -50,6 +54,7 @@ async function main() {
     DATABASE_URL,
     CLIENT_ORIGIN: 'http://localhost:8080',
     AUTH_RATE_LIMIT_MAX: '1000',
+    UPLOAD_DIR: UPLOAD_DIR,
     API_PUBLIC_URL: 'http://localhost:4000',
     GITHUB_CLIENT_ID: 'test_github_id',
     GITHUB_CLIENT_SECRET: 'test_github_secret',

@@ -4,6 +4,7 @@ import cors from 'cors';
 import morgan from 'morgan';
 import passport from 'passport';
 import { env } from './config/env';
+import { UPLOADS_ROUTE } from './common/uploads';
 import { router } from './routes';
 import { configurePassport } from './config/passport';
 import { errorHandler, notFoundHandler } from './middlewares/error-handler';
@@ -21,6 +22,12 @@ export function createApp(): Application {
 
   configurePassport();
   app.use(passport.initialize());
+
+  app.use(
+    UPLOADS_ROUTE,
+    helmet.crossOriginResourcePolicy({ policy: 'cross-origin' }),
+    express.static(env.UPLOAD_DIR, { index: false }),
+  );
 
   app.use('/api/v1', router);
 

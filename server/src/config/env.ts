@@ -18,8 +18,11 @@ const schema = z.object({
   CLIENT_ORIGIN: z.string().default('http://localhost:5173'),
   // Plafond du limiteur sur les routes d'authentification, par fenêtre et par IP.
   AUTH_RATE_LIMIT_MAX: z.coerce.number().default(20),
-  // URL publique de l'API, utilisée pour construire les callbacks OAuth.
+  // URL publique de l'API, utilisée pour les callbacks OAuth et les images.
   API_PUBLIC_URL: z.string().default('http://localhost:4000'),
+  // Stockage des fichiers envoyés (images) : monté en volume Docker.
+  UPLOAD_DIR: z.string().default('./uploads'),
+  UPLOAD_MAX_BYTES: z.coerce.number().int().positive().default(5 * 1024 * 1024),
   // Identifiants OAuth2 (vides si le provider n'est pas configuré).
   GITHUB_CLIENT_ID: z.string().default(''),
   GITHUB_CLIENT_SECRET: z.string().default(''),

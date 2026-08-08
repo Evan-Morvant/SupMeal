@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { authenticate } from '../../middlewares/authenticate';
 import { requireRecipeAccess, requireRecipeOwner } from '../../middlewares/recipe-access';
+import { uploadRecipeImage } from '../../middlewares/upload';
 import { validateBody, validateQuery } from '../../middlewares/validate';
 import { asyncHandler } from '../../common/async-handler';
 import * as recipesController from './recipes.controller';
@@ -37,4 +38,22 @@ recipesRouter.delete(
   '/:id',
   asyncHandler(requireRecipeOwner),
   asyncHandler(recipesController.remove),
+);
+
+recipesRouter.post(
+  '/:id/image',
+  asyncHandler(requireRecipeOwner),
+  uploadRecipeImage,
+  asyncHandler(recipesController.setImage),
+);
+
+recipesRouter.post(
+  '/:id/favorite',
+  asyncHandler(requireRecipeAccess),
+  asyncHandler(recipesController.addFavorite),
+);
+
+recipesRouter.delete(
+  '/:id/favorite',
+  asyncHandler(recipesController.removeFavorite),
 );

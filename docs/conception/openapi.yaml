@@ -323,24 +323,41 @@ paths:
     post:
       tags: [Recipes]
       summary: Uploader l'image de la recette
+      description: >
+        JPEG, PNG ou WebP, 5 Mo au maximum. Le nom du fichier stocké est généré
+        par le serveur, jamais repris du client. Envoyer une nouvelle image
+        remplace la précédente et supprime son fichier. `imageUrl` est rendue
+        absolue en réponse mais stockée en relatif.
       requestBody:
+        required: true
         content:
           multipart/form-data:
             schema:
               type: object
+              required: [file]
               properties: { file: { type: string, format: binary } }
       responses:
         '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/Recipe' } } } }
+        '400': { description: Fichier manquant ou format non supporté }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '413': { description: Image trop volumineuse }
   /recipes/{id}/favorite:
     parameters: [ { $ref: '#/components/parameters/Id' } ]
     post:
       tags: [Recipes]
       summary: Marquer comme favori
-      responses: { '204': { description: Ajouté aux favoris } }
+      description: Idempotent — marquer deux fois reste un succès.
+      responses:
+        '204': { description: Ajouté aux favoris }
+        '403': { $ref: '#/components/responses/Forbidden' }
     delete:
       tags: [Recipes]
       summary: Retirer des favoris
-      responses: { '204': { description: Retiré } }
+      description: >
+        Idempotent, et sans contrôle d'accès à la recette : perdre l'accès à
+        une recette ne doit pas empêcher de la retirer de ses propres favoris.
+      responses:
+        '204': { description: Retiré }
 
   # ----------------------------- Comments (privés au cookbook) -----------------------------
   /cookbooks/{id}/recipes/{recipeId}/comments:
