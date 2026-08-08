@@ -42,7 +42,7 @@ La spec exécutable correspondante : [`openapi.yaml`](openapi.yaml) (Swagger UI)
 | POST | `/auth/login` | Connexion locale (renvoie access+refresh) | ❌ | `rateLimit`, `validate` |
 | POST | `/auth/refresh` | Renouvelle l'access token | ❌* | `validate` (refresh token) |
 | POST | `/auth/logout` | Invalide le refresh token | ✅ | `authenticate` |
-| GET | `/auth/oauth/:provider` | Démarre le flux OAuth2 (`google`) | ❌ | — |
+| GET | `/auth/oauth/:provider` | Démarre le flux OAuth2 (`google`, `github`) | ❌ | — |
 | GET | `/auth/oauth/:provider/callback` | Callback OAuth2 (échange code, redirige vers le front avec les tokens) | ❌ | — |
 | GET | `/auth/me` | Utilisateur courant (depuis le JWT) | ✅ | `authenticate` |
 
@@ -82,12 +82,16 @@ La spec exécutable correspondante : [`openapi.yaml`](openapi.yaml) (Swagger UI)
 |---|---|---|
 | `q` | string | Recherche plein texte (titre, description, ingrédients). |
 | `cookbookId` | uuid | Restreint à un cookbook. |
-| `tags` | csv | Filtre par tags/catégories. |
-| `ingredients` | csv | Filtre par ingrédients. |
-| `maxPrep` / `maxCook` | int | Temps de préparation / cuisson max (min). |
+| `tags` | csv | Filtre par tags/catégories, insensible à la casse. Valeurs cumulées en **ET**. |
+| `ingredients` | csv | Filtre par ingrédients, cumulés en **ET** (« qu'est-ce que je peux faire avec ce que j'ai »). |
+| `maxPrep` / `maxCook` | int | Temps de préparation / cuisson max (min). Exclut les recettes sans temps renseigné. |
 | `favorite` | bool | Uniquement les favoris de l'utilisateur. |
-| `sort` | enum | `relevance` \| `recent` \| `prepTime`. |
-| `page` / `pageSize` | int | Pagination. |
+| `sort` | enum | `relevance` \| `recent` \| `prepTime`. Défaut : `relevance` si `q`, sinon `recent`. |
+| `page` / `pageSize` | int | Pagination (`pageSize` ≤ 100). |
+
+> **Périmètre** : ses propres recettes et celles des cookbooks dont on est membre.
+> Les entrées renvoyées sont des résumés (tags oui, ingrédients et étapes non) ;
+> le détail complet passe par `GET /recipes/:id`.
 
 > **Visibilité** : `POST /recipes` et `PATCH /recipes/:id` acceptent `visibility`
 > (`private` par défaut, `public`). Seul le **créateur** peut basculer une recette en public.

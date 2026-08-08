@@ -32,7 +32,7 @@ Trois briques distinctes (cf. sujet) : **client web** (n'interagit qu'avec l'API
 | Client | React 18 + Vite + TypeScript |
 | Serveur | Node.js 20 + Express + Sequelize (TypeScript) |
 | Base de données | PostgreSQL 16 |
-| Auth | JWT + OAuth2 (Google) |
+| Auth | JWT + OAuth2 (Google, GitHub) |
 | Temps réel | Socket.io (messagerie) |
 | Déploiement | Docker Compose |
 

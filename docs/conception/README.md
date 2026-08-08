@@ -24,8 +24,8 @@ par GitHub/GitLab). Ces documents alimentent la **documentation technique** du r
 - **Serveur** : Node.js + Express (API REST) + Socket.io
 - **ORM** : Sequelize
 - **Base de données** : PostgreSQL
-- **Auth** : JWT + Passport (OAuth2 Google)
-- **Déploiement** : Docker Compose (web + api + db)
+- **Auth** : JWT + Passport (OAuth2 Google et GitHub)
+- **Déploiement** : Docker Compose (web + api + db, plus un service `migrate` éphémère)
 
 ## Charte graphique
 
