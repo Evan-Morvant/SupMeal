@@ -1,6 +1,27 @@
 import { CookbookMembership, User } from '../../models';
 import { AppError } from '../../common/app-error';
-import type { Role } from '../../middlewares/require-role';
+import { ROLE_LEVEL, type Role } from '../../middlewares/require-role';
+
+/**
+ * Exige un rôle sur un cookbook désigné ailleurs que dans l'URL : corps de
+ * requête, chaîne de requête, ou événement WebSocket.
+ * Comme lui, un non-membre reçoit « introuvable » plutôt qu'« interdit » :
+ * l'existence du cookbook ne lui est pas confirmée.
+ */
+export async function assertCookbookRole(
+  userId: string,
+  cookbookId: string,
+  min: Role,
+): Promise<void> {
+  const membership = await CookbookMembership.findOne({ where: { cookbookId, userId } });
+
+  if (!membership) {
+    throw new AppError(404, 'COOKBOOK_NOT_FOUND', 'Cookbook introuvable');
+  }
+  if (ROLE_LEVEL[membership.role] < ROLE_LEVEL[min]) {
+    throw new AppError(403, 'FORBIDDEN', 'Rôle insuffisant');
+  }
+}
 
 /** Appartenance accompagnée du profil du membre, pour l'affichage. */
 function withUser(cookbookId: string, userId: string): Promise<CookbookMembership | null> {

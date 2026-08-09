@@ -4,8 +4,11 @@ import {
   InferAttributes,
   InferCreationAttributes,
   Model,
+  NonAttribute,
 } from 'sequelize';
 import { sequelize } from '../config/database';
+import type { Recipe } from './recipe.model';
+import type { User } from './user.model';
 
 export type MealType = 'petit-déjeuner' | 'déjeuner' | 'dîner' | 'collation';
 
@@ -24,6 +27,9 @@ export class MealPlanEntry extends Model<
   declare date: string;
   declare mealType: MealType;
   declare servings: number | null;
+
+  declare recipe?: NonAttribute<Recipe>;
+  declare user?: NonAttribute<User>;
 }
 
 MealPlanEntry.init(

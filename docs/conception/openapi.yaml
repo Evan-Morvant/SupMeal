@@ -726,6 +726,10 @@ paths:
     get:
       tags: [MealPlan]
       summary: Entrées du planning (personnel ou de groupe)
+      description: >-
+        Sans `cookbookId`, le planning personnel de l'appelant ; avec, celui du
+        cookbook (READER+), toutes personnes confondues. Les bornes `from` et
+        `to` sont facultatives et incluses ; une fenêtre inversée est refusée.
       parameters:
         - { in: query, name: from, schema: { type: string, format: date } }
         - { in: query, name: to, schema: { type: string, format: date } }
@@ -736,26 +740,44 @@ paths:
           content:
             application/json:
               schema: { type: array, items: { $ref: '#/components/schemas/MealPlanEntry' } }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '404': { $ref: '#/components/responses/NotFound' }
     post:
       tags: [MealPlan]
       summary: Ajouter une entrée (EDITOR+ si cookbook)
+      description: >-
+        La recette doit être accessible à l'appelant : créateur, membre d'un
+        cookbook la contenant, ou recette publique.
       requestBody:
         required: true
         content: { application/json: { schema: { $ref: '#/components/schemas/MealPlanEntryInput' } } }
       responses:
         '201': { description: Créé, content: { application/json: { schema: { $ref: '#/components/schemas/MealPlanEntry' } } } }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
   /meal-plan/{entryId}:
     parameters: [ { in: path, name: entryId, required: true, schema: { type: string, format: uuid } } ]
     patch:
       tags: [MealPlan]
-      summary: Modifier une entrée
+      summary: Modifier une entrée (auteur, ou EDITOR du cookbook)
+      description: >-
+        `cookbookId` n'est pas modifiable et toute clé inconnue est refusée
+        (400) : une entrée ne passe pas d'un planning personnel à celui d'un
+        groupe, sous peine de changer les droits qui l'encadrent.
       requestBody:
-        content: { application/json: { schema: { $ref: '#/components/schemas/MealPlanEntryInput' } } }
-      responses: { '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/MealPlanEntry' } } } } }
+        content: { application/json: { schema: { $ref: '#/components/schemas/MealPlanEntryUpdate' } } }
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/MealPlanEntry' } } } }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
     delete:
       tags: [MealPlan]
-      summary: Supprimer une entrée
-      responses: { '204': { description: Supprimé } }
+      summary: Supprimer une entrée (auteur, ou EDITOR du cookbook)
+      responses:
+        '204': { description: Supprimé }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
 
   # ----------------------------- Shopping lists -----------------------------
   /shopping-lists:
@@ -1123,10 +1145,17 @@ components:
       properties:
         id: { type: string, format: uuid }
         recipe: { $ref: '#/components/schemas/Recipe' }
-        cookbookId: { type: string, format: uuid, nullable: true }
+        cookbookId:
+          type: string
+          format: uuid
+          nullable: true
+          description: null pour un planning personnel, sinon le cookbook du planning partagé
+        author:
+          allOf: [ { $ref: '#/components/schemas/User' } ]
+          description: Membre qui a inscrit le repas
         date: { type: string, format: date }
         mealType: { type: string, enum: [petit-déjeuner, déjeuner, dîner, collation] }
-        servings: { type: integer }
+        servings: { type: integer, nullable: true }
     MealPlanEntryInput:
       type: object
       required: [recipeId, date, mealType]
@@ -1135,7 +1164,17 @@ components:
         cookbookId: { type: string, format: uuid, nullable: true }
         date: { type: string, format: date }
         mealType: { type: string, enum: [petit-déjeuner, déjeuner, dîner, collation] }
-        servings: { type: integer }
+        servings: { type: integer, nullable: true }
+    MealPlanEntryUpdate:
+      type: object
+      minProperties: 1
+      additionalProperties: false
+      description: Au moins un champ. `cookbookId` en est volontairement absent.
+      properties:
+        recipeId: { type: string, format: uuid }
+        date: { type: string, format: date }
+        mealType: { type: string, enum: [petit-déjeuner, déjeuner, dîner, collation] }
+        servings: { type: integer, nullable: true }
     ShoppingList:
       type: object
       properties:

@@ -6,6 +6,7 @@ import { recipesRouter } from './modules/recipes/recipes.routes';
 import { cookbooksRouter } from './modules/cookbooks/cookbooks.routes';
 import { invitationsRouter } from './modules/invitations/invitations.routes';
 import { commentsRouter } from './modules/comments/comments.routes';
+import { mealPlanRouter } from './modules/meal-plan/meal-plan.routes';
 
 /**
  * Routeur racine monté sur /api/v1.
@@ -21,9 +22,9 @@ router.use('/recipes', recipesRouter);
 router.use('/cookbooks', cookbooksRouter);
 router.use('/invitations', invitationsRouter);
 router.use('/comments', commentsRouter);
+router.use('/meal-plan', mealPlanRouter);
 
 // TODO (Phase 2) :
-// router.use('/meal-plan', mealPlanRouter);
 // router.use('/shopping-lists', shoppingListsRouter);
 // router.use('/ingredients', ingredientsRouter);
 // router.use('/tags', tagsRouter);

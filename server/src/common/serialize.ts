@@ -4,6 +4,7 @@ import {
   Cookbook,
   CookbookInvitation,
   CookbookMembership,
+  MealPlanEntry,
   Message,
   OAuthAccount,
   Recipe,
@@ -174,6 +175,23 @@ export function serializeMessage(message: Message) {
     author: message.author ? serializeUser(message.author) : null,
     content: message.content,
     createdAt: message.createdAt,
+  };
+}
+
+/**
+ * Entrée de planning. `cookbookId` à null désigne un planning personnel ;
+ * `author` dit qui a inscrit le repas, ce qui n'a d'intérêt qu'en groupe mais
+ * conditionne aussi les droits de modification.
+ */
+export function serializeMealPlanEntry(entry: MealPlanEntry, isFavorite = false) {
+  return {
+    id: entry.id,
+    cookbookId: entry.cookbookId,
+    date: entry.date,
+    mealType: entry.mealType,
+    servings: entry.servings,
+    author: entry.user ? serializeUser(entry.user) : null,
+    recipe: entry.recipe ? serializeRecipeSummary(entry.recipe, isFavorite) : null,
   };
 }
 

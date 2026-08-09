@@ -188,10 +188,32 @@ Attachés à la recette, visibles partout où elle l'est. Un avis par utilisateu
 
 | Méthode | Route | Description | Auth | Middlewares |
 |---|---|---|:---:|---|
-| GET | `/meal-plan` | Entrées du planning (`from`, `to`, `cookbookId?`) | ✅ | `authenticate` (+ `loadMembership` si cookbook) |
-| POST | `/meal-plan` | Ajouter une entrée (perso ou groupe) | ✅ | `authenticate`, `validate` (+ `requireRole(EDITOR)` si cookbook) |
-| PATCH | `/meal-plan/:entryId` | Modifier une entrée | ✅ | `authenticate` (propriétaire ou EDITOR) |
-| DELETE | `/meal-plan/:entryId` | Supprimer une entrée | ✅ | `authenticate` (propriétaire ou EDITOR) |
+| GET | `/meal-plan` | Entrées du planning (`from`, `to`, `cookbookId?`) | ✅ | `authenticate`, `validate` (+ READER si cookbook) |
+| POST | `/meal-plan` | Ajouter une entrée (perso ou groupe) | ✅ | `authenticate`, `validate` (+ EDITOR si cookbook) |
+| PATCH | `/meal-plan/:entryId` | Modifier une entrée | ✅ | `authenticate`, `validate` (auteur ou EDITOR) |
+| DELETE | `/meal-plan/:entryId` | Supprimer une entrée | ✅ | `authenticate` (auteur ou EDITOR) |
+
+**Règles de gestion :**
+- **Le cookbook est désigné hors de l'URL** (chaîne de requête ou corps) :
+  `loadMembership`, qui lit les paramètres de route, ne s'applique pas. Le
+  contrôle passe par `assertCookbookRole(userId, cookbookId, min)`, partagé avec
+  la messagerie, et rend 404 au non-membre comme le fait `loadMembership`.
+- **Deux plannings distincts** : sans `cookbookId`, l'appelant ne voit et
+  n'alimente que son planning personnel ; avec, celui du groupe — toutes
+  personnes confondues, c'est ce qui en fait un planning partagé.
+- **Accès à la recette exigé** : on ne planifie que ce qu'on peut consulter
+  (même règle que la consultation d'une recette), à la création comme lors
+  d'une substitution de recette. Sans ce contrôle, un identifiant deviné
+  ferait apparaître la recette privée d'un tiers dans le planning.
+- **Une entrée ne déménage pas** : `cookbookId` est absent du corps de `PATCH`
+  et les clés inconnues sont refusées (400). Passer du personnel au groupe
+  changerait les droits qui encadrent l'entrée : il faut la supprimer et la
+  recréer.
+- **Tri** : par date, puis par repas. L'ordre des repas vient de l'énuméré
+  PostgreSQL, déclaré dans l'ordre de la journée.
+- **`author`** accompagne chaque entrée : sur un planning partagé, savoir qui a
+  prévu quoi fait partie de l'information, et conditionne les droits de
+  modification.
 
 ## 7. Liste de courses (bonus) — `/shopping-lists`
 

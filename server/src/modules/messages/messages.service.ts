@@ -1,6 +1,6 @@
-import { CookbookMembership, Message, User } from '../../models';
-import { AppError } from '../../common/app-error';
-import { ROLE_LEVEL, type Role } from '../../middlewares/require-role';
+import { Message, User } from '../../models';
+import { assertCookbookRole } from '../cookbooks/members.service';
+import type { Role } from '../../middlewares/require-role';
 import type { ListMessagesQuery } from './messages.schemas';
 
 /** Message accompagné de son auteur, pour l'affichage du salon. */
@@ -15,20 +15,9 @@ const AUTHOR_INCLUDE = [{ model: User, as: 'author' }];
  */
 export const CHAT_MIN_ROLE: Role = 'COMMENTER';
 
-/**
- * Comme côté REST, un non-membre reçoit
- * « introuvable » plutôt qu'« interdit », pour ne pas
- * confirmer l'existence du cookbook à qui n'a pas à la connaître.
- */
-export async function assertChatAccess(userId: string, cookbookId: string): Promise<void> {
-  const membership = await CookbookMembership.findOne({ where: { cookbookId, userId } });
-
-  if (!membership) {
-    throw new AppError(404, 'COOKBOOK_NOT_FOUND', 'Cookbook introuvable');
-  }
-  if (ROLE_LEVEL[membership.role] < ROLE_LEVEL[CHAT_MIN_ROLE]) {
-    throw new AppError(403, 'FORBIDDEN', 'Rôle insuffisant');
-  }
+/** Contrôle d'accès du salon, appliqué hors de la pile Express. */
+export function assertChatAccess(userId: string, cookbookId: string): Promise<void> {
+  return assertCookbookRole(userId, cookbookId, CHAT_MIN_ROLE);
 }
 
 /**
