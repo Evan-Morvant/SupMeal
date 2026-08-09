@@ -1,0 +1,34 @@
+import { z } from 'zod';
+import { recipeFilterFields } from '../recipes/recipes.schemas';
+
+/** Schémas de validation du module cookbooks. */
+
+const cookbookFields = {
+  name: z.string().min(1).max(255),
+  description: z.string().max(2000).nullable().optional(),
+};
+
+export const createCookbookSchema = z.object(cookbookFields);
+
+export const updateCookbookSchema = z
+  .object({ ...cookbookFields, name: cookbookFields.name.optional() })
+  .refine((body) => Object.keys(body).length > 0, {
+    message: 'Aucun champ à modifier',
+  });
+
+/**
+ * Recherche interne au cookbook : mêmes critères que la liste générale, sans
+ * `cookbookId` puisque le cookbook est déjà désigné par l'URL.
+ */
+export const listCookbookRecipesSchema = z.object(recipeFilterFields);
+
+export const cookbookParamsSchema = z.object({ id: z.string().uuid() });
+
+export const cookbookRecipeParamsSchema = z.object({
+  id: z.string().uuid(),
+  recipeId: z.string().uuid(),
+});
+
+export type CreateCookbookInput = z.infer<typeof createCookbookSchema>;
+export type UpdateCookbookInput = z.infer<typeof updateCookbookSchema>;
+export type ListCookbookRecipesQuery = z.infer<typeof listCookbookRecipesSchema>;

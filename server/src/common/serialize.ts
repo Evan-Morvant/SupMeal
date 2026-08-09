@@ -1,5 +1,6 @@
 import { env } from '../config/env';
-import { OAuthAccount, Recipe, User, UserPreferences } from '../models';
+import { Cookbook, OAuthAccount, Recipe, User, UserPreferences } from '../models';
+import type { Role } from '../middlewares/require-role';
 
 /** Représentation publique d'un utilisateur. */
 export function serializeUser(user: User) {
@@ -85,4 +86,46 @@ export function serializeRecipe(recipe: Recipe, isFavorite = false) {
 /** Entrée de liste : sans ingrédients ni étapes, inutiles à ce niveau. */
 export function serializeRecipeSummary(recipe: Recipe, isFavorite = false) {
   return recipeBase(recipe, isFavorite);
+}
+
+/** Page de résultats de recherche, quel qu'en soit le périmètre. */
+export function serializeRecipePage(page: {
+  items: Recipe[];
+  total: number;
+  page: number;
+  pageSize: number;
+  favoriteIds: Set<string>;
+}) {
+  return {
+    items: page.items.map((recipe) =>
+      serializeRecipeSummary(recipe, page.favoriteIds.has(recipe.id)),
+    ),
+    total: page.total,
+    page: page.page,
+    pageSize: page.pageSize,
+  };
+}
+
+/**
+ * Cookbook vu par l'un de ses membres : `myRole` conditionne les actions que
+ * le client peut proposer, les compteurs évitent de charger les collections
+ * complètes pour afficher une liste.
+ */
+export function serializeCookbook(view: {
+  cookbook: Cookbook;
+  role: Role;
+  memberCount: number;
+  recipeCount: number;
+}) {
+  const { cookbook } = view;
+  return {
+    id: cookbook.id,
+    name: cookbook.name,
+    description: cookbook.description,
+    myRole: view.role,
+    memberCount: view.memberCount,
+    recipeCount: view.recipeCount,
+    createdAt: cookbook.createdAt,
+    updatedAt: cookbook.updatedAt,
+  };
 }

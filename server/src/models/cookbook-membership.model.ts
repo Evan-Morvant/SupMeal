@@ -4,9 +4,12 @@ import {
   InferAttributes,
   InferCreationAttributes,
   Model,
+  NonAttribute,
 } from 'sequelize';
 import { sequelize } from '../config/database';
 import type { Role } from '../middlewares/require-role';
+import type { Cookbook } from './cookbook.model';
+import type { User } from './user.model';
 
 /** Appartenance d'un utilisateur à un cookbook, avec son rôle. */
 export class CookbookMembership extends Model<
@@ -18,6 +21,9 @@ export class CookbookMembership extends Model<
   declare userId: string;
   declare role: Role;
   declare joinedAt: CreationOptional<Date>;
+
+  declare cookbook?: NonAttribute<Cookbook>;
+  declare user?: NonAttribute<User>;
 }
 
 CookbookMembership.init(

@@ -63,9 +63,13 @@ const csvSchema = z
  */
 const booleanParam = z.enum(['true', 'false']).transform((value) => value === 'true');
 
-export const listRecipesSchema = z.object({
+/**
+ * Critères de recherche communs à `/recipes` et à la recherche interne d'un
+ * cookbook, qui ne diffèrent que par la façon de désigner le cookbook :
+ * paramètre de requête ici, segment d'URL là-bas.
+ */
+export const recipeFilterFields = {
   q: z.string().min(1).max(200).optional(),
-  cookbookId: z.string().uuid().optional(),
   tags: csvSchema.optional(),
   ingredients: csvSchema.optional(),
   maxPrep: z.coerce.number().int().min(0).max(10000).optional(),
@@ -74,6 +78,11 @@ export const listRecipesSchema = z.object({
   sort: z.enum(['relevance', 'recent', 'prepTime']).optional(),
   page: z.coerce.number().int().min(1).default(1),
   pageSize: z.coerce.number().int().min(1).max(100).default(20),
+};
+
+export const listRecipesSchema = z.object({
+  cookbookId: z.string().uuid().optional(),
+  ...recipeFilterFields,
 });
 
 export type IngredientLineInput = z.infer<typeof ingredientLineSchema>;

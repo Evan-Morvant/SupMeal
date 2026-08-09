@@ -134,7 +134,7 @@ Attachés à la recette, visibles partout où elle l'est. Un avis par utilisateu
 |---|---|---|:---:|---|
 | GET | `/cookbooks` | Lister mes cookbooks | ✅ | `authenticate` |
 | POST | `/cookbooks` | Créer un cookbook (créateur = OWNER) | ✅ | `authenticate`, `validate` |
-| GET | `/cookbooks/:id` | Détail (+ rôles des membres) | ✅ | `authenticate`, `loadMembership`, `requireRole(READER)` |
+| GET | `/cookbooks/:id` | Détail (rôle du demandeur, compteurs) | ✅ | `authenticate`, `loadMembership`, `requireRole(READER)` |
 | PATCH | `/cookbooks/:id` | Modifier le cookbook | ✅ | `authenticate`, `loadMembership`, `requireRole(OWNER)` |
 | DELETE | `/cookbooks/:id` | Supprimer le cookbook (≠ recettes) | ✅ | `authenticate`, `loadMembership`, `requireRole(OWNER)` |
 

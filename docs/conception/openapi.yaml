@@ -512,8 +512,18 @@ paths:
     get:
       tags: [CookbookRecipes]
       summary: Recettes du cookbook + recherche propre
+      description: >
+        Mêmes critères que `GET /recipes`, restreints au cookbook : le
+        paramètre `cookbookId` n'a donc pas cours ici, le cookbook étant déjà
+        désigné par l'URL. Réponse paginée, entrées résumées.
       parameters:
         - { in: query, name: q, schema: { type: string } }
+        - { in: query, name: tags, schema: { type: string }, description: CSV cumulé en ET }
+        - { in: query, name: ingredients, schema: { type: string }, description: CSV cumulé en ET }
+        - { in: query, name: maxPrep, schema: { type: integer } }
+        - { in: query, name: maxCook, schema: { type: integer } }
+        - { in: query, name: favorite, schema: { type: boolean } }
+        - { in: query, name: sort, schema: { type: string, enum: [relevance, recent, prepTime] } }
         - { $ref: '#/components/parameters/Page' }
         - { $ref: '#/components/parameters/PageSize' }
       responses:
@@ -521,7 +531,13 @@ paths:
           description: OK
           content:
             application/json:
-              schema: { type: array, items: { $ref: '#/components/schemas/Recipe' } }
+              schema:
+                type: object
+                properties:
+                  items: { type: array, items: { $ref: '#/components/schemas/Recipe' } }
+                  total: { type: integer }
+                  page: { type: integer }
+                  pageSize: { type: integer }
     post:
       tags: [CookbookRecipes]
       summary: Créer une recette directement dans le cookbook (EDITOR+)
@@ -992,6 +1008,7 @@ components:
         memberCount: { type: integer }
         recipeCount: { type: integer }
         createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
     Membership:
       type: object
       properties:

@@ -1,6 +1,6 @@
 import { NextFunction, Request, Response } from 'express';
 import { AppError } from '../common/app-error';
-import { findRecipeOrFail, isRecipeAccessible } from '../modules/recipes/recipes.service';
+import { findAccessibleRecipeOrFail, findRecipeOrFail } from '../modules/recipes/recipes.service';
 import type { Recipe } from '../models';
 
 declare global {
@@ -24,14 +24,7 @@ export async function requireRecipeAccess(
   _res: Response,
   next: NextFunction,
 ): Promise<void> {
-  const recipe = await findRecipeOrFail(req.params.id);
-  const allowed =
-    recipe.visibility === 'public' || (await isRecipeAccessible(recipe.id, req.user!.id));
-
-  if (!allowed) {
-    throw new AppError(403, 'FORBIDDEN', 'Accès refusé à cette recette');
-  }
-  req.recipe = recipe;
+  req.recipe = await findAccessibleRecipeOrFail(req.params.id, req.user!.id);
   next();
 }
 

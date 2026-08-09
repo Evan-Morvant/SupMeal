@@ -1,6 +1,7 @@
 import fs from 'fs/promises';
 import { Op, Transaction, col, fn, where as sqlWhere } from 'sequelize';
 import {
+  CookbookRecipe,
   Favorite,
   Ingredient,
   Recipe,
@@ -190,6 +191,26 @@ export async function isRecipeAccessible(recipeId: string, userId: string): Prom
   return visible > 0;
 }
 
+/**
+ * Recette lisible par l'utilisateur, ou 404/403. Règle unique de consultation,
+ * partagée par la garde de route et par la liaison à un cookbook : une recette
+ * qu'on n'a pas le droit de lire ne doit pas non plus pouvoir être exposée à
+ * tout un cookbook.
+ */
+export async function findAccessibleRecipeOrFail(
+  recipeId: string,
+  userId: string,
+): Promise<Recipe> {
+  const recipe = await findRecipeOrFail(recipeId);
+  const allowed =
+    recipe.visibility === 'public' || (await isRecipeAccessible(recipe.id, userId));
+
+  if (!allowed) {
+    throw new AppError(403, 'FORBIDDEN', 'Accès refusé à cette recette');
+  }
+  return recipe;
+}
+
 /** Recette complète, ou 404. Les collections sont ordonnées côté SQL. */
 export async function findRecipeOrFail(recipeId: string): Promise<Recipe> {
   const recipe = await Recipe.findByPk(recipeId, {
@@ -208,8 +229,16 @@ export async function findRecipeOrFail(recipeId: string): Promise<Recipe> {
 /**
  * Création. Recette, ingrédients, étapes et tags sont écrits dans une seule
  * transaction : une recette n'existe jamais amputée de son contenu.
+ *
+ * `cookbookId` couvre la création directe dans un cookbook : la liaison entre
+ * dans la même transaction, faute de quoi un échec laisserait une recette
+ * personnelle orpheline là où l'utilisateur en attendait une partagée.
  */
-export async function createRecipe(ownerId: string, input: CreateRecipeInput): Promise<Recipe> {
+export async function createRecipe(
+  ownerId: string,
+  input: CreateRecipeInput,
+  cookbookId?: string,
+): Promise<Recipe> {
   const created = await sequelize.transaction(async (transaction) => {
     const recipe = await Recipe.create(
       {
@@ -229,6 +258,13 @@ export async function createRecipe(ownerId: string, input: CreateRecipeInput): P
     await replaceIngredients(recipe.id, input.ingredients ?? [], transaction);
     await replaceSteps(recipe.id, input.steps ?? [], transaction);
     await replaceTags(recipe.id, input.tags ?? [], transaction);
+
+    if (cookbookId) {
+      await CookbookRecipe.create(
+        { cookbookId, recipeId: recipe.id, addedBy: ownerId },
+        { transaction },
+      );
+    }
     return recipe;
   });
 
@@ -328,6 +364,11 @@ export interface RecipePage {
   pageSize: number;
 }
 
+/** Page de résultats accompagnée des favoris qu'elle contient. */
+export interface RecipePageWithFavorites extends RecipePage {
+  favoriteIds: Set<string>;
+}
+
 /**
  * Recherche paginée dans les recettes accessibles à l'utilisateur.
  */
@@ -357,4 +398,21 @@ export async function searchRecipes(userId: string, query: ListRecipesQuery): Pr
     .filter((recipe): recipe is Recipe => recipe !== undefined);
 
   return { items, total: count, page, pageSize };
+}
+
+/**
+ * Recherche destinée à l'affichage : la page et l'état « favori » de chacune de
+ * ses entrées. Sert aussi bien la liste générale que la recherche interne d'un
+ * cookbook, qui n'en diffère que par le filtre imposé.
+ */
+export async function searchRecipesForUser(
+  userId: string,
+  query: ListRecipesQuery,
+): Promise<RecipePageWithFavorites> {
+  const page = await searchRecipes(userId, query);
+  const favoriteIds = await findFavoriteRecipeIds(
+    userId,
+    page.items.map((recipe) => recipe.id),
+  );
+  return { ...page, favoriteIds };
 }

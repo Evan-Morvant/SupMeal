@@ -29,3 +29,17 @@ export const validateQuery =
     req.query = schema.parse(req.query) as Request['query'];
     next();
   };
+
+/**
+ * Paramètres d'URL. Ils restent des chaînes : le résultat de l'analyse n'est
+ * pas réécrit dans `req.params`, un schéma partiel effacerait sinon les
+ * paramètres qu'il ne décrit pas. Vérifier le format ici évite qu'un
+ * identifiant mal formé descende jusqu'à PostgreSQL, qui répondrait par une
+ * erreur de syntaxe (500) là où la requête est simplement invalide (400).
+ */
+export const validateParams =
+  <TOut, TIn>(schema: Schema<TOut, TIn>) =>
+  (req: Request, _res: Response, next: NextFunction): void => {
+    schema.parse(req.params);
+    next();
+  };

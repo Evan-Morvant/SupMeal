@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { serializeRecipe, serializeRecipeSummary } from '../../common/serialize';
+import { serializeRecipe, serializeRecipePage } from '../../common/serialize';
 import * as recipesService from './recipes.service';
 import type { ListRecipesQuery } from './recipes.schemas';
 
@@ -10,20 +10,8 @@ export async function create(req: Request, res: Response): Promise<void> {
 
 export async function list(req: Request, res: Response): Promise<void> {
   const query = req.query as unknown as ListRecipesQuery;
-  const page = await recipesService.searchRecipes(req.user!.id, query);
-
-  // Les favoris de toute la page sont résolus en une requête.
-  const favoriteIds = await recipesService.findFavoriteRecipeIds(
-    req.user!.id,
-    page.items.map((recipe) => recipe.id),
-  );
-
-  res.json({
-    items: page.items.map((recipe) => serializeRecipeSummary(recipe, favoriteIds.has(recipe.id))),
-    total: page.total,
-    page: page.page,
-    pageSize: page.pageSize,
-  });
+  const page = await recipesService.searchRecipesForUser(req.user!.id, query);
+  res.json(serializeRecipePage(page));
 }
 
 /** La recette a déjà été chargée et autorisée par le middleware d'accès. */

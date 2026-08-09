@@ -3,6 +3,7 @@ import { healthRouter } from './modules/health/health.routes';
 import { authRouter } from './modules/auth/auth.routes';
 import { usersRouter } from './modules/users/users.routes';
 import { recipesRouter } from './modules/recipes/recipes.routes';
+import { cookbooksRouter } from './modules/cookbooks/cookbooks.routes';
 
 /**
  * Routeur racine monté sur /api/v1.
@@ -15,9 +16,9 @@ router.use('/health', healthRouter);
 router.use('/auth', authRouter);
 router.use('/users', usersRouter);
 router.use('/recipes', recipesRouter);
+router.use('/cookbooks', cookbooksRouter);
 
 // TODO (Phase 2) :
-// router.use('/cookbooks', cookbooksRouter);
 // router.use('/meal-plan', mealPlanRouter);
 // router.use('/shopping-lists', shoppingListsRouter);
 // router.use('/ingredients', ingredientsRouter);
