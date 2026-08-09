@@ -1,5 +1,6 @@
 import { env } from '../config/env';
 import {
+  Comment,
   Cookbook,
   CookbookInvitation,
   CookbookMembership,
@@ -145,6 +146,19 @@ export function serializeMembership(membership: CookbookMembership) {
     user: membership.user ? serializeUser(membership.user) : null,
     role: membership.role,
     joinedAt: membership.joinedAt,
+  };
+}
+
+/** Commentaire d'un fil de cookbook, avec son auteur. */
+export function serializeComment(comment: Comment) {
+  return {
+    id: comment.id,
+    recipeId: comment.recipeId,
+    cookbookId: comment.cookbookId,
+    author: comment.author ? serializeUser(comment.author) : null,
+    content: comment.content,
+    createdAt: comment.createdAt,
+    updatedAt: comment.updatedAt,
   };
 }
 

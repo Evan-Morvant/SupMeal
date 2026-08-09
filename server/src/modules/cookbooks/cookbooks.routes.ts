@@ -6,6 +6,8 @@ import { requireRole, type Role } from '../../middlewares/require-role';
 import { validateBody, validateParams, validateQuery } from '../../middlewares/validate';
 import { asyncHandler } from '../../common/async-handler';
 import { createRecipeSchema } from '../recipes/recipes.schemas';
+import * as commentsController from '../comments/comments.controller';
+import { commentSchema } from '../comments/comments.schemas';
 import * as invitationsController from '../invitations/invitations.controller';
 import * as cookbooksController from './cookbooks.controller';
 import * as membersController from './members.controller';
@@ -75,6 +77,21 @@ cookbooksRouter.delete(
   '/:id/recipes/:recipeId',
   ...guards('EDITOR', cookbookRecipeParamsSchema),
   asyncHandler(cookbooksController.unlinkRecipe),
+);
+
+// Commentaires : privé au cookbook.
+// Le lecteur suit la conversation, le commentateur y participe.
+cookbooksRouter.get(
+  '/:id/recipes/:recipeId/comments',
+  ...guards('READER', cookbookRecipeParamsSchema),
+  asyncHandler(commentsController.list),
+);
+
+cookbooksRouter.post(
+  '/:id/recipes/:recipeId/comments',
+  ...guards('COMMENTER', cookbookRecipeParamsSchema),
+  validateBody(commentSchema),
+  asyncHandler(commentsController.create),
 );
 
 cookbooksRouter.get(

@@ -116,6 +116,12 @@ Rattachés au couple (recette, cookbook) → le fil reste interne au groupe.
 | PATCH | `/comments/:commentId` | Modifier son commentaire | ✅ | `authenticate` (auteur) |
 | DELETE | `/comments/:commentId` | Supprimer (auteur ou OWNER du cookbook) | ✅ | `authenticate` |
 
+**Règles de gestion :**
+- Le fil n'existe que si la recette est **effectivement liée** au cookbook (404 `RECIPE_NOT_IN_COOKBOOK`) : commenter sous une recette absente du cookbook n'aurait pas de sens, et le fil apparaîtrait par surprise si elle y était liée plus tard.
+- **Modification : l'auteur seul**, le créateur du cookbook ne réécrit les propos de personne.
+- **Suppression : l'auteur, ou le créateur du cookbook** au titre de la modération de son groupe. Un éditeur, si haut placé soit-il, n'y touche pas.
+- Les commentaires disparaissent avec la recette ou avec le cookbook (`ON DELETE CASCADE`).
+
 ## 4 bis. Avis & notation (**publics**, par recette) — *bonus*
 
 Attachés à la recette, visibles partout où elle l'est. Un avis par utilisateur.

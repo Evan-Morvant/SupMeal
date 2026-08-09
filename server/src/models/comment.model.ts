@@ -4,8 +4,10 @@ import {
   InferAttributes,
   InferCreationAttributes,
   Model,
+  NonAttribute,
 } from 'sequelize';
 import { sequelize } from '../config/database';
+import type { User } from './user.model';
 
 /** Commentaire sur une recette, **privé au cookbook** (`cookbookId`)*/
 export class Comment extends Model<
@@ -19,6 +21,8 @@ export class Comment extends Model<
   declare content: string;
   declare createdAt: CreationOptional<Date>;
   declare updatedAt: CreationOptional<Date>;
+
+  declare author?: NonAttribute<User>;
 }
 
 Comment.init(
