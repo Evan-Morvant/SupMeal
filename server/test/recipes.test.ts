@@ -1,7 +1,15 @@
 import { describe, it, expect } from 'vitest';
 import request from 'supertest';
 import { createApp } from '../src/app';
-import { Ingredient, Recipe, RecipeIngredient, RecipeStep, Tag } from '../src/models';
+import {
+  CookbookMembership,
+  Ingredient,
+  Recipe,
+  RecipeIngredient,
+  RecipeStep,
+  Tag,
+  User,
+} from '../src/models';
 
 const app = createApp();
 const base = '/api/v1/recipes';
@@ -254,6 +262,116 @@ describe('Modification', () => {
       .patch(base + '/' + created.body.id)
       .set('Authorization', bearer(autre))
       .send({ title: 'Detourne' });
+    expect(res.status).toBe(403);
+  });
+});
+
+describe('Modification par un cookbook partagé', () => {
+  /**
+   * Une recette du créateur, rangée dans un cookbook où l'on installe un
+   * second membre au rôle voulu.
+   */
+  async function shareRecipe(ownerToken: string, guestEmail: string, role: string) {
+    const cookbook = await request(app)
+      .post('/api/v1/cookbooks')
+      .set('Authorization', bearer(ownerToken))
+      .send({ name: 'Cuisine de famille' });
+    const recipe = await request(app)
+      .post('/api/v1/cookbooks/' + cookbook.body.id + '/recipes')
+      .set('Authorization', bearer(ownerToken))
+      .send(tarte);
+
+    const guest = await User.findOne({ where: { email: guestEmail } });
+    await CookbookMembership.create({
+      cookbookId: cookbook.body.id,
+      userId: guest!.id,
+      role: role as 'READER',
+    });
+    return { cookbookId: cookbook.body.id as string, recipeId: recipe.body.id as string };
+  }
+
+  it('un éditeur du cookbook corrige la recette -> 200', async () => {
+    const owner = await registerUser('sh-owner@test.fr');
+    const editor = await registerUser('sh-editor@test.fr');
+    const { recipeId } = await shareRecipe(owner, 'sh-editor@test.fr', 'EDITOR');
+
+    const res = await request(app)
+      .patch(base + '/' + recipeId)
+      .set('Authorization', bearer(editor))
+      .send({ title: 'Tarte aux pommes et cannelle' });
+
+    expect(res.status).toBe(200);
+    expect(res.body.title).toBe('Tarte aux pommes et cannelle');
+  });
+
+  it('le créateur du cookbook aussi -> 200', async () => {
+    const owner = await registerUser('sh-owner2@test.fr');
+    const coOwner = await registerUser('sh-coowner@test.fr');
+    const { recipeId } = await shareRecipe(owner, 'sh-coowner@test.fr', 'OWNER');
+
+    const res = await request(app)
+      .patch(base + '/' + recipeId)
+      .set('Authorization', bearer(coOwner))
+      .send({ prepTimeMin: 25 });
+
+    expect(res.status).toBe(200);
+  });
+
+  it('un commentateur ne modifie pas la recette -> 403', async () => {
+    const owner = await registerUser('sh-owner3@test.fr');
+    const commenter = await registerUser('sh-commenter@test.fr');
+    const { recipeId } = await shareRecipe(owner, 'sh-commenter@test.fr', 'COMMENTER');
+
+    const res = await request(app)
+      .patch(base + '/' + recipeId)
+      .set('Authorization', bearer(commenter))
+      .send({ title: 'Detourne' });
+
+    expect(res.status).toBe(403);
+  });
+
+  it('un éditeur ne supprime pas la recette d autrui -> 403', async () => {
+    const owner = await registerUser('sh-owner4@test.fr');
+    const editor = await registerUser('sh-editor2@test.fr');
+    const { recipeId } = await shareRecipe(owner, 'sh-editor2@test.fr', 'EDITOR');
+
+    const res = await request(app)
+      .delete(base + '/' + recipeId)
+      .set('Authorization', bearer(editor));
+
+    expect(res.status).toBe(403);
+  });
+
+  it('un éditeur ne bascule pas la recette en public -> 403', async () => {
+    const owner = await registerUser('sh-owner5@test.fr');
+    const editor = await registerUser('sh-editor3@test.fr');
+    const { recipeId } = await shareRecipe(owner, 'sh-editor3@test.fr', 'EDITOR');
+
+    const res = await request(app)
+      .patch(base + '/' + recipeId)
+      .set('Authorization', bearer(editor))
+      .send({ title: 'Corrigee', visibility: 'public' });
+
+    expect(res.status).toBe(403);
+    const recipe = await Recipe.findByPk(recipeId);
+    expect(recipe!.visibility).toBe('private');
+    expect(recipe!.title).toBe('Tarte aux pommes');
+  });
+
+  it('le droit tombe dès que la recette quitte le cookbook -> 403', async () => {
+    const owner = await registerUser('sh-owner6@test.fr');
+    const editor = await registerUser('sh-editor4@test.fr');
+    const { cookbookId, recipeId } = await shareRecipe(owner, 'sh-editor4@test.fr', 'EDITOR');
+
+    await request(app)
+      .delete('/api/v1/cookbooks/' + cookbookId + '/recipes/' + recipeId)
+      .set('Authorization', bearer(owner));
+
+    const res = await request(app)
+      .patch(base + '/' + recipeId)
+      .set('Authorization', bearer(editor))
+      .send({ title: 'Trop tard' });
+
     expect(res.status).toBe(403);
   });
 });
