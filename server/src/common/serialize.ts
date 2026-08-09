@@ -1,5 +1,13 @@
 import { env } from '../config/env';
-import { Cookbook, OAuthAccount, Recipe, User, UserPreferences } from '../models';
+import {
+  Cookbook,
+  CookbookInvitation,
+  CookbookMembership,
+  OAuthAccount,
+  Recipe,
+  User,
+  UserPreferences,
+} from '../models';
 import type { Role } from '../middlewares/require-role';
 
 /** Représentation publique d'un utilisateur. */
@@ -127,5 +135,42 @@ export function serializeCookbook(view: {
     recipeCount: view.recipeCount,
     createdAt: cookbook.createdAt,
     updatedAt: cookbook.updatedAt,
+  };
+}
+
+/** Membre d'un cookbook : son profil public et son rôle. */
+export function serializeMembership(membership: CookbookMembership) {
+  return {
+    id: membership.id,
+    user: membership.user ? serializeUser(membership.user) : null,
+    role: membership.role,
+    joinedAt: membership.joinedAt,
+  };
+}
+
+/** Invitation, sans son token : l'empreinte stockée n'a rien à faire dehors. */
+export function serializeInvitation(invitation: CookbookInvitation) {
+  return {
+    id: invitation.id,
+    invitedEmail: invitation.invitedEmail,
+    role: invitation.role,
+    status: invitation.status,
+    createdAt: invitation.createdAt,
+  };
+}
+
+/**
+ * Invitation fraîchement créée. Le lien d'acceptation n'apparaît qu'ici : le
+ * token en clair n'est jamais stocké, il ne pourra plus être relu ensuite.
+ */
+export function serializeCreatedInvitation(created: {
+  invitation: CookbookInvitation;
+  token: string;
+  acceptUrl: string;
+}) {
+  return {
+    ...serializeInvitation(created.invitation),
+    token: created.token,
+    acceptUrl: created.acceptUrl,
   };
 }

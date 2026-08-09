@@ -576,6 +576,18 @@ paths:
           content:
             application/json:
               schema: { type: array, items: { $ref: '#/components/schemas/Membership' } }
+  /cookbooks/{id}/members/me:
+    parameters: [ { $ref: '#/components/parameters/Id' } ]
+    delete:
+      tags: [Members]
+      summary: Quitter le cookbook (tout membre)
+      description: >
+        Supprime sa propre appartenance. Refusé au dernier `OWNER` : il doit
+        d'abord promouvoir un successeur, sans quoi le cookbook resterait sans
+        personne pour l'administrer.
+      responses:
+        '204': { description: Départ enregistré }
+        '409': { $ref: '#/components/responses/Conflict' }
   /cookbooks/{id}/members/{userId}:
     parameters:
       - { $ref: '#/components/parameters/Id' }
@@ -594,7 +606,9 @@ paths:
     delete:
       tags: [Members]
       summary: Retirer un membre (OWNER)
-      responses: { '204': { description: Retiré } }
+      responses:
+        '204': { description: Retiré }
+        '409': { $ref: '#/components/responses/Conflict' }
 
   /cookbooks/{id}/invitations:
     parameters: [ { $ref: '#/components/parameters/Id' } ]
@@ -621,7 +635,14 @@ paths:
                 email: { type: string, format: email }
                 role: { $ref: '#/components/schemas/Role' }
       responses:
-        '201': { description: Créé, content: { application/json: { schema: { $ref: '#/components/schemas/Invitation' } } } }
+        '201':
+          description: >
+            Créé. Seule réponse à porter le `token` en clair et le lien
+            d'acceptation : le token n'est stocké que haché.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/CreatedInvitation' }
+        '409': { $ref: '#/components/responses/Conflict' }
   /cookbooks/{id}/invitations/{invId}:
     parameters:
       - { $ref: '#/components/parameters/Id' }
@@ -1024,6 +1045,13 @@ components:
         role: { $ref: '#/components/schemas/Role' }
         status: { type: string, enum: [pending, accepted, declined] }
         createdAt: { type: string, format: date-time }
+    CreatedInvitation:
+      allOf:
+        - $ref: '#/components/schemas/Invitation'
+        - type: object
+          properties:
+            token: { type: string, description: Token en clair, transmis une seule fois }
+            acceptUrl: { type: string, description: Lien d'acceptation à transmettre à l'invité }
     Comment:
       type: object
       properties:

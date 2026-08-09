@@ -1,17 +1,24 @@
 import { RequestHandler, Router } from 'express';
+import { ZodTypeAny } from 'zod';
 import { authenticate } from '../../middlewares/authenticate';
 import { loadMembership } from '../../middlewares/load-membership';
 import { requireRole, type Role } from '../../middlewares/require-role';
 import { validateBody, validateParams, validateQuery } from '../../middlewares/validate';
 import { asyncHandler } from '../../common/async-handler';
 import { createRecipeSchema } from '../recipes/recipes.schemas';
+import * as invitationsController from '../invitations/invitations.controller';
 import * as cookbooksController from './cookbooks.controller';
+import * as membersController from './members.controller';
 import {
   cookbookParamsSchema,
   cookbookRecipeParamsSchema,
   createCookbookSchema,
+  invitationParamsSchema,
+  inviteMemberSchema,
   listCookbookRecipesSchema,
+  memberParamsSchema,
   updateCookbookSchema,
+  updateMemberRoleSchema,
 } from './cookbooks.schemas';
 
 export const cookbooksRouter = Router();
@@ -20,17 +27,12 @@ cookbooksRouter.use(authenticate);
 
 /**
  * Pile commune aux routes ciblant un cookbook : identifiants bien formés,
- * appartenance chargée, puis rôle minimal exigé.
+ * appartenance chargée, puis rôle minimal exigé. Le schéma de paramètres
+ * varie selon que la route désigne en plus une recette, un membre ou une
+ * invitation.
  */
-const guards = (min: Role): RequestHandler[] => [
-  validateParams(cookbookParamsSchema),
-  asyncHandler(loadMembership()),
-  requireRole(min),
-];
-
-/** Même pile pour les routes qui désignent en plus une recette. */
-const recipeGuards = (min: Role): RequestHandler[] => [
-  validateParams(cookbookRecipeParamsSchema),
+const guards = (min: Role, params: ZodTypeAny = cookbookParamsSchema): RequestHandler[] => [
+  validateParams(params),
   asyncHandler(loadMembership()),
   requireRole(min),
 ];
@@ -66,11 +68,53 @@ cookbooksRouter.post(
 
 cookbooksRouter.put(
   '/:id/recipes/:recipeId',
-  ...recipeGuards('EDITOR'),
+  ...guards('EDITOR', cookbookRecipeParamsSchema),
   asyncHandler(cookbooksController.linkRecipe),
 );
 cookbooksRouter.delete(
   '/:id/recipes/:recipeId',
-  ...recipeGuards('EDITOR'),
+  ...guards('EDITOR', cookbookRecipeParamsSchema),
   asyncHandler(cookbooksController.unlinkRecipe),
+);
+
+cookbooksRouter.get(
+  '/:id/members',
+  ...guards('READER'),
+  asyncHandler(membersController.list));
+
+cookbooksRouter.delete(
+  '/:id/members/me',
+  ...guards('READER'),
+  asyncHandler(membersController.leave),
+);
+
+cookbooksRouter.patch(
+  '/:id/members/:userId',
+  ...guards('OWNER', memberParamsSchema),
+  validateBody(updateMemberRoleSchema),
+  asyncHandler(membersController.updateRole),
+);
+
+cookbooksRouter.delete(
+  '/:id/members/:userId',
+  ...guards('OWNER', memberParamsSchema),
+  asyncHandler(membersController.remove),
+);
+
+cookbooksRouter.get(
+  '/:id/invitations',
+  ...guards('OWNER'),
+  asyncHandler(invitationsController.list));
+
+cookbooksRouter.post(
+  '/:id/invitations',
+  ...guards('OWNER'),
+  validateBody(inviteMemberSchema),
+  asyncHandler(invitationsController.invite),
+);
+
+cookbooksRouter.delete(
+  '/:id/invitations/:invId',
+  ...guards('OWNER', invitationParamsSchema),
+  asyncHandler(invitationsController.revoke),
 );

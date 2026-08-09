@@ -4,6 +4,7 @@ import { authRouter } from './modules/auth/auth.routes';
 import { usersRouter } from './modules/users/users.routes';
 import { recipesRouter } from './modules/recipes/recipes.routes';
 import { cookbooksRouter } from './modules/cookbooks/cookbooks.routes';
+import { invitationsRouter } from './modules/invitations/invitations.routes';
 
 /**
  * Routeur racine monté sur /api/v1.
@@ -17,6 +18,7 @@ router.use('/auth', authRouter);
 router.use('/users', usersRouter);
 router.use('/recipes', recipesRouter);
 router.use('/cookbooks', cookbooksRouter);
+router.use('/invitations', invitationsRouter);
 
 // TODO (Phase 2) :
 // router.use('/meal-plan', mealPlanRouter);

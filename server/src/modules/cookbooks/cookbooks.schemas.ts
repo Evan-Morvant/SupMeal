@@ -22,6 +22,15 @@ export const updateCookbookSchema = z
  */
 export const listCookbookRecipesSchema = z.object(recipeFilterFields);
 
+const roleSchema = z.enum(['OWNER', 'EDITOR', 'COMMENTER', 'READER']);
+
+export const updateMemberRoleSchema = z.object({ role: roleSchema });
+
+export const inviteMemberSchema = z.object({
+  email: z.string().email().max(255),
+  role: roleSchema.default('READER'),
+});
+
 export const cookbookParamsSchema = z.object({ id: z.string().uuid() });
 
 export const cookbookRecipeParamsSchema = z.object({
@@ -29,6 +38,18 @@ export const cookbookRecipeParamsSchema = z.object({
   recipeId: z.string().uuid(),
 });
 
+export const memberParamsSchema = z.object({
+  id: z.string().uuid(),
+  userId: z.string().uuid(),
+});
+
+export const invitationParamsSchema = z.object({
+  id: z.string().uuid(),
+  invId: z.string().uuid(),
+});
+
 export type CreateCookbookInput = z.infer<typeof createCookbookSchema>;
 export type UpdateCookbookInput = z.infer<typeof updateCookbookSchema>;
 export type ListCookbookRecipesQuery = z.infer<typeof listCookbookRecipesSchema>;
+export type UpdateMemberRoleInput = z.infer<typeof updateMemberRoleSchema>;
+export type InviteMemberInput = z.infer<typeof inviteMemberSchema>;

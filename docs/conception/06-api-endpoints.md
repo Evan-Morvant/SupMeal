@@ -154,11 +154,18 @@ Attachés à la recette, visibles partout où elle l'est. Un avis par utilisateu
 | GET | `/cookbooks/:id/members` | Lister les membres et leurs rôles | ✅ | `loadMembership`, `requireRole(READER)` |
 | PATCH | `/cookbooks/:id/members/:userId` | Changer le rôle d'un membre | ✅ | `loadMembership`, `requireRole(OWNER)` |
 | DELETE | `/cookbooks/:id/members/:userId` | Retirer un membre | ✅ | `loadMembership`, `requireRole(OWNER)` |
+| DELETE | `/cookbooks/:id/members/me` | Quitter le cookbook | ✅ | `loadMembership`, `requireRole(READER)` |
 | POST | `/cookbooks/:id/invitations` | Inviter (email + rôle) | ✅ | `loadMembership`, `requireRole(OWNER)`, `validate` |
 | GET | `/cookbooks/:id/invitations` | Lister les invitations | ✅ | `loadMembership`, `requireRole(OWNER)` |
 | DELETE | `/cookbooks/:id/invitations/:invId` | Révoquer une invitation | ✅ | `loadMembership`, `requireRole(OWNER)` |
 | POST | `/invitations/:token/accept` | Accepter une invitation | ✅ | `authenticate` |
 | POST | `/invitations/:token/decline` | Refuser une invitation | ✅ | `authenticate` |
+
+**Règles de gestion :**
+- **Dernier créateur** : ni rétrogradation ni départ si c'est le seul `OWNER` restant (409 `LAST_OWNER`) — sinon le cookbook n'aurait plus personne pour inviter, changer les rôles ou le supprimer. Il faut d'abord promouvoir un successeur.
+- **Token d'invitation** : tiré au sort, transmis **une seule fois** dans la réponse de création (`token` + `acceptUrl`), stocké **haché** (HMAC, comme les refresh tokens) et jamais renvoyé par la liste.
+- **Acceptation** : réservée au titulaire de l'adresse invitée (403 `INVITATION_EMAIL_MISMATCH`), comparaison insensible à la casse. Une invitation déjà acceptée ou refusée ne resert pas (409).
+- **Départ d'un membre** : les recettes qu'il avait liées **restent** dans le cookbook ; elles ont été partagées avec le groupe et lui appartiennent toujours par ailleurs.
 
 ### 5.3 Messagerie de groupe — `/cookbooks/:id/messages`
 
