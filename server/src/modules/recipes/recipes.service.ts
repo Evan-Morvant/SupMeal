@@ -17,6 +17,7 @@ import {
   accessibleRecipesCondition,
   buildRecipeOrder,
   buildRecipeWhere,
+  editableRecipesCondition,
 } from './recipes.filters';
 import type {
   CreateRecipeInput,
@@ -192,6 +193,17 @@ export async function isRecipeAccessible(recipeId: string, userId: string): Prom
 }
 
 /**
+ * Droit de modification hérité d'un cookbook (le cas du créateur se traite à
+ * part, il n'a besoin d'aucune liaison).
+ */
+export async function isRecipeEditable(recipeId: string, userId: string): Promise<boolean> {
+  const editable = await Recipe.count({
+    where: { id: recipeId, [Op.and]: [editableRecipesCondition(userId)] },
+  });
+  return editable > 0;
+}
+
+/**
  * Recette lisible par l'utilisateur, ou 404/403. Règle unique de consultation,
  * partagée par la garde de route et par la liaison à un cookbook : une recette
  * qu'on n'a pas le droit de lire ne doit pas non plus pouvoir être exposée à
@@ -274,8 +286,27 @@ export async function createRecipe(
 /**
  * Modification. Les champs simples absents sont conservés ; une collection
  * présente dans le corps remplace intégralement l'ancienne.
+ *
+ * La visibilité fait exception : un éditeur du cookbook corrige le contenu,
+ * mais seul le créateur décide d'exposer sa recette au monde.
  */
-export async function updateRecipe(recipe: Recipe, input: UpdateRecipeInput): Promise<Recipe> {
+export async function updateRecipe(
+  recipe: Recipe,
+  input: UpdateRecipeInput,
+  actorId: string,
+): Promise<Recipe> {
+  if (
+    input.visibility !== undefined &&
+    input.visibility !== recipe.visibility &&
+    recipe.ownerId !== actorId
+  ) {
+    throw new AppError(
+      403,
+      'FORBIDDEN',
+      'Seul le créateur peut changer la visibilité de la recette',
+    );
+  }
+
   await sequelize.transaction(async (transaction) => {
     const changes: Partial<Recipe> = {};
     if (input.title !== undefined) changes.title = input.title;

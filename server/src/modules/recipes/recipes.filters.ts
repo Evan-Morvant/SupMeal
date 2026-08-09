@@ -1,5 +1,6 @@
 import { Op, Order, WhereOptions, literal } from 'sequelize';
 import { sequelize } from '../../models';
+import { ROLE_LEVEL } from '../../middlewares/require-role';
 import type { ListRecipesQuery } from './recipes.schemas';
 
 /**
@@ -39,6 +40,27 @@ export function accessibleRecipesCondition(userId: string) {
       JOIN cookbook_memberships cm ON cm.cookbook_id = cr.cookbook_id
       WHERE cr.recipe_id = "Recipe"."id" AND cm.user_id = ${quote(userId)}
     )
+  )`);
+}
+
+/** Rôles autorisés à modifier le contenu d'un cookbook, déduits de la hiérarchie. */
+const EDIT_ROLES = Object.entries(ROLE_LEVEL)
+  .filter(([, level]) => level >= ROLE_LEVEL.EDITOR)
+  .map(([role]) => role);
+
+/**
+ * Droit de modification hérité d'un cookbook : être Éditeur ou Créateur d'un
+ * cookbook où la recette est rangée. Le partage dans un groupe emporte le
+ * droit de corriger.
+ */
+export function editableRecipesCondition(userId: string) {
+  return literal(`EXISTS (
+    SELECT 1
+    FROM cookbook_recipes cr
+    JOIN cookbook_memberships cm ON cm.cookbook_id = cr.cookbook_id
+    WHERE cr.recipe_id = "Recipe"."id"
+      AND cm.user_id = ${quote(userId)}
+      AND cm.role IN (${quoteList(EDIT_ROLES)})
   )`);
 }
 

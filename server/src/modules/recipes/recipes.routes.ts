@@ -1,6 +1,10 @@
 import { Router } from 'express';
 import { authenticate } from '../../middlewares/authenticate';
-import { requireRecipeAccess, requireRecipeOwner } from '../../middlewares/recipe-access';
+import {
+  requireRecipeAccess,
+  requireRecipeEditor,
+  requireRecipeOwner,
+} from '../../middlewares/recipe-access';
 import { uploadRecipeImage } from '../../middlewares/upload';
 import { validateBody, validateQuery } from '../../middlewares/validate';
 import { asyncHandler } from '../../common/async-handler';
@@ -30,7 +34,7 @@ recipesRouter.get(
 );
 recipesRouter.patch(
   '/:id',
-  asyncHandler(requireRecipeOwner),
+  asyncHandler(requireRecipeEditor),
   validateBody(updateRecipeSchema),
   asyncHandler(recipesController.update),
 );

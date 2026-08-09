@@ -19,7 +19,8 @@ La spec exécutable correspondante : [`openapi.yaml`](openapi.yaml) (Swagger UI)
 | `loadMembership(:cookbookId)` | Charge le `CookbookMembership` (rôle) de l'utilisateur pour le cookbook ciblé. → 404 si non membre. |
 | `requireRole(min)` | Vérifie la hiérarchie de rôle `READER < COMMENTER < EDITOR < OWNER`. → 403 si insuffisant. |
 | `requireRecipeAccess` | Autorise la lecture si l'utilisateur est **owner**, **membre** d'un cookbook contenant la recette, **ou** si la recette est `public`. → 403/404. |
-| `requireRecipeOwner` | Réserve l'action au **créateur** de la recette. → 403. |
+| `requireRecipeEditor` | Autorise la modification du contenu au **créateur** ou à un **Éditeur+** d'un cookbook contenant la recette. → 403. |
+| `requireRecipeOwner` | Réserve l'action au **créateur** de la recette (suppression, image, visibilité). → 403. |
 | `upload` | `multer` pour les fichiers (image de recette, fichier d'import). |
 | `errorHandler` | Gestion d'erreurs centralisée (format d'erreur uniforme). |
 
@@ -68,13 +69,13 @@ La spec exécutable correspondante : [`openapi.yaml`](openapi.yaml) (Swagger UI)
 | GET | `/recipes` | Liste + **recherche plein texte** + filtres (voir query) | ✅ | `authenticate`, `validate` |
 | POST | `/recipes` | Créer une recette **personnelle** (owner = user) | ✅ | `authenticate`, `validate` |
 | GET | `/recipes/:id` | Détail d'une recette | ✅ | `authenticate`, `requireRecipeAccess` |
-| PATCH | `/recipes/:id` | Modifier une recette | ✅ | `authenticate`, `requireRecipeOwner` ou `requireRole(EDITOR)`** |
+| PATCH | `/recipes/:id` | Modifier une recette | ✅ | `authenticate`, `requireRecipeEditor`** |
 | DELETE | `/recipes/:id` | Supprimer la recette (entité) | ✅ | `authenticate`, `requireRecipeOwner` |
 | POST | `/recipes/:id/image` | Uploader l'image | ✅ | `authenticate`, `requireRecipeOwner`, `upload` |
 | POST | `/recipes/:id/favorite` | Marquer favori | ✅ | `authenticate`, `requireRecipeAccess` |
 | DELETE | `/recipes/:id/favorite` | Retirer des favoris | ✅ | `authenticate` |
 
-\*\* modifiable par le créateur, ou par un Éditeur+ d'un cookbook contenant la recette.
+\*\* modifiable par le créateur, ou par un Éditeur+ d'un cookbook contenant la recette : partager une recette dans un groupe, c'est accepter que le groupe la corrige. Le droit tombe dès que la recette est retirée du cookbook. **La visibilité fait exception** : seul le créateur bascule sa recette en `public` (403 sinon), de même que la suppression et l'image restent son privilège.
 
 **Query params de `GET /recipes`** (filtrage et recherche du sujet) :
 

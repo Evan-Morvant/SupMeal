@@ -307,6 +307,8 @@ paths:
         intégralement lorsqu'elles sont présentes, et conservées lorsqu'elles
         sont absentes — le client décrit l'état final voulu plutôt qu'un diff.
         Un tableau vide efface donc la collection. L'écriture est transactionnelle.
+        `visibility` fait exception à l'ouverture aux éditeurs : seul le
+        créateur bascule sa recette en `public` (403 sinon).
       requestBody:
         content: { application/json: { schema: { $ref: '#/components/schemas/RecipeInput' } } }
       responses:

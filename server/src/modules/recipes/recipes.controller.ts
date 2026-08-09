@@ -22,7 +22,7 @@ export async function detail(req: Request, res: Response): Promise<void> {
 }
 
 export async function update(req: Request, res: Response): Promise<void> {
-  const recipe = await recipesService.updateRecipe(req.recipe!, req.body);
+  const recipe = await recipesService.updateRecipe(req.recipe!, req.body, req.user!.id);
   const isFavorite = await recipesService.isRecipeFavorite(req.user!.id, recipe.id);
   res.json(serializeRecipe(recipe, isFavorite));
 }

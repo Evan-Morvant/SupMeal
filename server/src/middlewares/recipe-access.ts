@@ -1,6 +1,10 @@
 import { NextFunction, Request, Response } from 'express';
 import { AppError } from '../common/app-error';
-import { findAccessibleRecipeOrFail, findRecipeOrFail } from '../modules/recipes/recipes.service';
+import {
+  findAccessibleRecipeOrFail,
+  findRecipeOrFail,
+  isRecipeEditable,
+} from '../modules/recipes/recipes.service';
 import type { Recipe } from '../models';
 
 declare global {
@@ -28,7 +32,10 @@ export async function requireRecipeAccess(
   next();
 }
 
-/** Écriture et suppression : réservées au créateur de la recette. */
+/**
+ * Suppression, image, bascule en public : réservées au créateur. Ces actions
+ * engagent la recette elle-même, pas seulement son contenu.
+ */
 export async function requireRecipeOwner(
   req: Request,
   _res: Response,
@@ -37,6 +44,31 @@ export async function requireRecipeOwner(
   const recipe = await findRecipeOrFail(req.params.id);
   if (recipe.ownerId !== req.user?.id) {
     throw new AppError(403, 'FORBIDDEN', 'Seul le créateur peut modifier cette recette');
+  }
+  req.recipe = recipe;
+  next();
+}
+
+/**
+ * Modification du contenu : le créateur, ou un Éditeur+ d'un cookbook où la
+ * recette est rangée. Partager une recette dans un groupe, c'est accepter que
+ * le groupe la corrige.
+ */
+export async function requireRecipeEditor(
+  req: Request,
+  _res: Response,
+  next: NextFunction,
+): Promise<void> {
+  const recipe = await findRecipeOrFail(req.params.id);
+  const allowed =
+    recipe.ownerId === req.user!.id || (await isRecipeEditable(recipe.id, req.user!.id));
+
+  if (!allowed) {
+    throw new AppError(
+      403,
+      'FORBIDDEN',
+      'Modification réservée au créateur ou à un éditeur du cookbook',
+    );
   }
   req.recipe = recipe;
   next();
