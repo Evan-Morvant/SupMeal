@@ -4,8 +4,10 @@ import {
   InferAttributes,
   InferCreationAttributes,
   Model,
+  NonAttribute,
 } from 'sequelize';
 import { sequelize } from '../config/database';
+import type { User } from './user.model';
 
 /** Message de la messagerie temps réel d'un cookbook. */
 export class Message extends Model<
@@ -17,6 +19,8 @@ export class Message extends Model<
   declare userId: string;
   declare content: string;
   declare createdAt: CreationOptional<Date>;
+
+  declare author?: NonAttribute<User>;
 }
 
 Message.init(

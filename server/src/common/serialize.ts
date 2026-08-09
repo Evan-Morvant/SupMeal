@@ -4,6 +4,7 @@ import {
   Cookbook,
   CookbookInvitation,
   CookbookMembership,
+  Message,
   OAuthAccount,
   Recipe,
   User,
@@ -159,6 +160,20 @@ export function serializeComment(comment: Comment) {
     content: comment.content,
     createdAt: comment.createdAt,
     updatedAt: comment.updatedAt,
+  };
+}
+
+/**
+ * Message du salon d'un cookbook. La forme est la même qu'il sorte de l'API
+ * REST ou d'une diffusion WebSocket : le client n'a qu'une lecture à écrire.
+ */
+export function serializeMessage(message: Message) {
+  return {
+    id: message.id,
+    cookbookId: message.cookbookId,
+    author: message.author ? serializeUser(message.author) : null,
+    content: message.content,
+    createdAt: message.createdAt,
   };
 }
 

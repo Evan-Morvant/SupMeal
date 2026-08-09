@@ -1,6 +1,5 @@
 import { NextFunction, Request, Response } from 'express';
-import jwt from 'jsonwebtoken';
-import { env } from '../config/env';
+import { verifyAccessToken } from '../common/tokens';
 import { AppError } from '../common/app-error';
 
 export interface AuthUser {
@@ -22,7 +21,7 @@ export function authenticate(req: Request, _res: Response, next: NextFunction): 
     throw new AppError(401, 'UNAUTHORIZED', 'Token manquant');
   }
   try {
-    req.user = jwt.verify(header.slice(7), env.JWT_ACCESS_SECRET) as AuthUser;
+    req.user = verifyAccessToken(header.slice(7));
     next();
   } catch {
     throw new AppError(401, 'UNAUTHORIZED', 'Token invalide ou expiré');

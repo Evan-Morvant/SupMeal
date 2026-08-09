@@ -15,6 +15,15 @@ export function signAccessToken(user: AccessTokenUser): string {
   return jwt.sign({ id: user.id, email: user.email }, env.JWT_ACCESS_SECRET, options);
 }
 
+/**
+ * Vérifie la signature et l'expiration d'un access token. Lève si invalide.
+ * Partagé par le middleware HTTP et par le handshake WebSocket, pour que les
+ * deux portes d'entrée reconnaissent exactement les mêmes jetons.
+ */
+export function verifyAccessToken(token: string): AccessTokenUser {
+  return jwt.verify(token, env.JWT_ACCESS_SECRET) as AccessTokenUser;
+}
+
 export interface SignedRefreshToken {
   token: string;
   hash: string;

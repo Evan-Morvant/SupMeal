@@ -221,15 +221,32 @@ Attachés à la recette, visibles partout où elle l'est. Un avis par utilisateu
 
 ## WebSocket (Socket.io) — messagerie temps réel
 
-Namespace authentifié par JWT (handshake). Salons par cookbook.
+Authentifié par JWT au handshake (`auth: { token }`, ou en-tête `Authorization`).
+Salons par cookbook, nommés `cookbook:<id>`.
 
 | Événement | Sens | Payload | Garde |
 |---|---|---|---|
-| `connection` | client → serveur | `{ token }` | Vérifie le JWT |
+| `connection` | client → serveur | `{ token }` | Vérifie le JWT — sinon `connect_error` |
 | `cookbook:join` | client → serveur | `{ cookbookId }` | Membre ≥ COMMENTER |
+| `cookbook:joined` | serveur → client | `{ cookbookId }` | Confirme l'entrée dans le salon |
 | `message:send` | client → serveur | `{ cookbookId, content }` | Membre ≥ COMMENTER → persiste `Message` |
 | `message:new` | serveur → clients (room) | `Message` | Diffusion à la room |
 | `cookbook:leave` | client → serveur | `{ cookbookId }` | — |
+| `app:error` | serveur → client | `{ code, message, details? }` | Échec d'un événement client |
+
+**Règles de gestion :**
+- **Même règle des deux côtés** : le rôle minimal (COMMENTER) est défini une fois
+  (`CHAT_MIN_ROLE`) et appliqué par les middlewares côté REST, par un contrôle
+  direct côté WebSocket — ce dernier n'ayant pas de pile Express.
+- **Accès revérifié à chaque envoi** : un membre exclu ou rétrogradé après son
+  entrée dans le salon ne peut plus y écrire.
+- **`app:error`** reprend le vocabulaire de codes de l'API REST (`FORBIDDEN`,
+  `COOKBOOK_NOT_FOUND`, `VALIDATION_ERROR`), pour que le client traite l'échec
+  au même endroit quelle que soit la voie empruntée.
+- **Le repli REST diffuse aussi** : un message posté en `POST` est poussé dans le
+  salon, sinon les clients connectés ne le verraient qu'au rechargement.
+- **Historique à rebours** : la page 1 porte les messages les plus récents, rendus
+  dans l'ordre de lecture ; les pages suivantes remontent la conversation.
 
 ---
 

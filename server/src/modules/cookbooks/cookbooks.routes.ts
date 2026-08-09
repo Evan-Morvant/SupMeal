@@ -9,6 +9,9 @@ import { createRecipeSchema } from '../recipes/recipes.schemas';
 import * as commentsController from '../comments/comments.controller';
 import { commentSchema } from '../comments/comments.schemas';
 import * as invitationsController from '../invitations/invitations.controller';
+import * as messagesController from '../messages/messages.controller';
+import { listMessagesSchema, messageSchema } from '../messages/messages.schemas';
+import { CHAT_MIN_ROLE } from '../messages/messages.service';
 import * as cookbooksController from './cookbooks.controller';
 import * as membersController from './members.controller';
 import {
@@ -92,6 +95,22 @@ cookbooksRouter.post(
   ...guards('COMMENTER', cookbookRecipeParamsSchema),
   validateBody(commentSchema),
   asyncHandler(commentsController.create),
+);
+
+// Messagerie de groupe. Le temps réel passe par le WebSocket.
+// Ces deux routes servent l'historique et le repli des clients sans WebSocket.
+cookbooksRouter.get(
+  '/:id/messages',
+  ...guards(CHAT_MIN_ROLE),
+  validateQuery(listMessagesSchema),
+  asyncHandler(messagesController.list),
+);
+
+cookbooksRouter.post(
+  '/:id/messages',
+  ...guards(CHAT_MIN_ROLE),
+  validateBody(messageSchema),
+  asyncHandler(messagesController.create),
 );
 
 cookbooksRouter.get(
