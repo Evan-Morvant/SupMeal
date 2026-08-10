@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { booleanParam } from '../../common/schemas';
 
 /** Schémas de validation des corps de requête du module recipes. */
 
@@ -56,12 +57,6 @@ const csvSchema = z
       .filter((value) => value.length > 0),
   )
   .pipe(z.array(z.string().min(1).max(120)).max(20));
-
-/**
- * `z.coerce.boolean()` est inutilisable ici : la chaîne "false" est truthy et
- * serait convertie en `true`. On lit donc les deux valeurs explicitement.
- */
-const booleanParam = z.enum(['true', 'false']).transform((value) => value === 'true');
 
 /**
  * Critères de recherche communs à `/recipes` et à la recherche interne d'un
