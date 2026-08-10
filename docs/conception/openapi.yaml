@@ -343,6 +343,33 @@ paths:
         '400': { description: Fichier manquant ou format non supporté }
         '403': { $ref: '#/components/responses/Forbidden' }
         '413': { description: Image trop volumineuse }
+  /recipes/{id}/export:
+    parameters: [ { $ref: '#/components/parameters/Id' } ]
+    get:
+      tags: [ImportExport]
+      summary: Exporter une seule recette
+      description: >
+        Même enveloppe que `/export`, réduite à une recette (`cookbooks` vide),
+        dans les trois mêmes formats. Le fichier obtenu se réimporte par `/import`
+        sans traitement particulier. On n'exporte que ce qu'on a le droit de lire.
+      parameters:
+        - in: query
+          name: format
+          schema: { type: string, enum: [json, csv, mealie], default: json }
+      responses:
+        '200':
+          description: Fichier d'export
+          headers:
+            Content-Disposition:
+              description: 'attachment; filename="supmeal-<titre>-AAAA-MM-JJ.<ext>"'
+              schema: { type: string }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ExportFile' }
+            text/csv:
+              schema: { type: string }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
   /recipes/{id}/favorite:
     parameters: [ { $ref: '#/components/parameters/Id' } ]
     post:
@@ -523,6 +550,33 @@ paths:
         '204': { description: Supprimé }
         '403': { $ref: '#/components/responses/Forbidden' }
 
+  /cookbooks/{id}/export:
+    parameters: [ { $ref: '#/components/parameters/Id' } ]
+    get:
+      tags: [ImportExport]
+      summary: Exporter un cookbook et ses recettes
+      description: >
+        Même enveloppe que `/export`, réduite aux recettes du cookbook et à sa
+        composition. Sans les préférences culinaires de l'exportateur : on partage
+        un livre de recettes, pas un profil. Ouvert au Lecteur, qui peut déjà tout
+        y consulter ; le périmètre d'accès continue de s'appliquer aux recettes.
+      parameters:
+        - in: query
+          name: format
+          schema: { type: string, enum: [json, csv, mealie], default: json }
+      responses:
+        '200':
+          description: Fichier d'export
+          headers:
+            Content-Disposition:
+              description: 'attachment; filename="supmeal-<nom-du-cookbook>-AAAA-MM-JJ.<ext>"'
+              schema: { type: string }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ExportFile' }
+            text/csv:
+              schema: { type: string }
+        '404': { $ref: '#/components/responses/NotFound' }
   /cookbooks/{id}/recipes:
     parameters: [ { $ref: '#/components/parameters/Id' } ]
     get:
@@ -864,27 +918,58 @@ paths:
     get:
       tags: [ImportExport]
       summary: Exporter ses recettes et cookbooks (données en clair)
-      parameters: [ { in: query, name: format, schema: { type: string, enum: [json, csv, mealie] } } ]
+      description: >
+        Périmètre de lecture de l'utilisateur : ses recettes et celles des cookbooks
+        dont il est membre. Le fichier est renvoyé en pièce jointe.
+        L'avertissement sur les données en clair figure dans le champ `warning`
+        de l'export JSON et en tête du fichier CSV.
+      parameters:
+        - in: query
+          name: format
+          description: Natif (json), tableur (csv) ou schéma Mealie (mealie).
+          schema: { type: string, enum: [json, csv, mealie], default: json }
       responses:
         '200':
-          description: Fichier
+          description: Fichier d'export
+          headers:
+            Content-Disposition:
+              description: 'attachment; filename="supmeal-export-AAAA-MM-JJ.<ext>"'
+              schema: { type: string }
           content:
-            application/json: {}
-            text/csv: {}
-            application/octet-stream: {}
+            application/json:
+              schema: { $ref: '#/components/schemas/ExportFile' }
+            text/csv:
+              schema: { type: string }
   /import:
     post:
       tags: [ImportExport]
       summary: Importer un fichier (importeur = créateur)
+      description: >
+        L'importeur devient créateur des recettes importées, qui sont créées privées
+        quelle que soit la visibilité d'origine. Une recette dont le titre est déjà
+        possédé est ignorée (`skipped`), ce qui rend l'import idempotent ; une recette
+        invalide est consignée dans `errors` sans interrompre les suivantes.
       requestBody:
         required: true
         content:
           multipart/form-data:
             schema:
               type: object
+              required: [file]
               properties:
                 file: { type: string, format: binary }
-                format: { type: string, enum: [json, csv, mealie] }
+                format:
+                  description: Déduit du contenu du fichier s'il est omis.
+                  type: string
+                  enum: [json, csv, mealie]
+                withPreferences:
+                  description: >
+                    Reprendre les préférences culinaires du fichier, en remplacement
+                    intégral de celles du compte. Jamais implicite : importer des
+                    recettes ne doit pas écraser au passage son régime et ses allergies.
+                  type: string
+                  enum: ['true', 'false']
+                  default: 'false'
       responses:
         '200':
           description: Rapport d'import
@@ -893,10 +978,13 @@ paths:
               schema:
                 type: object
                 properties:
+                  format: { type: string, enum: [json, csv, mealie] }
                   created: { type: integer }
                   skipped: { type: integer }
                   errors: { type: array, items: { type: string } }
-        '422': { description: Fichier mal formé }
+                  preferencesImported: { type: boolean }
+        '400': { description: Fichier absent ou type non accepté }
+        '422': { description: Fichier mal formé, vide ou de plus de 500 recettes }
 
 components:
   securitySchemes:
@@ -1193,3 +1281,59 @@ components:
         quantity: { type: number }
         unit: { type: string }
         checked: { type: boolean }
+    ExportedRecipe:
+      description: >
+        Recette telle qu'elle figure dans un fichier d'export natif. Forme volontairement
+        distincte de Recipe : un fichier d'export est un contrat durable, il ne doit pas
+        changer parce que la réponse HTTP a gagné un champ. La visibilité n'y figure pas,
+        toute recette importée étant créée privée.
+      type: object
+      properties:
+        title: { type: string }
+        description: { type: string, nullable: true }
+        prepTimeMin: { type: integer, nullable: true }
+        cookTimeMin: { type: integer, nullable: true }
+        servings: { type: integer, nullable: true }
+        source: { type: string, nullable: true }
+        tags: { type: array, items: { type: string } }
+        ingredients:
+          type: array
+          items:
+            type: object
+            properties:
+              name: { type: string }
+              quantity: { type: number, nullable: true }
+              unit: { type: string, nullable: true }
+              note: { type: string, nullable: true }
+        steps: { type: array, items: { type: string } }
+    ExportFile:
+      description: Fichier d'export au format natif SUPMEAL.
+      type: object
+      properties:
+        format: { type: string, enum: [supmeal] }
+        version: { type: integer }
+        warning:
+          description: Avertissement sur les données personnelles en clair.
+          type: string
+        exportedAt: { type: string, format: date-time }
+        owner:
+          type: object
+          properties:
+            email: { type: string, format: email }
+            displayName: { type: string }
+        preferences:
+          description: >
+            Préférences culinaires : renseignées dans l'export complet du compte,
+            nulles dans l'export d'un cookbook ou d'une recette, qui relèvent du
+            contenu et non du profil.
+          nullable: true
+          allOf: [ { $ref: '#/components/schemas/UserPreferences' } ]
+        cookbooks:
+          type: array
+          items:
+            type: object
+            properties:
+              name: { type: string }
+              description: { type: string, nullable: true }
+              recipeTitles: { type: array, items: { type: string } }
+        recipes: { type: array, items: { $ref: '#/components/schemas/ExportedRecipe' } }

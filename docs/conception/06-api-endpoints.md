@@ -236,8 +236,32 @@ Attachés à la recette, visibles partout où elle l'est. Un avis par utilisateu
 
 | Méthode | Route | Description | Auth | Middlewares |
 |---|---|---|:---:|---|
-| GET | `/export?format=json\|csv\|mealie` | Exporter toutes ses recettes & cookbooks (données en clair) | ✅ | `authenticate` |
+| GET | `/export?format=json\|csv\|mealie` | Exporter toutes ses recettes & cookbooks (données en clair) | ✅ | `authenticate`, `validate` |
+| GET | `/recipes/:id/export?format=` | Exporter une seule recette | ✅ | `authenticate`, `requireRecipeAccess`, `validate` |
+| GET | `/cookbooks/:id/export?format=` | Exporter un cookbook et ses recettes | ✅ | `authenticate`, `loadMembership`, `requireRole(READER)`, `validate` |
 | POST | `/import` | Importer un fichier (importeur = créateur) | ✅ | `authenticate`, `upload`, `validate` |
+
+**Formats.** `json` est le format natif (le plus complet, à privilégier pour sauvegarder puis restaurer) ; `csv` ouvre l'export dans un tableur, une recette par ligne, les collections tenant dans une cellule à raison d'un élément par ligne ; `mealie` suit le schéma de recette de Mealie (schema.org : `recipeIngredient`, `recipeInstructions`, durées ISO 8601), pour l'interopérabilité.
+
+**Export.** Réponse en pièce jointe (`Content-Disposition: attachment`), nommée `supmeal-export-AAAA-MM-JJ.<ext>`. Le périmètre est celui de la lecture : ses propres recettes et celles des cookbooks dont on est membre. L'avertissement sur les données en clair figure dans le champ `warning` de l'export JSON et en tête du fichier CSV ; le client doit également l'afficher avant le téléchargement.
+
+**Trois périmètres, une seule enveloppe.** Les exports partiels produisent la même structure que l'export complet, réduite à leur périmètre — le fichier obtenu se réimporte donc par `/import` sans traitement particulier, quel que soit son périmètre d'origine.
+
+| Route | `recipes` | `cookbooks` | `preferences` | Nom du fichier |
+|---|---|---|---|---|
+| `/export` | tout ce qui est lisible | tous ceux dont on est membre | ✅ | `supmeal-export-AAAA-MM-JJ.<ext>` |
+| `/cookbooks/:id/export` | celles du cookbook | le cookbook visé | `null` | `supmeal-<nom-du-cookbook>-…` |
+| `/recipes/:id/export` | la recette visée | `[]` | `null` | `supmeal-<titre-recette>-…` |
+
+Le périmètre d'accès s'applique dans tous les cas : `requireRecipeAccess` pour une recette, `requireRole(READER)` pour un cookbook (un non-membre reçoit 404, jamais 403). L'export d'un cookbook est ouvert au Lecteur, qui peut déjà tout y consulter.
+
+**Préférences culinaires.** Elles ne figurent que dans l'export **complet du compte**, seul export destiné à restaurer un compte. Un cookbook ou une recette relèvent du contenu, pas du profil : y joindre le régime et les allergies de l'exportateur reviendrait à les divulguer à qui reçoit le fichier. Elles ne survivent qu'au format natif — un CSV et un fichier Mealie ne décrivent que des recettes.
+
+**Import.** `multipart/form-data` : `file` (obligatoire), `format` (facultatif — déduit du contenu s'il est omis) et `withPreferences` (`'true'`/`'false'`, faux par défaut). L'importeur devient créateur de chaque recette importée, et celle-ci est créée **privée**, quelle que soit la visibilité d'origine : un aller-retour de fichier ne doit jamais publier quelque chose par accident. Une recette dont le titre est déjà possédé est ignorée (`skipped`), ce qui rend l'import idempotent. Une recette invalide n'interrompt pas le traitement : elle est consignée dans `errors` et les suivantes sont traitées.
+
+`withPreferences` conditionne la reprise des préférences culinaires du fichier, jamais implicite : importer des recettes ne doit pas écraser au passage son régime et ses allergies. Quand elle est demandée, la reprise est un remplacement intégral, comme sur `PUT /users/me/preferences`. Des préférences mal formées sont ignorées sans faire échouer l'import.
+
+Réponse `200` : `{ format, created, skipped, errors[], preferencesImported }`. Fichier illisible ou vide, ou plus de 500 recettes : `422`.
 
 ---
 

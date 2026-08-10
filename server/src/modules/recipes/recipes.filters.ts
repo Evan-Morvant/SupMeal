@@ -103,7 +103,7 @@ function fullTextCondition(q: string) {
  * périmètre de visibilité s'applique de toute façon, donc filtrer sur un
  * cookbook dont on n'est pas membre rend une liste vide, sans rien divulguer.
  */
-function inCookbookCondition(cookbookId: string) {
+export function inCookbookCondition(cookbookId: string) {
   return literal(`EXISTS (
     SELECT 1 FROM cookbook_recipes cr
     WHERE cr.recipe_id = "Recipe"."id" AND cr.cookbook_id = ${quote(cookbookId)}

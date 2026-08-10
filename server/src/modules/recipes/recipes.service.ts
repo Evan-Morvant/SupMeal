@@ -18,6 +18,7 @@ import {
   buildRecipeOrder,
   buildRecipeWhere,
   editableRecipesCondition,
+  inCookbookCondition,
 } from './recipes.filters';
 import type {
   CreateRecipeInput,
@@ -236,6 +237,41 @@ export async function findRecipeOrFail(recipeId: string): Promise<Recipe> {
     throw new AppError(404, 'RECIPE_NOT_FOUND', 'Recette introuvable');
   }
   return recipe;
+}
+
+/**
+ * Recettes accessibles, chargées avec leur contenu complet et sans pagination,
+ * éventuellement restreintes à un cookbook. Réservé à l'export, seul cas où
+ * l'absence de limite se justifie : une sauvegarde amputée de sa fin n'aurait
+ * aucune valeur.
+ *
+ * Le périmètre d'accès s'applique même quand un cookbook est visé : rien ne
+ * doit sortir par l'export qui ne sorte pas par la liste.
+ */
+export async function listAccessibleRecipesInFull(
+  userId: string,
+  cookbookId?: string,
+): Promise<Recipe[]> {
+  const conditions = [accessibleRecipesCondition(userId)];
+  if (cookbookId !== undefined) {
+    conditions.push(inCookbookCondition(cookbookId));
+  }
+
+  return Recipe.findAll({
+    where: { [Op.and]: conditions },
+    include: FULL_INCLUDES,
+    order: [
+      ['createdAt', 'ASC'],
+      [{ model: RecipeIngredient, as: 'ingredients' }, 'position', 'ASC'],
+      [{ model: RecipeStep, as: 'steps' }, 'position', 'ASC'],
+    ],
+  });
+}
+
+/** Titres des recettes dont l'utilisateur est créateur, en minuscules. */
+export async function findOwnedTitles(userId: string): Promise<Set<string>> {
+  const recipes = await Recipe.findAll({ attributes: ['title'], where: { ownerId: userId } });
+  return new Set(recipes.map((recipe) => recipe.title.trim().toLowerCase()));
 }
 
 /**

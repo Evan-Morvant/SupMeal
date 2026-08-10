@@ -8,6 +8,8 @@ import {
 import { uploadRecipeImage } from '../../middlewares/upload';
 import { validateBody, validateQuery } from '../../middlewares/validate';
 import { asyncHandler } from '../../common/async-handler';
+import * as importExportController from '../import-export/import-export.controller';
+import { exportQuerySchema } from '../import-export/import-export.schemas';
 import * as recipesController from './recipes.controller';
 import { createRecipeSchema, listRecipesSchema, updateRecipeSchema } from './recipes.schemas';
 
@@ -42,6 +44,15 @@ recipesRouter.delete(
   '/:id',
   asyncHandler(requireRecipeOwner),
   asyncHandler(recipesController.remove),
+);
+
+// Export d'une recette isolée : mêmes formats que l'export complet, et le
+// fichier produit se réimporte par /import sans traitement particulier.
+recipesRouter.get(
+  '/:id/export',
+  asyncHandler(requireRecipeAccess),
+  validateQuery(exportQuerySchema),
+  asyncHandler(importExportController.exportRecipe),
 );
 
 recipesRouter.post(

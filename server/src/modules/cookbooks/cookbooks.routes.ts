@@ -8,6 +8,8 @@ import { asyncHandler } from '../../common/async-handler';
 import { createRecipeSchema } from '../recipes/recipes.schemas';
 import * as commentsController from '../comments/comments.controller';
 import { commentSchema } from '../comments/comments.schemas';
+import * as importExportController from '../import-export/import-export.controller';
+import { exportQuerySchema } from '../import-export/import-export.schemas';
 import * as invitationsController from '../invitations/invitations.controller';
 import * as messagesController from '../messages/messages.controller';
 import { listMessagesSchema, messageSchema } from '../messages/messages.schemas';
@@ -69,6 +71,14 @@ cookbooksRouter.post(
   ...guards('EDITOR'),
   validateBody(createRecipeSchema),
   asyncHandler(cookbooksController.createRecipe),
+);
+
+// Export du cookbook : ouvert au Lecteur, qui peut déjà tout consulter.
+cookbooksRouter.get(
+  '/:id/export',
+  ...guards('READER'),
+  validateQuery(exportQuerySchema),
+  asyncHandler(importExportController.exportCookbook),
 );
 
 cookbooksRouter.put(
