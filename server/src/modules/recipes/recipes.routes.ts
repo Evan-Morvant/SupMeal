@@ -10,6 +10,8 @@ import { validateBody, validateQuery } from '../../middlewares/validate';
 import { asyncHandler } from '../../common/async-handler';
 import * as importExportController from '../import-export/import-export.controller';
 import { exportQuerySchema } from '../import-export/import-export.schemas';
+import * as suggestionsController from '../suggestions/suggestions.controller';
+import { listSuggestionsSchema } from '../suggestions/suggestions.schemas';
 import * as recipesController from './recipes.controller';
 import { createRecipeSchema, listRecipesSchema, updateRecipeSchema } from './recipes.schemas';
 
@@ -27,6 +29,12 @@ recipesRouter.post(
   '/',
   validateBody(createRecipeSchema),
   asyncHandler(recipesController.create),
+);
+
+recipesRouter.get(
+  '/suggestions',
+  validateQuery(listSuggestionsSchema),
+  asyncHandler(suggestionsController.list),
 );
 
 recipesRouter.get(

@@ -343,6 +343,48 @@ paths:
         '400': { description: Fichier manquant ou format non supporté }
         '403': { $ref: '#/components/responses/Forbidden' }
         '413': { description: Image trop volumineuse }
+  /recipes/suggestions:
+    get:
+      tags: [Recipes]
+      summary: Suggestions de recettes (bonus)
+      description: >
+        Propositions tirées du vivier accessible à l'utilisateur — ses recettes et
+        celles de ses cookbooks. On ne suggère jamais ce qui n'est pas lisible : une
+        suggestion menant à un 403 serait pire que pas de suggestion.
+
+        Sont écartées les recettes contenant un ingrédient rappelant une allergie
+        déclarée, celles déjà mises en favori et celles déjà prévues au planning à
+        venir. Le reste est classé par un score explicable : régime déclaré (3),
+        cuisine préférée (2), puis proximité avec ce que l'utilisateur cuisine déjà,
+        plafonnée par tag. Chaque suggestion porte les motifs qui l'ont fait
+        remonter.
+
+        Déclarée avant `/recipes/{id}` : la route paramétrée capterait sinon
+        « suggestions » comme un identifiant.
+      parameters:
+        - in: query
+          name: limit
+          schema: { type: integer, minimum: 1, maximum: 20, default: 5 }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    recipe:
+                      description: Résumé, sans `ingredients` ni `steps`.
+                      allOf: [ { $ref: '#/components/schemas/Recipe' } ]
+                    score: { type: integer }
+                    reasons:
+                      description: Motifs en clair, à afficher avec la suggestion.
+                      type: array
+                      items: { type: string }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
   /recipes/{id}/export:
     parameters: [ { $ref: '#/components/parameters/Id' } ]
     get:

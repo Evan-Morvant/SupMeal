@@ -68,12 +68,23 @@ La spec exécutable correspondante : [`openapi.yaml`](openapi.yaml) (Swagger UI)
 |---|---|---|:---:|---|
 | GET | `/recipes` | Liste + **recherche plein texte** + filtres (voir query) | ✅ | `authenticate`, `validate` |
 | POST | `/recipes` | Créer une recette **personnelle** (owner = user) | ✅ | `authenticate`, `validate` |
+| GET | `/recipes/suggestions` | **Suggestions** classées (bonus) | ✅ | `authenticate`, `validate` |
 | GET | `/recipes/:id` | Détail d'une recette | ✅ | `authenticate`, `requireRecipeAccess` |
 | PATCH | `/recipes/:id` | Modifier une recette | ✅ | `authenticate`, `requireRecipeEditor`** |
 | DELETE | `/recipes/:id` | Supprimer la recette (entité) | ✅ | `authenticate`, `requireRecipeOwner` |
 | POST | `/recipes/:id/image` | Uploader l'image | ✅ | `authenticate`, `requireRecipeOwner`, `upload` |
 | POST | `/recipes/:id/favorite` | Marquer favori | ✅ | `authenticate`, `requireRecipeAccess` |
 | DELETE | `/recipes/:id/favorite` | Retirer des favoris | ✅ | `authenticate` |
+
+**Suggestions (bonus).** Le vivier est celui que l'utilisateur peut lire — ses recettes et celles de ses cookbooks. On ne suggère jamais ce qui n'est pas accessible : une suggestion menant à un 403 serait pire que pas de suggestion.
+
+*Écartées en SQL* : les recettes contenant un ingrédient dont le nom rappelle une **allergie** déclarée, celles déjà en **favori** et celles déjà **prévues au planning** à venir. La correspondance sur les allergies est volontairement large — « arachide » écarte « beurre d'arachide » — parce que l'erreur n'a pas le même coût des deux côtés : proposer une recette dangereuse est bien plus grave que d'en écarter une inoffensive. Le passé reste éligible, une recette cuisinée le mois dernier pouvant revenir.
+
+*Classées en mémoire*, sur un vivier déjà réduit, par une somme de signaux nommés : régime déclaré (3), cuisine préférée (2), puis proximité avec ce que l'utilisateur cuisine déjà — les tags de ses favoris pèsent le double de ceux qu'il a seulement planifiés, la contribution d'un même tag étant plafonnée pour qu'une catégorie omniprésente n'écrase pas le reste. Chaque suggestion porte ses **motifs en clair** : un classement qu'on ne sait pas expliquer n'a pas sa place ici. À score égal, l'ordre du vivier fait foi — les recettes les plus récentes — ce qui donne une réponse utile même à un profil vide.
+
+La correspondance des régimes et cuisines se fait sur le **libellé** du tag, non sur son type : hors des quelques tags de référence posés par la migration, tout tag saisi par un utilisateur naît `custom`, et filtrer sur `type = 'diet'` rendrait ce signal définitivement muet. La règle de score est isolée dans `suggestions/scoring.ts`, fonction pure éprouvée sans base.
+
+La route est déclarée **avant** `/recipes/:id`, qui capterait sinon « suggestions » comme un identifiant.
 
 \*\* modifiable par le créateur, ou par un Éditeur+ d'un cookbook contenant la recette : partager une recette dans un groupe, c'est accepter que le groupe la corrige. Le droit tombe dès que la recette est retirée du cookbook. **La visibilité fait exception** : seul le créateur bascule sa recette en `public` (403 sinon), de même que la suppression et l'image restent son privilège.
 
