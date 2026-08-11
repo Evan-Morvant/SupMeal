@@ -847,6 +847,17 @@ paths:
     post:
       tags: [ShoppingLists]
       summary: Générer une liste depuis le planning (EDITOR+ si cookbook)
+      description: >
+        Agrège les ingrédients de tous les repas planifiés sur la période. Deux lignes
+        ne se cumulent que si elles portent le même ingrédient dans la même unité :
+        « 2 pommes » et « 200 g de pommes » restent séparés, faute de table de
+        conversion. Un ingrédient sans quantité — le sel — le reste. Les quantités
+        sont mises à l'échelle quand l'entrée de planning et la recette précisent
+        toutes deux leurs portions.
+
+        La liste est un instantané : ses lignes sont écrites à la génération, et
+        modifier une recette ensuite ne réécrit pas une liste déjà emportée au
+        marché.
       requestBody:
         required: true
         content:
@@ -855,39 +866,60 @@ paths:
               type: object
               required: [fromDate, toDate]
               properties:
-                name: { type: string }
+                name:
+                  description: À défaut, un intitulé est déduit de la période.
+                  type: string
                 fromDate: { type: string, format: date }
                 toDate: { type: string, format: date }
                 cookbookId: { type: string, format: uuid, nullable: true }
       responses:
         '201': { description: Créé, content: { application/json: { schema: { $ref: '#/components/schemas/ShoppingList' } } } }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '422': { description: Aucun repas planifié sur cette période }
   /shopping-lists/{id}:
     parameters: [ { $ref: '#/components/parameters/Id' } ]
     get:
       tags: [ShoppingLists]
-      summary: Détail (items agrégés)
-      responses: { '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/ShoppingList' } } } } }
+      summary: Détail (items agrégés, triés par nom d'ingrédient)
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/ShoppingList' } } } }
+        '404': { $ref: '#/components/responses/NotFound' }
     delete:
       tags: [ShoppingLists]
-      summary: Supprimer la liste
-      responses: { '204': { description: Supprimé } }
+      summary: Supprimer la liste (EDITOR+ si cookbook)
+      responses:
+        '204': { description: Supprimé }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
   /shopping-lists/{id}/items/{itemId}:
     parameters:
       - { $ref: '#/components/parameters/Id' }
       - { in: path, name: itemId, required: true, schema: { type: string, format: uuid } }
     patch:
       tags: [ShoppingLists]
-      summary: Cocher / modifier un item
+      summary: Cocher / modifier un item (EDITOR+ si cookbook)
+      description: >
+        Seule la ligne modifiée est rendue : cocher un article n'en change aucun
+        autre, et renvoyer une liste de courses entière à chaque case cochée serait
+        du gaspillage.
       requestBody:
+        required: true
         content:
           application/json:
             schema:
               type: object
+              minProperties: 1
+              additionalProperties: false
               properties:
                 checked: { type: boolean }
-                quantity: { type: number }
-                unit: { type: string }
-      responses: { '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/ShoppingListItem' } } } } }
+                quantity: { type: number, nullable: true }
+                unit: { type: string, nullable: true }
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/ShoppingListItem' } } } }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
 
   # ----------------------------- Catalog -----------------------------
   /ingredients:

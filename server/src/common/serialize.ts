@@ -9,6 +9,8 @@ import {
   Message,
   OAuthAccount,
   Recipe,
+  ShoppingList,
+  ShoppingListItem,
   Tag,
   User,
   UserPreferences,
@@ -204,6 +206,36 @@ export function serializeMealPlanEntry(entry: MealPlanEntry, isFavorite = false)
     servings: entry.servings,
     author: entry.user ? serializeUser(entry.user) : null,
     recipe: entry.recipe ? serializeRecipeSummary(entry.recipe, isFavorite) : null,
+  };
+}
+
+/**
+ * Ligne d'une liste de courses. La quantité passe par `Number` pour la même
+ * raison que dans une recette : le driver rend les `numeric` en chaîne.
+ */
+export function serializeShoppingListItem(item: ShoppingListItem) {
+  return {
+    id: item.id,
+    ingredient: item.ingredient ? serializeIngredient(item.ingredient) : null,
+    quantity: item.quantity === null ? null : Number(item.quantity),
+    unit: item.unit,
+    checked: item.checked,
+  };
+}
+
+/**
+ * Liste de courses et son contenu. `cookbookId` à null désigne une liste
+ * personnelle ; renseigné, une liste partagée avec le groupe.
+ */
+export function serializeShoppingList(list: ShoppingList) {
+  return {
+    id: list.id,
+    name: list.name,
+    cookbookId: list.cookbookId,
+    fromDate: list.fromDate,
+    toDate: list.toDate,
+    items: (list.items ?? []).map(serializeShoppingListItem),
+    createdAt: list.createdAt,
   };
 }
 

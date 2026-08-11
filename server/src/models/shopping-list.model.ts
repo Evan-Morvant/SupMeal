@@ -4,8 +4,10 @@ import {
   InferAttributes,
   InferCreationAttributes,
   Model,
+  NonAttribute,
 } from 'sequelize';
 import { sequelize } from '../config/database';
+import type { ShoppingListItem } from './shopping-list-item.model';
 
 /**
  * Liste de courses générée depuis un planning. `cookbookId` null = perso.
@@ -21,6 +23,8 @@ export class ShoppingList extends Model<
   declare fromDate: string | null;
   declare toDate: string | null;
   declare createdAt: CreationOptional<Date>;
+
+  declare items?: NonAttribute<ShoppingListItem[]>;
 }
 
 ShoppingList.init(

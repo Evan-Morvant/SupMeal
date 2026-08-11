@@ -4,8 +4,10 @@ import {
   InferAttributes,
   InferCreationAttributes,
   Model,
+  NonAttribute,
 } from 'sequelize';
 import { sequelize } from '../config/database';
+import type { Ingredient } from './ingredient.model';
 
 /** Ligne d'une liste de courses : ingrédient agrégé, quantité, coché ou non. */
 export class ShoppingListItem extends Model<
@@ -18,6 +20,8 @@ export class ShoppingListItem extends Model<
   declare quantity: number | null;
   declare unit: string | null;
   declare checked: CreationOptional<boolean>;
+
+  declare ingredient?: NonAttribute<Ingredient>;
 }
 
 ShoppingListItem.init(

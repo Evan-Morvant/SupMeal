@@ -220,10 +220,20 @@ Attachés à la recette, visibles partout où elle l'est. Un avis par utilisateu
 | Méthode | Route | Description | Auth | Middlewares |
 |---|---|---|:---:|---|
 | GET | `/shopping-lists` | Mes listes (perso + groupe) | ✅ | `authenticate` |
-| POST | `/shopping-lists` | **Générer** depuis le planning (`from`, `to`, `cookbookId?`) | ✅ | `authenticate`, `validate` (+ `requireRole(EDITOR)` si cookbook) |
+| POST | `/shopping-lists` | **Générer** depuis le planning (`fromDate`, `toDate`, `cookbookId?`) | ✅ | `authenticate`, `validate` (+ `requireRole(EDITOR)` si cookbook) |
 | GET | `/shopping-lists/:id` | Détail (items agrégés) | ✅ | `authenticate` (accès) |
 | PATCH | `/shopping-lists/:id/items/:itemId` | Cocher / modifier un item | ✅ | `authenticate` (accès) |
 | DELETE | `/shopping-lists/:id` | Supprimer la liste | ✅ | `authenticate` (accès) |
+
+**Règle d'agrégation.** Deux lignes ne se cumulent que si elles portent le même ingrédient **dans la même unité** : « 2 pommes » et « 200 g de pommes » restent séparés, faute de table de conversion — les additionner donnerait 202 de rien du tout. L'unité est comparée sans casse ni espaces de bordure, pour que « g » et « G » ne fassent pas deux lignes. Un ingrédient sans quantité — le sel, le poivre — le reste : lui en attribuer une serait inventer.
+
+**Mise à l'échelle.** Une entrée de planning porte ses portions, la recette les siennes : prévoir 8 parts d'une recette qui en donne 4 double les quantités. À défaut de connaître les deux nombres, aucune mise à l'échelle n'est appliquée — mieux vaut une quantité brute qu'une quantité inventée. La règle est isolée dans `shopping-lists/aggregate.ts`, fonction pure éprouvée sans base.
+
+**Un instantané, pas une vue.** Les lignes sont écrites en base à la génération. Modifier une recette ensuite ne réécrit pas une liste déjà emportée au marché.
+
+**Permissions.** Une liste personnelle n'appartient qu'à son auteur. Une liste de groupe suit les rôles du cookbook : `READER` pour la consulter — un membre voit donc une liste qu'il n'a pas générée — et `EDITOR` pour la générer, cocher ses lignes ou la supprimer, conformément à la matrice des rôles (l'éditeur gère recettes, tags, planning et liste de courses). Le périmètre des repas repris est exactement celui qu'affiche `/meal-plan` sur la même fenêtre : les deux règles partagent le même constructeur de requête.
+
+Générer sur une période sans aucun repas planifié répond `422` plutôt que de créer une liste vide, qu'on croirait complète.
 
 ## 8. Référentiels (autocomplétion / filtres) — `/ingredients`, `/tags`
 

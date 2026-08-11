@@ -47,6 +47,20 @@ function buildDateFilter({ from, to }: ListMealPlanQuery): WhereOptions {
   return {};
 }
 
+/**
+ * Périmètre d'un planning : le sien, ou celui d'un groupe, restreint à la
+ * fenêtre demandée. Partagé avec la génération des listes de courses, qui doit
+ * lire exactement les entrées que le planning affiche.
+ */
+export function buildEntryWhere(userId: string, query: ListMealPlanQuery): WhereOptions {
+  const scope: WhereOptions =
+    query.cookbookId === undefined
+      ? { userId, cookbookId: null }
+      : { cookbookId: query.cookbookId };
+
+  return { ...scope, ...buildDateFilter(query) };
+}
+
 /** Planning accompagné des favoris qu'il contient, pour l'affichage. */
 export interface MealPlanView {
   entries: MealPlanEntry[];
@@ -65,17 +79,12 @@ export async function listEntries(
   userId: string,
   query: ListMealPlanQuery,
 ): Promise<MealPlanView> {
-  const scope: WhereOptions =
-    query.cookbookId === undefined
-      ? { userId, cookbookId: null }
-      : { cookbookId: query.cookbookId };
-
   if (query.cookbookId !== undefined) {
     await assertCookbookRole(userId, query.cookbookId, PLAN_READ_ROLE);
   }
 
   const entries = await MealPlanEntry.findAll({
-    where: { ...scope, ...buildDateFilter(query) },
+    where: buildEntryWhere(userId, query),
     include: ENTRY_INCLUDES,
     order: [
       ['date', 'ASC'],
