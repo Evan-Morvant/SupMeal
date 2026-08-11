@@ -29,7 +29,7 @@ docker compose up -d --build
 Depuis `server/` :
 
 ```bash
-npm run demo                                   # les neuf scénarios
+npm run demo                                   # les dix scénarios
 node scripts/demo/recipes.mjs                  # un seul
 node scripts/demo/run-all.mjs recipes search   # une sélection
 ```
@@ -77,12 +77,13 @@ démonstration finie** : elle n'a rien à faire dans une configuration déployé
 | `users.mjs` | Profil, mot de passe, préférences culinaires, comptes OAuth2 | 19 |
 | `recipes.mjs` | Cycle de vie complet, image, favoris, droits du créateur | 27 |
 | `search.mjs` | Plein texte français, tags, ingrédients, temps, tri, pagination | 20 |
+| `catalog.mjs` | Autocomplétion des ingrédients, liste des tags par type | 17 |
 | `cookbooks.mjs` | Invitations, hiérarchie des rôles, permissions par action | 26 |
 | `comments.mjs` | Fils par recette, cloisonnement entre cookbooks, modération | 18 |
 | `meal-plan.mjs` | Planning personnel et partagé, fenêtres de consultation | 24 |
 | `chat.mjs` | WebSocket, repli REST, historique, rétrogradation | 10 |
 | `import-export.mjs` | Trois formats, trois périmètres, règles d'import | 60 |
-| | | **220** |
+| | | **237** |
 
 `users.mjs` s'adapte à la configuration de l'instance : sans identifiants OAuth2
 renseignés, il vérifie le refus explicite (`503 PROVIDER_NOT_CONFIGURED`) au lieu
