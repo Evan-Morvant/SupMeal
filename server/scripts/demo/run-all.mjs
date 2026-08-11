@@ -24,6 +24,7 @@ const SCENARIOS = [
   'cookbooks',
   'comments',
   'meal-plan',
+  'shopping-lists',
   'chat',
   'import-export',
 ];
