@@ -7,7 +7,13 @@ import {
 } from 'sequelize';
 import { sequelize } from '../config/database';
 
-export type TagType = 'cuisine' | 'diet' | 'difficulty' | 'course' | 'custom';
+/**
+ * Source unique des types de tag : l'énumération PostgreSQL comme les schémas
+ * de validation en dérivent, ils ne peuvent donc pas diverger.
+ */
+export const TAG_TYPES = ['cuisine', 'diet', 'difficulty', 'course', 'custom'] as const;
+
+export type TagType = (typeof TAG_TYPES)[number];
 
 /** Étiquette applicable aux recettes (cuisine, régime, difficulté…). */
 export class Tag extends Model<InferAttributes<Tag>, InferCreationAttributes<Tag>> {
@@ -21,7 +27,7 @@ Tag.init(
     id: { type: DataTypes.UUID, defaultValue: DataTypes.UUIDV4, primaryKey: true },
     name: { type: DataTypes.STRING, allowNull: false },
     type: {
-      type: DataTypes.ENUM('cuisine', 'diet', 'difficulty', 'course', 'custom'),
+      type: DataTypes.ENUM(...TAG_TYPES),
       allowNull: false,
       defaultValue: 'custom',
     },

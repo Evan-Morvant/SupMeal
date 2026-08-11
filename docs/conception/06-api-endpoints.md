@@ -229,8 +229,16 @@ Attachés à la recette, visibles partout où elle l'est. Un avis par utilisateu
 
 | Méthode | Route | Description | Auth | Middlewares |
 |---|---|---|:---:|---|
-| GET | `/ingredients?q=` | Recherche d'ingrédients (autocomplétion) | ✅ | `authenticate` |
-| GET | `/tags?type=` | Lister les tags par type | ✅ | `authenticate` |
+| GET | `/ingredients?q=&limit=` | Recherche d'ingrédients (autocomplétion) | ✅ | `authenticate`, `validate` |
+| GET | `/tags?type=` | Lister les tags par type | ✅ | `authenticate`, `validate` |
+
+**Un vocabulaire partagé, sans propriétaire.** Ingrédients et tags ne sont cloisonnés par aucun utilisateur : les restreindre à ce que l'utilisateur a déjà écrit viderait l'autocomplétion sur un compte neuf, précisément quand elle sert le plus. Ce sont des noms communs, pas des données personnelles. Les deux routes restent fermées à l'anonyme : c'est le vocabulaire de l'application, pas une page publique.
+
+**Autocomplétion par fragment.** « olive » retrouve « huile d'olive » — un préfixe seul échouerait sur les noms composés. Les noms qui *commencent* par la saisie passent devant, le reste suit par ordre alphabétique. La casse est ignorée (les noms sont normalisés en minuscules à l'écriture) et les jokers `LIKE` sont neutralisés, sans quoi un `%` tapé dans le champ ferait remonter tout le catalogue. `limit` vaut 20 par défaut, 50 au maximum. Sans `q`, la route rend le début du catalogue par ordre alphabétique.
+
+La recherche s'appuie sur un **index trigramme** (`pg_trgm`, GIN) posé par la migration `0003` : l'index d'unicité sur `name` est un btree, inutilisable pour un `LIKE '%…%'`. Mesuré sur 200 000 ingrédients : 36 ms en parcours séquentiel contre 0,7 ms via l'index, que le planificateur choisit de lui-même.
+
+**Tags.** Rendus en entier, groupés par type puis par ordre alphabétique. Le type `course` (entrée, plat, dessert...) est posé par la migration initiale ; les tags `custom` naissent des recettes.
 
 ## 9. Import / Export — `/import`, `/export`
 

@@ -894,24 +894,50 @@ paths:
     get:
       tags: [Catalog]
       summary: Recherche d'ingrédients (autocomplétion)
-      parameters: [ { in: query, name: q, schema: { type: string } } ]
+      description: >
+        Recherche par fragment, quelle que soit sa position dans le nom : « olive »
+        retrouve « huile d'olive ». Les noms qui commencent par la saisie passent
+        devant. Le catalogue est global et alimenté au fil des recettes créées ;
+        il n'est cloisonné par aucun utilisateur, sans quoi l'autocomplétion serait
+        vide sur un compte neuf. Sans `q`, rend le début du catalogue par ordre
+        alphabétique.
+      parameters:
+        - in: query
+          name: q
+          description: Fragment recherché. La casse est ignorée, les jokers LIKE neutralisés.
+          schema: { type: string, minLength: 1, maxLength: 120 }
+        - in: query
+          name: limit
+          description: Nombre maximal de propositions.
+          schema: { type: integer, minimum: 1, maximum: 50, default: 20 }
       responses:
         '200':
           description: OK
           content:
             application/json:
               schema: { type: array, items: { $ref: '#/components/schemas/Ingredient' } }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
   /tags:
     get:
       tags: [Catalog]
       summary: Lister les tags
-      parameters: [ { in: query, name: type, schema: { type: string, enum: [cuisine, diet, difficulty, custom] } } ]
+      description: >
+        Vocabulaire partagé, rendu en entier et groupé par type puis par ordre
+        alphabétique. Les tags de type `course` (entrée, plat, dessert...) sont
+        posés par la migration initiale ; les tags `custom` naissent des recettes.
+      parameters:
+        - in: query
+          name: type
+          schema: { type: string, enum: [cuisine, diet, difficulty, course, custom] }
       responses:
         '200':
           description: OK
           content:
             application/json:
               schema: { type: array, items: { $ref: '#/components/schemas/Tag' } }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
 
   # ----------------------------- Import / Export -----------------------------
   /export:
@@ -1107,7 +1133,7 @@ components:
       properties:
         id: { type: string, format: uuid }
         name: { type: string }
-        type: { type: string, enum: [cuisine, diet, difficulty, custom] }
+        type: { type: string, enum: [cuisine, diet, difficulty, course, custom] }
     Recipe:
       type: object
       properties:

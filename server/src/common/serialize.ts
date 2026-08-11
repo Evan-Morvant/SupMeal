@@ -4,10 +4,12 @@ import {
   Cookbook,
   CookbookInvitation,
   CookbookMembership,
+  Ingredient,
   MealPlanEntry,
   Message,
   OAuthAccount,
   Recipe,
+  Tag,
   User,
   UserPreferences,
 } from '../models';
@@ -44,6 +46,16 @@ export function serializeOAuthAccount(account: OAuthAccount) {
   };
 }
 
+/** Tag du catalogue. */
+export function serializeTag(tag: Tag) {
+  return { id: tag.id, name: tag.name, type: tag.type };
+}
+
+/** Ingrédient normalisé du catalogue. */
+export function serializeIngredient(ingredient: Ingredient) {
+  return { id: ingredient.id, name: ingredient.name };
+}
+
 /**
  * L'image est stockée en chemin relatif et rendue absolue à la sortie : si
  * l'URL publique de l'API change, les lignes en base restent valides.
@@ -66,7 +78,7 @@ function recipeBase(recipe: Recipe, isFavorite: boolean) {
     source: recipe.source,
     visibility: recipe.visibility,
     isFavorite,
-    tags: (recipe.tags ?? []).map((tag) => ({ id: tag.id, name: tag.name, type: tag.type })),
+    tags: (recipe.tags ?? []).map(serializeTag),
     createdAt: recipe.createdAt,
     updatedAt: recipe.updatedAt,
   };
