@@ -59,7 +59,8 @@ cd client && npm install && npm run dev
 ## Documentation
 
 - Conception (UML, BDD, API) : [`docs/conception/`](docs/conception/README.md)
-- Contrat d'API (OpenAPI/Swagger) : [`docs/conception/openapi.yaml`](docs/conception/openapi.yaml)
+- Contrat d'API (OpenAPI/Swagger) : [`server/openapi.yaml`](server/openapi.yaml), servi en
+  Swagger UI sur [`/api/v1/swagger`](http://localhost:4000/api/v1/swagger)
 
 ## Sécurité
 

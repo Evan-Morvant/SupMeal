@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import { docsRouter } from './modules/docs/docs.routes';
 import { healthRouter } from './modules/health/health.routes';
 import { authRouter } from './modules/auth/auth.routes';
 import { usersRouter } from './modules/users/users.routes';
@@ -19,6 +20,7 @@ import { shoppingListsRouter } from './modules/shopping-lists/shopping-lists.rou
 export const router = Router();
 
 router.use('/health', healthRouter);
+router.use('/swagger', docsRouter);
 router.use('/auth', authRouter);
 router.use('/users', usersRouter);
 router.use('/recipes', recipesRouter);

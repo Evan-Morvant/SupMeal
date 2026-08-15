@@ -489,6 +489,7 @@ paths:
     get:
       tags: [Reviews]
       summary: Lister les avis et la note moyenne
+      description: Lecture anonyme si la recette est `public`, du plus récent au plus ancien.
       security: []
       responses:
         '200':
@@ -498,22 +499,33 @@ paths:
               schema:
                 type: object
                 properties:
-                  avgRating: { type: number }
+                  avgRating:
+                    type: number
+                    nullable: true
+                    description: "`null` sans avis : non notée n'est pas notée zéro."
                   reviewCount: { type: integer }
                   items: { type: array, items: { $ref: '#/components/schemas/Review' } }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
     put:
       tags: [Reviews]
       summary: Créer ou mettre à jour son avis (1 par utilisateur)
+      description: >
+        Un avis par couple (recette, utilisateur) : le même appel dépose ou
+        remplace le sien. Le créateur ne note pas sa propre recette.
       requestBody:
         required: true
         content: { application/json: { schema: { $ref: '#/components/schemas/ReviewInput' } } }
       responses:
         '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/Review' } } } }
         '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
     delete:
       tags: [Reviews]
       summary: Supprimer son avis
-      responses: { '204': { description: Supprimé } }
+      responses:
+        '204': { description: Supprimé }
+        '404': { description: Aucun avis de cet utilisateur sur cette recette }
 
   # ----------------------------- Discovery (public) -----------------------------
   /discover/recipes:
@@ -1319,7 +1331,7 @@ components:
       required: [rating]
       properties:
         rating: { type: integer, minimum: 1, maximum: 5 }
-        body: { type: string }
+        body: { type: string, maxLength: 2000, nullable: true }
     Message:
       type: object
       properties:

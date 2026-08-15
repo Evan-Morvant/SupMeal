@@ -54,4 +54,4 @@ modules/<domaine>/
 ```
 
 Le contrat complet des endpoints : [`../docs/conception/06-api-endpoints.md`](../docs/conception/06-api-endpoints.md)
-et [`../docs/conception/openapi.yaml`](../docs/conception/openapi.yaml).
+et [`openapi.yaml`](openapi.yaml), Swagger sur `/api/v1/swagger`.

@@ -11,12 +11,15 @@ par GitHub/GitLab). Ces documents alimentent la **documentation technique** du r
 | 04 | [Diagrammes de séquence](04-diagrammes-sequence.md) | OAuth2, ajout recette, recherche plein texte, messagerie temps réel, import/export. |
 | 05 | [Architecture & déploiement](05-architecture-deploiement.md) | Composants (3 briques) + déploiement Docker Compose + gestion des secrets. |
 | 06 | [Catalogue des endpoints](06-api-endpoints.md) | Toutes les routes REST + auth + rôles + middlewares + événements WebSocket. |
-| — | [`openapi.yaml`](openapi.yaml) | Spec OpenAPI 3 (design-first) visualisable dans Swagger UI / Swagger Editor. |
+| — | [`server/openapi.yaml`](../../server/openapi.yaml) | Spec OpenAPI 3 (design-first). Rangée avec l'API, qui la sert telle quelle. |
 
-## Visualiser l'OpenAPI sans backend
+## Visualiser l'OpenAPI
 
-- En ligne : copier `openapi.yaml` dans [editor.swagger.io](https://editor.swagger.io).
-- VS Code : extension *OpenAPI (Swagger) Editor* ou *Swagger Viewer*.
+- **API démarrée** : [http://localhost:4000/api/v1/swagger](http://localhost:4000/api/v1/swagger),
+  où les requêtes s'essaient pour de vrai (spec brute sur `/api/v1/swagger/openapi.json`).
+- **Sans backend**, la spec étant écrite à la main :
+  - coller `server/openapi.yaml` dans [editor.swagger.io](https://editor.swagger.io).
+  - extension de prévisualisation.
 
 ## Stack technique
 
