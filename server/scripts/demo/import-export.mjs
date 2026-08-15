@@ -33,13 +33,10 @@ const PREFERENCES = {
 };
 
 /** Envoie un contenu au point d'import et rend le rapport. */
-function importer(token, content, { format, withPreferences, filename, expect } = {}) {
+function importer(token, content, { format, filename, expect } = {}) {
   const fields = {};
   if (format !== undefined) {
     fields.format = format;
-  }
-  if (withPreferences !== undefined) {
-    fields.withPreferences = withPreferences;
   }
   return sendFile('/import', {
     token,
@@ -74,7 +71,6 @@ async function run() {
     "export : l'avertissement sur les données en clair est présent",
   );
   checkEqual(complet.body.recipes.length, 1, 'export : la recette est là');
-  checkEqual(complet.body.preferences, PREFERENCES, 'export complet : les préférences y figurent');
   checkEqual(
     complet.body.recipes[0].ingredients[0],
     { name: 'farine', quantity: 200, unit: 'g', note: 'tamisée' },
@@ -193,7 +189,10 @@ async function run() {
   );
   checkEqual(uneRecette.body.recipes.length, 1, 'export unitaire : une seule recette');
   checkEqual(uneRecette.body.cookbooks, [], 'export unitaire : aucun cookbook');
-  checkEqual(uneRecette.body.preferences, null, 'export unitaire : pas de préférences');
+  check(
+    uneRecette.body.preferences === undefined && uneRecette.body.owner === undefined,
+    'export unitaire : rien de personnel non plus',
+  );
 
   const destinataire = await register('destinataire');
   const recuUnitaire = await importer(destinataire.token, JSON.stringify(uneRecette.body));
@@ -228,10 +227,9 @@ async function run() {
     ['Bûche au chocolat'],
     'export cookbook : sa composition est jointe',
   );
-  checkEqual(
-    exportCookbook.body.preferences,
-    null,
-    'export cookbook : sans les préférences de celui qui exporte',
+  check(
+    exportCookbook.body.preferences === undefined && exportCookbook.body.owner === undefined,
+    'export cookbook : rien de celui qui exporte',
   );
 
   const invite = await register('invite');
@@ -249,34 +247,33 @@ async function run() {
   await call('GET', '/cookbooks/' + cookbook.id + '/export', { token: etranger.token, expect: 404 });
   check(true, 'export cookbook : introuvable pour un non-membre (404)');
 
-  section('Préférences à l import');
-  const sansPrefs = await register('sans-prefs');
-  const rapportSansPrefs = await importer(sansPrefs.token, JSON.stringify(complet.body));
-  checkEqual(
-    rapportSansPrefs.preferencesImported,
-    false,
-    'les préférences ne sont pas reprises par défaut',
+  section('L export ne porte aucune donnée personnelle');
+  check(complet.body.owner === undefined, "l'export ne nomme pas celui qui exporte");
+  check(complet.body.preferences === undefined, "il ne porte pas ses préférences culinaires");
+  check(
+    !JSON.stringify(complet.body).includes(chef.email),
+    "son adresse électronique n'apparaît nulle part dans le fichier",
   );
-  const prefsIntactes = await call('GET', '/users/me/preferences', { token: sansPrefs.token });
-  checkEqual(prefsIntactes.allergies, [], 'les préférences du compte sont restées intactes');
 
-  const avecPrefs = await register('avec-prefs');
-  const rapportAvecPrefs = await importer(avecPrefs.token, JSON.stringify(complet.body), {
-    withPreferences: 'true',
-  });
-  checkEqual(rapportAvecPrefs.preferencesImported, true, 'withPreferences=true : elles sont reprises');
-  const prefsReprises = await call('GET', '/users/me/preferences', { token: avecPrefs.token });
-  checkEqual(prefsReprises, PREFERENCES, 'les préférences du fichier remplacent celles du compte');
+  const repris = await register('repris');
+  const rapport = await importer(repris.token, JSON.stringify(complet.body));
+  check(
+    rapport.preferencesImported === undefined,
+    "l'import ne rend plus compte de préférences : il n'en reprend aucune",
+  );
+  const prefsIntactes = await call('GET', '/users/me/preferences', { token: repris.token });
+  checkEqual(prefsIntactes.allergies, [], 'les préférences du compte restent intactes');
 
-  const viaCsv = await register('via-csv');
-  const rapportCsv = await importer(viaCsv.token, csv.body, {
-    filename: 'export.csv',
-    withPreferences: 'true',
-  });
+  const ancien = await register('ancien-format');
+  await importer(
+    ancien.token,
+    JSON.stringify({ preferences: PREFERENCES, recipes: [{ title: 'Tarte d un vieux fichier' }] }),
+  );
+  const apresAncien = await call('GET', '/users/me/preferences', { token: ancien.token });
   checkEqual(
-    rapportCsv.preferencesImported,
-    false,
-    'un CSV ne porte pas de préférences : rien à reprendre, même sur demande',
+    apresAncien.allergies,
+    [],
+    'un fichier d une version antérieure voit ses préférences ignorées',
   );
 }
 

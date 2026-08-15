@@ -29,6 +29,7 @@ const SCENARIOS = [
   'shopping-lists',
   'chat',
   'import-export',
+  'personal-data',
 ];
 
 function runScenario(name) {

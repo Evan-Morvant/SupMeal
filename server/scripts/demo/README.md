@@ -86,7 +86,8 @@ démonstration finie** : elle n'a rien à faire dans une configuration déployé
 | `shopping-lists.mjs` | Agrégation, mise à l'échelle, instantané, liste de groupe | 20 |
 | `chat.mjs` | WebSocket, repli REST, historique, rétrogradation | 10 |
 | `import-export.mjs` | Trois formats, trois périmètres, règles d'import | 60 |
-| | | **295** |
+| `personal-data.mjs` | Portabilité : contenu, absence de secrets, cloisonnement | 26 |
+| | | **321** |
 
 `users.mjs` s'adapte à la configuration de l'instance : sans identifiants OAuth2
 renseignés, il vérifie le refus explicite (`503 PROVIDER_NOT_CONFIGURED`) au lieu
