@@ -295,7 +295,7 @@ describe('Export d\'un cookbook', () => {
     ]);
   });
 
-  it('ne joint pas les préférences de celui qui exporte', async () => {
+  it('ne joint rien de celui qui exporte', async () => {
     const { token, cookbookId } = await seedCookbook('cb2@test.fr', 'Famille', ['Gratin']);
     await request(app)
       .put('/api/v1/users/me/preferences')
@@ -303,7 +303,8 @@ describe('Export d\'un cookbook', () => {
       .send({ allergies: ['arachides'] });
 
     const res = await exportCookbookAs(token, cookbookId);
-    expect(res.body.preferences).toBeNull();
+    expect(res.body).not.toHaveProperty('preferences');
+    expect(res.body).not.toHaveProperty('owner');
   });
 
   it('produit un fichier réimportable', async () => {
@@ -345,7 +346,7 @@ describe('Export d\'un cookbook', () => {
   });
 });
 
-describe('Préférences culinaires dans l\'export', () => {
+describe('Aucune donnée personnelle dans l\'export', () => {
   const PREFERENCES = {
     diets: ['végétarien'],
     allergies: ['arachides', 'gluten'],
@@ -365,16 +366,44 @@ describe('Préférences culinaires dans l\'export', () => {
     return request(app).get('/api/v1/users/me/preferences').set('Authorization', bearer(token));
   }
 
-  it('figurent dans l\'export complet du compte', async () => {
+  it('l\'export du compte ne porte ni profil ni préférences', async () => {
     const token = await registerUser('pref1@test.fr');
     await setPreferences(token);
     await createRecipe(token, TARTE);
 
     const res = await exportAs(token, 'json');
-    expect(res.body.preferences).toEqual(PREFERENCES);
+    expect(res.body).not.toHaveProperty('preferences');
+    expect(res.body).not.toHaveProperty('owner');
+    // Ce qui reste est bien le contenu attendu.
+    expect(res.body.recipes).toHaveLength(1);
   });
 
-  it('ne sont pas reprises sans demande explicite', async () => {
+  it('l\'export d\'une recette isolée non plus', async () => {
+    const token = await registerUser('pref8@test.fr');
+    await setPreferences(token);
+    await createRecipe(token, TARTE);
+    const recipeId = (await findImported('pref8@test.fr', TARTE.title))!.id;
+
+    const res = await request(app)
+      .get('/api/v1/recipes/' + recipeId + '/export')
+      .set('Authorization', bearer(token));
+    expect(res.body).not.toHaveProperty('preferences');
+    expect(res.body).not.toHaveProperty('owner');
+  });
+
+  it('aucun email n\'apparaît dans le fichier, quel que soit le format', async () => {
+    const token = await registerUser('pref9@test.fr');
+    await setPreferences(token);
+    await createRecipe(token, TARTE);
+
+    for (const format of ['json', 'csv', 'mealie'] as const) {
+      const res = await exportAs(token, format);
+      const contenu = format === 'json' ? JSON.stringify(res.body) : res.text;
+      expect(contenu).not.toContain('pref9@test.fr');
+    }
+  });
+
+  it('l\'import laisse les préférences du compte intactes', async () => {
     const author = await registerUser('pref2@test.fr');
     await setPreferences(author);
     await createRecipe(author, TARTE);
@@ -382,20 +411,37 @@ describe('Préférences culinaires dans l\'export', () => {
 
     const importer = await registerUser('pref3@test.fr');
     const res = await importFile(importer, JSON.stringify(exported.body), 'export.json');
-    expect(res.body).toMatchObject({ created: 1, preferencesImported: false });
+    expect(res.body).toMatchObject({ created: 1 });
+    expect(res.body).not.toHaveProperty('preferencesImported');
 
     const after = await getPreferences(importer);
     expect(after.body.allergies).toEqual([]);
     expect(after.body.defaultServings).toBe(2);
   });
 
-  it('remplacent celles du compte quand withPreferences vaut true', async () => {
-    const author = await registerUser('pref4@test.fr');
+  it('un fichier portant des préférences les voit ignorées', async () => {
+    const importer = await registerUser('pref4@test.fr');
+
+    // Fichier d'une version antérieure du format, préférences comprises.
+    const ancien = {
+      preferences: PREFERENCES,
+      recipes: [{ title: 'Tarte tatin', ingredients: [], steps: [] }],
+    };
+    const res = await importFile(importer, JSON.stringify(ancien), 'ancien.json');
+    expect(res.body).toMatchObject({ created: 1 });
+
+    const after = await getPreferences(importer);
+    expect(after.body.allergies).toEqual([]);
+    expect(after.body.defaultServings).toBe(2);
+  });
+
+  it('le champ withPreferences n\'a plus cours et ne fait rien', async () => {
+    const author = await registerUser('pref5@test.fr');
     await setPreferences(author);
     await createRecipe(author, TARTE);
     const exported = await exportAs(author, 'json');
 
-    const importer = await registerUser('pref5@test.fr');
+    const importer = await registerUser('pref6@test.fr');
     const res = await request(app)
       .post(importUrl)
       .set('Authorization', bearer(importer))
@@ -405,42 +451,10 @@ describe('Préférences culinaires dans l\'export', () => {
         contentType: 'application/json',
       });
 
-    expect(res.body).toMatchObject({ created: 1, preferencesImported: true });
-    const after = await getPreferences(importer);
-    expect(after.body).toEqual(PREFERENCES);
-  });
-
-  it('restent absentes d\'un format qui ne sait pas les porter', async () => {
-    const author = await registerUser('pref6@test.fr');
-    await setPreferences(author);
-    await createRecipe(author, TARTE);
-    const exported = await exportAs(author, 'csv');
-
-    const importer = await registerUser('pref7@test.fr');
-    const res = await request(app)
-      .post(importUrl)
-      .set('Authorization', bearer(importer))
-      .field('withPreferences', 'true')
-      .attach('file', Buffer.from(exported.text, 'utf8'), {
-        filename: 'export.csv',
-        contentType: 'text/csv',
-      });
-
-    expect(res.body).toMatchObject({ created: 1, preferencesImported: false });
+    expect(res.status).toBe(200);
+    expect(res.body).toMatchObject({ created: 1 });
     const after = await getPreferences(importer);
     expect(after.body.allergies).toEqual([]);
-  });
-
-  it('ne suivent pas l\'export d\'une recette isolée', async () => {
-    const token = await registerUser('pref8@test.fr');
-    await setPreferences(token);
-    await createRecipe(token, TARTE);
-    const recipeId = (await findImported('pref8@test.fr', TARTE.title))!.id;
-
-    const res = await request(app)
-      .get('/api/v1/recipes/' + recipeId + '/export')
-      .set('Authorization', bearer(token));
-    expect(res.body.preferences).toBeNull();
   });
 });
 
