@@ -80,6 +80,7 @@ démonstration finie** : elle n'a rien à faire dans une configuration déployé
 | `catalog.mjs` | Autocomplétion des ingrédients, liste des tags par type | 17 |
 | `suggestions.mjs` | Exclusions (allergies, favoris, déjà prévu), score et motifs | 16 |
 | `reviews.mjs` | Note et texte, un avis par personne, moyenne, lecture anonyme | 22 |
+| `discover.mjs` | Fonds public, recherche, tri par note, 404 sur une privée | 16 |
 | `cookbooks.mjs` | Invitations, hiérarchie des rôles, permissions par action | 26 |
 | `comments.mjs` | Fils par recette, cloisonnement entre cookbooks, modération | 18 |
 | `meal-plan.mjs` | Planning personnel et partagé, fenêtres de consultation | 24 |
@@ -87,7 +88,7 @@ démonstration finie** : elle n'a rien à faire dans une configuration déployé
 | `chat.mjs` | WebSocket, repli REST, historique, rétrogradation | 10 |
 | `import-export.mjs` | Trois formats, trois périmètres, règles d'import | 60 |
 | `personal-data.mjs` | Portabilité : contenu, absence de secrets, cloisonnement | 26 |
-| | | **321** |
+| | | **337** |
 
 `users.mjs` s'adapte à la configuration de l'instance : sans identifiants OAuth2
 renseignés, il vérifie le refus explicite (`503 PROVIDER_NOT_CONFIGURED`) au lieu

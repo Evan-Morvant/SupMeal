@@ -23,6 +23,7 @@ const SCENARIOS = [
   'catalog',
   'suggestions',
   'reviews',
+  'discover',
   'cookbooks',
   'comments',
   'meal-plan',
