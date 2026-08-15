@@ -9,6 +9,7 @@ import {
   Message,
   OAuthAccount,
   Recipe,
+  Review,
   ShoppingList,
   ShoppingListItem,
   Tag,
@@ -79,6 +80,8 @@ function recipeBase(recipe: Recipe, isFavorite: boolean) {
     imageUrl: absoluteImageUrl(recipe.imageUrl),
     source: recipe.source,
     visibility: recipe.visibility,
+    avgRating: recipe.avgRating === null ? null : Number(recipe.avgRating),
+    reviewCount: recipe.reviewCount,
     isFavorite,
     tags: (recipe.tags ?? []).map(serializeTag),
     createdAt: recipe.createdAt,
@@ -175,6 +178,19 @@ export function serializeComment(comment: Comment) {
     content: comment.content,
     createdAt: comment.createdAt,
     updatedAt: comment.updatedAt,
+  };
+}
+
+/** Avis public sur une recette, avec son auteur. */
+export function serializeReview(review: Review) {
+  return {
+    id: review.id,
+    recipeId: review.recipeId,
+    author: review.author ? serializeUser(review.author) : null,
+    rating: review.rating,
+    body: review.body,
+    createdAt: review.createdAt,
+    updatedAt: review.updatedAt,
   };
 }
 

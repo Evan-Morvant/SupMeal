@@ -10,12 +10,17 @@ import { validateBody, validateQuery } from '../../middlewares/validate';
 import { asyncHandler } from '../../common/async-handler';
 import * as importExportController from '../import-export/import-export.controller';
 import { exportQuerySchema } from '../import-export/import-export.schemas';
+import { reviewsRouter } from '../reviews/reviews.routes';
 import * as suggestionsController from '../suggestions/suggestions.controller';
 import { listSuggestionsSchema } from '../suggestions/suggestions.schemas';
 import * as recipesController from './recipes.controller';
 import { createRecipeSchema, listRecipesSchema, updateRecipeSchema } from './recipes.schemas';
 
 export const recipesRouter = Router();
+
+// Avant l'authentification globale : les avis portent leur propre pile, dont
+// une lecture ouverte aux visiteurs.
+recipesRouter.use('/:id/reviews', reviewsRouter);
 
 // La consultation anonyme des recettes publiques passera par /discover.
 recipesRouter.use(authenticate);

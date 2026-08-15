@@ -21,14 +21,15 @@ declare global {
  * Consultation : le créateur, un membre d'un cookbook contenant la recette,
  * ou n'importe qui si elle est publique. Le périmètre est celui qui filtre la
  * liste — sans quoi une recette pourrait apparaître dans les résultats sans
- * pouvoir être ouverte.
+ * pouvoir être ouverte. `req.user` est facultatif : derrière
+ * `authenticateOptional`, la même garde sert les routes ouvertes aux visiteurs.
  */
 export async function requireRecipeAccess(
   req: Request,
   _res: Response,
   next: NextFunction,
 ): Promise<void> {
-  req.recipe = await findAccessibleRecipeOrFail(req.params.id, req.user!.id);
+  req.recipe = await findAccessibleRecipeOrFail(req.params.id, req.user?.id);
   next();
 }
 

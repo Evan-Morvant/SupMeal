@@ -186,7 +186,15 @@ async function replaceTags(
   );
 }
 
-export async function isRecipeAccessible(recipeId: string, userId: string): Promise<boolean> {
+export async function isRecipeAccessible(
+  recipeId: string,
+  userId?: string,
+): Promise<boolean> {
+  // Un visiteur anonyme n'a ni propriété ni adhésion : seule la visibilité
+  // publique, vérifiée par l'appelant, peut le servir.
+  if (!userId) {
+    return false;
+  }
   const visible = await Recipe.count({
     where: { id: recipeId, [Op.and]: [accessibleRecipesCondition(userId)] },
   });
@@ -212,7 +220,7 @@ export async function isRecipeEditable(recipeId: string, userId: string): Promis
  */
 export async function findAccessibleRecipeOrFail(
   recipeId: string,
-  userId: string,
+  userId?: string,
 ): Promise<Recipe> {
   const recipe = await findRecipeOrFail(recipeId);
   const allowed =

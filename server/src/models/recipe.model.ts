@@ -33,6 +33,9 @@ export class Recipe extends Model<
   declare imageUrl: string | null;
   declare source: string | null;
   declare visibility: CreationOptional<RecipeVisibility>;
+  /** Agrégats des avis, tenus par `reviews.service`. */
+  declare avgRating: CreationOptional<string | null>;
+  declare reviewCount: CreationOptional<number>;
   declare createdAt: CreationOptional<Date>;
   declare updatedAt: CreationOptional<Date>;
 
@@ -58,6 +61,8 @@ Recipe.init(
       allowNull: false,
       defaultValue: 'private',
     },
+    avgRating: { type: DataTypes.DECIMAL(3, 2), allowNull: true },
+    reviewCount: { type: DataTypes.INTEGER, allowNull: false, defaultValue: 0 },
     createdAt: DataTypes.DATE,
     updatedAt: DataTypes.DATE,
   },

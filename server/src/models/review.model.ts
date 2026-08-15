@@ -4,8 +4,10 @@ import {
   InferAttributes,
   InferCreationAttributes,
   Model,
+  NonAttribute,
 } from 'sequelize';
 import { sequelize } from '../config/database';
+import type { User } from './user.model';
 
 /**
  * Avis public sur une recette (note 1–5 + texte optionnel).
@@ -22,6 +24,9 @@ export class Review extends Model<
   declare body: string | null;
   declare createdAt: CreationOptional<Date>;
   declare updatedAt: CreationOptional<Date>;
+
+  // Renseigné seulement quand la requête le charge via `include`.
+  declare author?: NonAttribute<User>;
 }
 
 Review.init(

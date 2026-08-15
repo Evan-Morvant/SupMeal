@@ -4,7 +4,8 @@ Conception **design-first** : ce contrat est défini **avant** l'implémentation
 Base URL : `/api/v1`. Échanges en JSON. Authentification par **JWT Bearer**
 (`Authorization: Bearer <access_token>`).
 
-La spec exécutable correspondante : [`openapi.yaml`](openapi.yaml) (Swagger UI).
+La spec exécutable correspondante : [`server/openapi.yaml`](../../server/openapi.yaml),
+servie par l'API sur `/api/v1/swagger` (Swagger UI).
 
 ---
 
@@ -145,6 +146,12 @@ Attachés à la recette, visibles partout où elle l'est. Un avis par utilisateu
 | DELETE | `/recipes/:id/reviews` | Supprimer son avis | ✅ | `authenticate` |
 
 \* lecture autorisée sans authentification si la recette est `public`.
+
+**Règles de gestion :**
+- **Un avis par couple (recette, utilisateur)** : le `PUT` dépose l'avis ou remplace le sien, d'où l'absence de `POST`. La note est obligatoire, le texte non.
+- **Le créateur ne note pas sa propre recette** (403) : sa voix pèserait sur une moyenne qui sert à départager les recettes.
+- `avg_rating` et `review_count` sont **portés par la recette**, rafraîchis à chaque écriture d'avis : la découverte trie par note, un `AVG` à la lecture imposerait un regroupement de toute la table `reviews`. `updated_at` reste intact, et `avgRating` vaut `null` sans avis — non notée n'est pas notée zéro.
+- La suppression ne repasse pas `requireRecipeAccess` : perdre l'accès à une recette ne doit pas y laisser un avis qu'on ne pourrait plus effacer.
 
 ## 5. Cookbooks — `/cookbooks`
 
