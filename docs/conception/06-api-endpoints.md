@@ -279,25 +279,37 @@ La recherche s'appuie sur un **index trigramme** (`pg_trgm`, GIN) posé par la m
 
 **Formats.** `json` est le format natif (le plus complet, à privilégier pour sauvegarder puis restaurer) ; `csv` ouvre l'export dans un tableur, une recette par ligne, les collections tenant dans une cellule à raison d'un élément par ligne ; `mealie` suit le schéma de recette de Mealie (schema.org : `recipeIngredient`, `recipeInstructions`, durées ISO 8601), pour l'interopérabilité.
 
-**Export.** Réponse en pièce jointe (`Content-Disposition: attachment`), nommée `supmeal-export-AAAA-MM-JJ.<ext>`. Le périmètre est celui de la lecture : ses propres recettes et celles des cookbooks dont on est membre. L'avertissement sur les données en clair figure dans le champ `warning` de l'export JSON et en tête du fichier CSV ; le client doit également l'afficher avant le téléchargement.
+**Export.** Réponse en pièce jointe (`Content-Disposition: attachment`), nommée `supmeal-export-AAAA-MM-JJ.<ext>`. Le périmètre est celui de la lecture : ses propres recettes et celles des cookbooks dont on est membre. L'avertissement exigé au cahier des charges figure dans le champ `warning` de l'export JSON et en tête du fichier CSV ; le client doit également l'afficher avant le téléchargement.
 
 **Trois périmètres, une seule enveloppe.** Les exports partiels produisent la même structure que l'export complet, réduite à leur périmètre — le fichier obtenu se réimporte donc par `/import` sans traitement particulier, quel que soit son périmètre d'origine.
 
-| Route | `recipes` | `cookbooks` | `preferences` | Nom du fichier |
-|---|---|---|---|---|
-| `/export` | tout ce qui est lisible | tous ceux dont on est membre | ✅ | `supmeal-export-AAAA-MM-JJ.<ext>` |
-| `/cookbooks/:id/export` | celles du cookbook | le cookbook visé | `null` | `supmeal-<nom-du-cookbook>-…` |
-| `/recipes/:id/export` | la recette visée | `[]` | `null` | `supmeal-<titre-recette>-…` |
+| Route | `recipes` | `cookbooks` | Nom du fichier |
+|---|---|---|---|
+| `/export` | tout ce qui est lisible | tous ceux dont on est membre | `supmeal-export-AAAA-MM-JJ.<ext>` |
+| `/cookbooks/:id/export` | celles du cookbook | le cookbook visé | `supmeal-<nom-du-cookbook>-…` |
+| `/recipes/:id/export` | la recette visée | `[]` | `supmeal-<titre-recette>-…` |
 
 Le périmètre d'accès s'applique dans tous les cas : `requireRecipeAccess` pour une recette, `requireRole(READER)` pour un cookbook (un non-membre reçoit 404, jamais 403). L'export d'un cookbook est ouvert au Lecteur, qui peut déjà tout y consulter.
 
-**Préférences culinaires.** Elles ne figurent que dans l'export **complet du compte**, seul export destiné à restaurer un compte. Un cookbook ou une recette relèvent du contenu, pas du profil : y joindre le régime et les allergies de l'exportateur reviendrait à les divulguer à qui reçoit le fichier. Elles ne survivent qu'au format natif — un CSV et un fichier Mealie ne décrivent que des recettes.
+**Aucune donnée personnelle dans l'export.** L'enveloppe ne porte ni l'identité de l'exportateur, ni ses préférences culinaires : un fichier d'export est fait pour être transmis, et y joindre une adresse ou un régime alimentaire reviendrait à les divulguer à qui le reçoit. Ce qui relève de la personne sort par `GET /users/me/data` (voir 9 bis). Un fichier d'une version antérieure qui porterait encore ces champs voit l'import les ignorer.
 
-**Import.** `multipart/form-data` : `file` (obligatoire), `format` (facultatif — déduit du contenu s'il est omis) et `withPreferences` (`'true'`/`'false'`, faux par défaut). L'importeur devient créateur de chaque recette importée, et celle-ci est créée **privée**, quelle que soit la visibilité d'origine : un aller-retour de fichier ne doit jamais publier quelque chose par accident. Une recette dont le titre est déjà possédé est ignorée (`skipped`), ce qui rend l'import idempotent. Une recette invalide n'interrompt pas le traitement : elle est consignée dans `errors` et les suivantes sont traitées.
+**Import.** `multipart/form-data` : `file` (obligatoire) et `format` (facultatif — déduit du contenu s'il est omis). L'importeur devient créateur de chaque recette importée, et celle-ci est créée **privée**, quelle que soit la visibilité d'origine : un aller-retour de fichier ne doit jamais publier quelque chose par accident. Une recette dont le titre est déjà possédé est ignorée (`skipped`), ce qui rend l'import idempotent. Une recette invalide n'interrompt pas le traitement : elle est consignée dans `errors` et les suivantes sont traitées.
 
-`withPreferences` conditionne la reprise des préférences culinaires du fichier, jamais implicite : importer des recettes ne doit pas écraser au passage son régime et ses allergies. Quand elle est demandée, la reprise est un remplacement intégral, comme sur `PUT /users/me/preferences`. Des préférences mal formées sont ignorées sans faire échouer l'import.
+Réponse `200` : `{ format, created, skipped, errors[] }`. Fichier illisible ou vide, ou plus de 500 recettes : `422`.
 
-Réponse `200` : `{ format, created, skipped, errors[], preferencesImported }`. Fichier illisible ou vide, ou plus de 500 recettes : `422`.
+## 9 bis. Données personnelles (portabilité) — `/users/me/data`
+
+| Méthode | Route | Description | Auth | Middlewares |
+|---|---|---|:---:|---|
+| GET | `/users/me/data` | Exporter ses données personnelles | ✅ | `authenticate` |
+
+Deux exports, deux objets distincts. `/export` produit du **contenu réimportable**, en trois formats et trois périmètres. `/users/me/data` décrit **une personne**, ne se réimporte pas, et n'existe qu'en JSON — le CSV ne saurait porter un ensemble aussi hétérogène, et le schéma Mealie ne décrit que des recettes.
+
+Contenu : profil, préférences culinaires, comptes OAuth2 liés, adhésions aux cookbooks, favoris, avis, commentaires, messages, planning, listes de courses. Les recettes n'y figurent **qu'en référence** (identifiant, titre, visibilité, date) : leur contenu s'obtient par `/export`, dont c'est la raison d'être, et le dupliquer imposerait un second chemin de sérialisation moins bon.
+
+**Deux règles tiennent le fichier :**
+- **Aucun secret** : ni hash de mot de passe, ni jeton d'aucune sorte. Le profil dit seulement `hasPassword`, l'existence d'un mot de passe local étant une donnée du compte, sa valeur non.
+- **Rien qui appartienne à autrui** : commentaires, messages et avis sont filtrés sur leur auteur, et un cookbook n'apparaît que par l'adhésion de l'intéressé, jamais par sa liste de membres. Un export de portabilité qui livrerait les propos des autres membres ferait le contraire de ce qu'on lui demande.
 
 ---
 

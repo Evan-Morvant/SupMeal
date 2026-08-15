@@ -7,6 +7,8 @@ import {
   NonAttribute,
 } from 'sequelize';
 import { sequelize } from '../config/database';
+import type { Cookbook } from './cookbook.model';
+import type { Recipe } from './recipe.model';
 import type { User } from './user.model';
 
 /** Commentaire sur une recette, **privé au cookbook** (`cookbookId`)*/
@@ -23,6 +25,8 @@ export class Comment extends Model<
   declare updatedAt: CreationOptional<Date>;
 
   declare author?: NonAttribute<User>;
+  declare recipe?: NonAttribute<Recipe>;
+  declare cookbook?: NonAttribute<Cookbook>;
 }
 
 Comment.init(

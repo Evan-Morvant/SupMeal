@@ -7,6 +7,7 @@ import {
   NonAttribute,
 } from 'sequelize';
 import { sequelize } from '../config/database';
+import type { Cookbook } from './cookbook.model';
 import type { ShoppingListItem } from './shopping-list-item.model';
 
 /**
@@ -25,6 +26,7 @@ export class ShoppingList extends Model<
   declare createdAt: CreationOptional<Date>;
 
   declare items?: NonAttribute<ShoppingListItem[]>;
+  declare cookbook?: NonAttribute<Cookbook>;
 }
 
 ShoppingList.init(

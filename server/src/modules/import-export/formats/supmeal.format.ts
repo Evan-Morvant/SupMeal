@@ -1,4 +1,3 @@
-import { preferencesSchema, type PreferencesInput } from '../../users/users.schemas';
 import {
   EXPORT_WARNING,
   type ExportPayload,
@@ -52,19 +51,6 @@ function readIngredient(raw: unknown): IngredientView | null {
   };
 }
 
-/**
- * Préférences culinaires du fichier. Des préférences mal formées ne sont pas
- * une raison de refuser l'import : elles sont simplement ignorées, les
- * recettes restant le contenu principal du fichier.
- */
-function readPreferences(document: unknown): PreferencesInput | null {
-  if (!isRecord(document) || !isRecord(document.preferences)) {
-    return null;
-  }
-  const parsed = preferencesSchema.safeParse(document.preferences);
-  return parsed.success ? parsed.data : null;
-}
-
 function toRecipeView(raw: Record<string, unknown>): RecipeView {
   return {
     // Une recette sans titre sera refusée par le schéma de création, qui
@@ -93,8 +79,6 @@ export const supmealFormat: RecipeFormat = {
         version: FORMAT_VERSION,
         warning: EXPORT_WARNING,
         exportedAt: payload.exportedAt,
-        owner: payload.owner,
-        preferences: payload.preferences,
         cookbooks: payload.cookbooks,
         recipes: payload.recipes,
       },
@@ -104,10 +88,6 @@ export const supmealFormat: RecipeFormat = {
   },
 
   parse(text: string): ParsedFile {
-    const document = parseJsonDocument(text);
-    return {
-      recipes: readRecipeList(document).map(toRecipeView),
-      preferences: readPreferences(document),
-    };
+    return { recipes: readRecipeList(parseJsonDocument(text)).map(toRecipeView) };
   },
 };

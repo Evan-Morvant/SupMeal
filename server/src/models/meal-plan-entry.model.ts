@@ -7,6 +7,7 @@ import {
   NonAttribute,
 } from 'sequelize';
 import { sequelize } from '../config/database';
+import type { Cookbook } from './cookbook.model';
 import type { Recipe } from './recipe.model';
 import type { User } from './user.model';
 
@@ -30,6 +31,7 @@ export class MealPlanEntry extends Model<
 
   declare recipe?: NonAttribute<Recipe>;
   declare user?: NonAttribute<User>;
+  declare cookbook?: NonAttribute<Cookbook>;
 }
 
 MealPlanEntry.init(

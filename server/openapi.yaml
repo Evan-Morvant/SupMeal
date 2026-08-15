@@ -180,6 +180,28 @@ paths:
       responses:
         '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/UserPreferences' } } } }
         '400': { $ref: '#/components/responses/ValidationError' }
+  /users/me/data:
+    get:
+      tags: [Users]
+      summary: Exporter ses données personnelles (portabilité)
+      description: >
+        Distinct de `/export`, qui produit du contenu réimportable : ce fichier
+        décrit la personne et ne se réimporte pas. JSON seul. Il ne contient
+        aucun secret (ni hash de mot de passe, ni jeton) et rien qui appartienne
+        à autrui : commentaires, messages et avis sont ceux de l'utilisateur,
+        les cookbooks n'y figurent que par sa propre adhésion. Les recettes y
+        sont listées en référence, leur contenu s'obtenant par `/export`.
+      responses:
+        '200':
+          description: Fichier de données personnelles
+          headers:
+            Content-Disposition:
+              description: 'attachment; filename="supmeal-donnees-AAAA-MM-JJ.json"'
+              schema: { type: string }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/PersonalDataFile' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
   /users/me/oauth:
     get:
       tags: [Users]
@@ -217,7 +239,7 @@ paths:
       responses:
         '204': { description: Délié }
         '404': { $ref: '#/components/responses/NotFound' }
-        '409': { description: Dernier moyen de connexion, déliaison refusée }
+        '409': { description: "Dernier moyen de connexion, déliaison refusée" }
 
   # ----------------------------- Recipes -----------------------------
   /recipes:
@@ -1074,14 +1096,6 @@ paths:
                   description: Déduit du contenu du fichier s'il est omis.
                   type: string
                   enum: [json, csv, mealie]
-                withPreferences:
-                  description: >
-                    Reprendre les préférences culinaires du fichier, en remplacement
-                    intégral de celles du compte. Jamais implicite : importer des
-                    recettes ne doit pas écraser au passage son régime et ses allergies.
-                  type: string
-                  enum: ['true', 'false']
-                  default: 'false'
       responses:
         '200':
           description: Rapport d'import
@@ -1094,9 +1108,8 @@ paths:
                   created: { type: integer }
                   skipped: { type: integer }
                   errors: { type: array, items: { type: string } }
-                  preferencesImported: { type: boolean }
         '400': { description: Fichier absent ou type non accepté }
-        '422': { description: Fichier mal formé, vide ou de plus de 500 recettes }
+        '422': { description: "Fichier mal formé, vide ou de plus de 500 recettes" }
 
 components:
   securitySchemes:
@@ -1304,7 +1317,7 @@ components:
         - $ref: '#/components/schemas/Invitation'
         - type: object
           properties:
-            token: { type: string, description: Token en clair, transmis une seule fois }
+            token: { type: string, description: "Token en clair, transmis une seule fois" }
             acceptUrl: { type: string, description: Lien d'acceptation à transmettre à l'invité }
     Comment:
       type: object
@@ -1418,6 +1431,119 @@ components:
               unit: { type: string, nullable: true }
               note: { type: string, nullable: true }
         steps: { type: array, items: { type: string } }
+    PersonalDataFile:
+      description: >
+        Données personnelles, pour la portabilité. Chaque collection ne porte que
+        ce que l'utilisateur a produit lui-même.
+      type: object
+      properties:
+        exportedAt: { type: string, format: date-time }
+        warning: { type: string }
+        profile:
+          type: object
+          properties:
+            email: { type: string, format: email }
+            displayName: { type: string }
+            avatarUrl: { type: string, nullable: true }
+            hasPassword:
+              description: Existence d'un mot de passe local ; sa valeur ne sort jamais.
+              type: boolean
+            createdAt: { type: string, format: date-time }
+        preferences: { $ref: '#/components/schemas/UserPreferences' }
+        oauthAccounts:
+          type: array
+          items:
+            type: object
+            properties:
+              provider: { type: string, enum: [google, github, microsoft] }
+              providerUserId: { type: string }
+              linkedAt: { type: string, format: date-time }
+        cookbookMemberships:
+          type: array
+          items:
+            type: object
+            properties:
+              cookbook: { type: string, nullable: true }
+              role: { $ref: '#/components/schemas/Role' }
+              joinedAt: { type: string, format: date-time }
+        recipes:
+          type: object
+          properties:
+            note:
+              description: Renvoi vers `/export`, seul à produire les recettes en entier.
+              type: string
+            items:
+              type: array
+              items:
+                type: object
+                properties:
+                  id: { type: string, format: uuid }
+                  title: { type: string }
+                  visibility: { type: string, enum: [private, public] }
+                  createdAt: { type: string, format: date-time }
+        favorites:
+          type: array
+          items:
+            type: object
+            properties:
+              recipe: { type: string, nullable: true }
+              addedAt: { type: string, format: date-time }
+        reviews:
+          type: array
+          items:
+            type: object
+            properties:
+              recipe: { type: string, nullable: true }
+              rating: { type: integer }
+              body: { type: string, nullable: true }
+              createdAt: { type: string, format: date-time }
+              updatedAt: { type: string, format: date-time }
+        comments:
+          type: array
+          items:
+            type: object
+            properties:
+              cookbook: { type: string, nullable: true }
+              recipe: { type: string, nullable: true }
+              content: { type: string }
+              createdAt: { type: string, format: date-time }
+        messages:
+          type: array
+          items:
+            type: object
+            properties:
+              cookbook: { type: string, nullable: true }
+              content: { type: string }
+              createdAt: { type: string, format: date-time }
+        mealPlan:
+          type: array
+          items:
+            type: object
+            properties:
+              date: { type: string, format: date }
+              mealType: { type: string }
+              recipe: { type: string, nullable: true }
+              servings: { type: integer, nullable: true }
+              cookbook: { type: string, nullable: true }
+        shoppingLists:
+          type: array
+          items:
+            type: object
+            properties:
+              name: { type: string }
+              cookbook: { type: string, nullable: true }
+              fromDate: { type: string, format: date, nullable: true }
+              toDate: { type: string, format: date, nullable: true }
+              createdAt: { type: string, format: date-time }
+              items:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    ingredient: { type: string, nullable: true }
+                    quantity: { type: number, nullable: true }
+                    unit: { type: string, nullable: true }
+                    checked: { type: boolean }
     ExportFile:
       description: Fichier d'export au format natif SUPMEAL.
       type: object
@@ -1425,21 +1551,9 @@ components:
         format: { type: string, enum: [supmeal] }
         version: { type: integer }
         warning:
-          description: Avertissement sur les données personnelles en clair.
+          description: Avertissement sur l'absence de chiffrement du fichier.
           type: string
         exportedAt: { type: string, format: date-time }
-        owner:
-          type: object
-          properties:
-            email: { type: string, format: email }
-            displayName: { type: string }
-        preferences:
-          description: >
-            Préférences culinaires : renseignées dans l'export complet du compte,
-            nulles dans l'export d'un cookbook ou d'une recette, qui relèvent du
-            contenu et non du profil.
-          nullable: true
-          allOf: [ { $ref: '#/components/schemas/UserPreferences' } ]
         cookbooks:
           type: array
           items:

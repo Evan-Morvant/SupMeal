@@ -39,7 +39,7 @@ export async function exportData(req: Request, res: Response): Promise<void> {
 export async function exportRecipe(req: Request, res: Response): Promise<void> {
   const { format } = req.query as unknown as ExportQuery;
   const recipe = req.recipe!;
-  const payload = await buildRecipeExportPayload(req.user!.id, recipe);
+  const payload = buildRecipeExportPayload(recipe);
 
   // Un titre fait de ponctuation ne donnerait pas de nom de fichier utilisable.
   sendExport(res, getFormat(format), payload, slugify(recipe.title) || 'recette');
@@ -56,9 +56,9 @@ export async function exportCookbook(req: Request, res: Response): Promise<void>
 
 export async function importData(req: Request, res: Response): Promise<void> {
   const text = stripBom(req.file!.buffer.toString('utf8'));
-  const { format, withPreferences } = req.body as ImportBody;
+  const { format } = req.body as ImportBody;
   const recipeFormat = format === undefined ? detectFormat(text) : getFormat(format);
 
-  const report = await importFile(req.user!.id, recipeFormat.parse(text), withPreferences);
+  const report = await importFile(req.user!.id, recipeFormat.parse(text));
   res.json({ format: recipeFormat.id, ...report });
 }

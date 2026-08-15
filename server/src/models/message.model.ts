@@ -7,6 +7,7 @@ import {
   NonAttribute,
 } from 'sequelize';
 import { sequelize } from '../config/database';
+import type { Cookbook } from './cookbook.model';
 import type { User } from './user.model';
 
 /** Message de la messagerie temps réel d'un cookbook. */
@@ -21,6 +22,7 @@ export class Message extends Model<
   declare createdAt: CreationOptional<Date>;
 
   declare author?: NonAttribute<User>;
+  declare cookbook?: NonAttribute<Cookbook>;
 }
 
 Message.init(

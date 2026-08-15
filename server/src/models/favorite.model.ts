@@ -4,8 +4,10 @@ import {
   InferAttributes,
   InferCreationAttributes,
   Model,
+  NonAttribute,
 } from 'sequelize';
 import { sequelize } from '../config/database';
+import type { Recipe } from './recipe.model';
 
 /** Mise en favori d'une recette par un utilisateur. */
 export class Favorite extends Model<
@@ -16,6 +18,8 @@ export class Favorite extends Model<
   declare userId: string;
   declare recipeId: string;
   declare createdAt: CreationOptional<Date>;
+
+  declare recipe?: NonAttribute<Recipe>;
 }
 
 Favorite.init(

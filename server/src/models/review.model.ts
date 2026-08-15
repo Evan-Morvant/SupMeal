@@ -7,6 +7,7 @@ import {
   NonAttribute,
 } from 'sequelize';
 import { sequelize } from '../config/database';
+import type { Recipe } from './recipe.model';
 import type { User } from './user.model';
 
 /**
@@ -27,6 +28,7 @@ export class Review extends Model<
 
   // Renseigné seulement quand la requête le charge via `include`.
   declare author?: NonAttribute<User>;
+  declare recipe?: NonAttribute<Recipe>;
 }
 
 Review.init(

@@ -194,11 +194,7 @@ export const mealieFormat: RecipeFormat = {
     return JSON.stringify(payload.recipes.map(toMealieRecipe), null, 2);
   },
 
-  // Le schéma de Mealie ne décrit que des recettes : pas de préférences.
   parse(text: string): ParsedFile {
-    return {
-      recipes: readRecipeList(parseJsonDocument(text)).map(toRecipeView),
-      preferences: null,
-    };
+    return { recipes: readRecipeList(parseJsonDocument(text)).map(toRecipeView) };
   },
 };

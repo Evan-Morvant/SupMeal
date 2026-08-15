@@ -2,7 +2,6 @@ import { ZodError } from 'zod';
 import { AppError } from '../../common/app-error';
 import { createRecipeSchema } from '../recipes/recipes.schemas';
 import { createRecipe, findOwnedTitles } from '../recipes/recipes.service';
-import { replacePreferences } from '../users/users.service';
 import { malformedFile } from './formats/values';
 import type { ParsedFile, RecipeView } from './import-export.types';
 
@@ -28,8 +27,6 @@ export interface ImportReport {
   created: number;
   skipped: number;
   errors: string[];
-  /** Vrai si les préférences du fichier ont remplacé celles du compte. */
-  preferencesImported: boolean;
 }
 
 /** Message d'erreur nommant la recette fautive et les champs en cause. */
@@ -42,26 +39,9 @@ function describeFailure(index: number, title: string, error: ZodError): string 
   return 'Recette ' + (index + 1) + ' (' + name + ') : champs invalides - ' + fields;
 }
 
-/**
- * Import du contenu d'un fichier.
- *
- * `withPreferences` conditionne la reprise des préférences culinaires, qui
- * n'est jamais implicite : l'utilisateur qui importe des recettes ne s'attend
- * pas à voir son régime et ses allergies écrasés au passage. Le remplacement
- * est intégral quand il est demandé, comme sur `PUT /users/me/preferences`.
- */
-export async function importFile(
-  userId: string,
-  file: ParsedFile,
-  withPreferences: boolean,
-): Promise<ImportReport> {
-  const report = await importRecipes(userId, file.recipes);
-
-  if (withPreferences && file.preferences !== null) {
-    await replacePreferences(userId, file.preferences);
-    report.preferencesImported = true;
-  }
-  return report;
+/** Import du contenu d'un fichier. */
+export function importFile(userId: string, file: ParsedFile): Promise<ImportReport> {
+  return importRecipes(userId, file.recipes);
 }
 
 async function importRecipes(userId: string, recipes: RecipeView[]): Promise<ImportReport> {
@@ -76,12 +56,7 @@ async function importRecipes(userId: string, recipes: RecipeView[]): Promise<Imp
     );
   }
 
-  const report: ImportReport = {
-    created: 0,
-    skipped: 0,
-    errors: [],
-    preferencesImported: false,
-  };
+  const report: ImportReport = { created: 0, skipped: 0, errors: [] };
   const addError = (message: string): void => {
     if (report.errors.length < MAX_REPORTED_ERRORS) {
       report.errors.push(message);

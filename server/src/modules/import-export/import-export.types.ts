@@ -11,8 +11,6 @@
  * réponse HTTP a gagné un champ.
  */
 
-import type { PreferencesInput } from '../users/users.schemas';
-
 /** Ligne d'ingrédient, telle qu'attendue par le schéma de création de recette. */
 export interface IngredientView {
   name: string;
@@ -44,26 +42,17 @@ export interface CookbookView {
 /**
  * Ensemble des données à exporter, avant mise en forme par un format.
  *
- * Les préférences culinaires ne figurent que dans l'export complet du compte :
- * un cookbook ou une recette isolée relèvent du contenu, pas du profil, et y
- * joindre le régime ou les allergies de l'exportateur reviendrait à les
- * divulguer à qui reçoit le fichier.
+ * Du contenu, et rien d'autre : ni identité de l'exportateur, ni profil.
  */
 export interface ExportPayload {
   exportedAt: string;
-  owner: { email: string; displayName: string };
-  preferences: PreferencesInput | null;
   recipes: RecipeView[];
   cookbooks: CookbookView[];
 }
 
-/**
- * Contenu exploitable d'un fichier importé. Les préférences n'existent que
- * dans le format natif ; les autres les rapportent à `null`.
- */
+/** Contenu exploitable d'un fichier importé. */
 export interface ParsedFile {
   recipes: RecipeView[];
-  preferences: PreferencesInput | null;
 }
 
 export const FORMAT_IDS = ['json', 'csv', 'mealie'] as const;
@@ -83,10 +72,6 @@ export interface RecipeFormat {
   parse(text: string): ParsedFile;
 }
 
-/**
- * Avertissement exigé au cahier des charges : l'export contient les données
- * personnelles en clair.
- */
+/** Avertissement exigé au cahier des charges : le fichier n'est pas chiffré. */
 export const EXPORT_WARNING =
-  'Ce fichier contient vos données personnelles en clair. Conservez-le en lieu sûr et ' +
-  'ne le partagez pas.';
+  'Ce fichier contient vos recettes et vos cookbooks en clair, sans chiffrement.';

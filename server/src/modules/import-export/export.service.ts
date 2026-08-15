@@ -1,13 +1,11 @@
 import { Op } from 'sequelize';
-import { Cookbook, CookbookMembership, CookbookRecipe, Recipe, User } from '../../models';
-import { AppError } from '../../common/app-error';
-import { serializeUserPreferences } from '../../common/serialize';
+import { Cookbook, CookbookMembership, CookbookRecipe, Recipe } from '../../models';
 import { listAccessibleRecipesInFull } from '../recipes/recipes.service';
-import { getPreferences } from '../users/users.service';
 import type { CookbookView, ExportPayload, RecipeView } from './import-export.types';
 
 /**
- * Collecte des données exportables d'un utilisateur.
+ * Collecte du contenu exportable d'un utilisateur : ses recettes et ses
+ * cookbooks. Les données de la personne relèvent de `/users/me/data`.
  *
  * Le périmètre est celui de la lecture : ses propres recettes et celles des
  * cookbooks dont il est membre, exactement ce que `/recipes` lui montre. Un
@@ -85,53 +83,31 @@ async function listCookbookViews(
   }));
 }
 
-/** Identité de l'auteur de l'export, rappelée en tête de fichier. */
-async function findOwner(userId: string): Promise<ExportPayload['owner']> {
-  const user = await User.findByPk(userId);
-  if (user === null) {
-    throw new AppError(404, 'USER_NOT_FOUND', 'Utilisateur introuvable');
-  }
-  return { email: user.email, displayName: user.displayName };
-}
-
-/**
- * Export complet du compte : c'est le seul à porter les préférences
- * culinaires, puisque c'est le seul destiné à restaurer un compte.
- */
+/** Export de tout ce que l'utilisateur peut lire : ses recettes et ses cookbooks. */
 export async function buildExportPayload(userId: string): Promise<ExportPayload> {
-  const owner = await findOwner(userId);
-  const preferences = await getPreferences(userId);
   const recipes = await listAccessibleRecipesInFull(userId);
   const titlesById = new Map(recipes.map((recipe) => [recipe.id, recipe.title]));
 
   return {
     exportedAt: new Date().toISOString(),
-    owner,
-    preferences: serializeUserPreferences(preferences),
     recipes: recipes.map(toRecipeView),
     cookbooks: await listCookbookViews(userId, titlesById),
   };
 }
 
 /**
- * Export d'un cookbook : les recettes qu'il contient et sa composition, sans
- * les préférences de l'exportateur — on partage un livre de recettes, pas un
- * profil.
- *
- * Le périmètre d'accès continue de s'appliquer aux recettes : un membre
- * n'exporte que ce qu'il pourrait déjà lire.
+ * Export d'un cookbook : les recettes qu'il contient et sa composition. Le
+ * périmètre d'accès continue de s'appliquer aux recettes, un membre n'exporte
+ * que ce qu'il pourrait déjà lire.
  */
 export async function buildCookbookExportPayload(
   userId: string,
   cookbook: Cookbook,
 ): Promise<ExportPayload> {
-  const owner = await findOwner(userId);
   const recipes = await listAccessibleRecipesInFull(userId, cookbook.id);
 
   return {
     exportedAt: new Date().toISOString(),
-    owner,
-    preferences: null,
     recipes: recipes.map(toRecipeView),
     cookbooks: [
       {
@@ -150,14 +126,9 @@ export async function buildCookbookExportPayload(
  * fichier obtenu se réimporte par le même chemin, sans traitement à part, et
  * les trois formats le produisent aussi bien.
  */
-export async function buildRecipeExportPayload(
-  userId: string,
-  recipe: Recipe,
-): Promise<ExportPayload> {
+export function buildRecipeExportPayload(recipe: Recipe): ExportPayload {
   return {
     exportedAt: new Date().toISOString(),
-    owner: await findOwner(userId),
-    preferences: null,
     recipes: [toRecipeView(recipe)],
     cookbooks: [],
   };

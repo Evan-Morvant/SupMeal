@@ -152,7 +152,6 @@ export const csvFormat: RecipeFormat = {
           .filter(isNotNull),
         steps: splitCell(cellAt(cells, 'steps')),
       })),
-      preferences: null,
     };
   },
 };
