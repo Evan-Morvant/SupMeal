@@ -115,8 +115,18 @@ Navigation publique des recettes `visibility = public`. Lecture sans authentific
 
 | Méthode | Route | Description | Auth | Middlewares |
 |---|---|---|:---:|---|
-| GET | `/discover/recipes` | Lister/rechercher les recettes publiques (filtres + tri par note) | ❌ | `validate` |
-| GET | `/discover/recipes/:id` | Détail public d'une recette `public` (+ avis) | ❌ | — |
+| GET | `/discover/recipes` | Lister/rechercher les recettes publiques (`q`, `tags`, tri) | ❌ | `authenticateOptional`, `validate` |
+| GET | `/discover/recipes/:id` | Détail public d'une recette `public` | ❌ | `authenticateOptional` |
+
+**Règles de gestion :**
+- **Le périmètre est la seule différence avec `/recipes`** : `visibility = 'public'` remplace le périmètre du compte, et les filtres de contenu (plein texte, tags, temps) sont les mêmes fonctions, partagées dans `recipes.filters.ts`.
+- **`cookbookId` et `favorite` en sont absents** : ils désignent le périmètre d'un compte, qu'un visiteur n'a pas. Le tri accepte `relevance`, `rating` et `recent` — `prepTime` reste à la liste personnelle.
+- **Tri `rating`** : `avg_rating DESC NULLS LAST`, servi par l'index partiel `recipes_rating_idx` posé sur les seules recettes publiques.
+- **`authenticateOptional`** : un jeton est accepté sans être exigé. Il renseigne alors `isFavorite`, sans jamais élargir le périmètre — le créateur d'une recette privée ne la voit pas non plus dans la découverte, il la lit par `/recipes`.
+- **Le détail répond 404 sur une recette non publique**, jamais 403. La route est anonyme et adressable par n'importe quel identifiant : un 403 confirmerait l'existence de la recette à qui la cherche, et les identifiants fuient légitimement (l'export de `/users/me/data` liste les siens).
+- Réponse de la liste : l'enveloppe paginée `{ items, total, page, pageSize }`, la même que `/recipes` — sans `total`, le client ne peut pas construire sa pagination.
+
+> **Page d'accueil.** `/discover?sort=rating` alimente l'accueil d'un visiteur. Un utilisateur connecté reçoit `GET /recipes/suggestions` (scoré, avec motifs) ; si la liste revient vide — compte neuf, sans recette ni cookbook — le client se rabat sur `/discover`. Choisir laquelle afficher relève de la composition d'affichage, pas de la logique métier.
 
 ## 4. Commentaires (conseils, **privés au cookbook**)
 

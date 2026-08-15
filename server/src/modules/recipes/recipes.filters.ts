@@ -1,7 +1,7 @@
 import { Op, Order, WhereOptions, literal } from 'sequelize';
 import { sequelize } from '../../models';
 import { ROLE_LEVEL } from '../../middlewares/require-role';
-import type { ListRecipesQuery } from './recipes.schemas';
+import type { DiscoverRecipesQuery, ListRecipesQuery, RecipeFilters } from './recipes.schemas';
 
 /**
  * Construction des conditions SQL de recherche.
@@ -125,15 +125,20 @@ function maxMinutesCondition(column: 'prep_time_min' | 'cook_time_min', minutes:
   return literal(`"Recipe"."${column}" IS NOT NULL AND "Recipe"."${column}" <= ${quote(minutes)}`);
 }
 
-/** Assemble le `WHERE` complet à partir du périmètre et des filtres demandés. */
-export function buildRecipeWhere(userId: string, query: ListRecipesQuery): WhereOptions {
-  const conditions = [accessibleRecipesCondition(userId)];
+/** Recettes ouvertes à tous, périmètre de `/discover`. */
+export function publicRecipesCondition() {
+  return literal(`"Recipe"."visibility" = 'public'`);
+}
+
+/**
+ * Filtres portant sur le contenu de la recette. Ils ne dépendent d'aucun
+ * périmètre, et servent donc aussi bien la liste personnelle que la découverte.
+ */
+function contentConditions(query: RecipeFilters) {
+  const conditions = [];
 
   if (query.q) {
     conditions.push(fullTextCondition(query.q));
-  }
-  if (query.cookbookId) {
-    conditions.push(inCookbookCondition(query.cookbookId));
   }
   if (query.tags?.length) {
     conditions.push(allTagsCondition(query.tags));
@@ -147,6 +152,17 @@ export function buildRecipeWhere(userId: string, query: ListRecipesQuery): Where
   if (query.maxCook !== undefined) {
     conditions.push(maxMinutesCondition('cook_time_min', query.maxCook));
   }
+
+  return conditions;
+}
+
+/** Assemble le `WHERE` complet à partir du périmètre et des filtres demandés. */
+export function buildRecipeWhere(userId: string, query: ListRecipesQuery): WhereOptions {
+  const conditions = [accessibleRecipesCondition(userId), ...contentConditions(query)];
+
+  if (query.cookbookId) {
+    conditions.push(inCookbookCondition(query.cookbookId));
+  }
   if (query.favorite) {
     conditions.push(isFavoriteCondition(userId));
   }
@@ -155,10 +171,19 @@ export function buildRecipeWhere(userId: string, query: ListRecipesQuery): Where
 }
 
 /**
+ * Même chose pour la découverte. `cookbookId` et `favorite` en sont absents :
+ * ils désignent le périmètre d'un compte, qu'un visiteur n'a pas.
+ */
+export function buildPublicRecipeWhere(query: DiscoverRecipesQuery): WhereOptions {
+  return { [Op.and]: [publicRecipesCondition(), ...contentConditions(query)] };
+}
+
+/**
  * Tri. La pertinence n'a de sens qu'avec une recherche plein texte : sans `q`,
  * `ts_rank` vaudrait zéro partout, on retombe donc sur les plus récentes.
+ * Chaque périmètre restreint les valeurs qu'il accepte dans son schéma.
  */
-export function buildRecipeOrder(query: ListRecipesQuery): Order {
+export function buildRecipeOrder(query: RecipeFilters): Order {
   const sort = query.sort ?? (query.q ? 'relevance' : 'recent');
 
   if (sort === 'relevance' && query.q) {
@@ -173,6 +198,10 @@ export function buildRecipeOrder(query: ListRecipesQuery): Order {
   }
   if (sort === 'prepTime') {
     return [[literal('"Recipe"."prep_time_min" ASC NULLS LAST')], ['createdAt', 'DESC']] as Order;
+  }
+  if (sort === 'rating') {
+    // Sert l'index partiel `recipes_rating_idx`, posé sur les seules publiques.
+    return [[literal('"Recipe"."avg_rating" DESC NULLS LAST')], ['createdAt', 'DESC']] as Order;
   }
   return [['createdAt', 'DESC']];
 }

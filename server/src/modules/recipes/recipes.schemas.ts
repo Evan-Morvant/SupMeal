@@ -80,7 +80,36 @@ export const listRecipesSchema = z.object({
   ...recipeFilterFields,
 });
 
+/**
+ * Critères de découverte. Ni `cookbookId` ni `favorite` : ils désignent le
+ * périmètre d'un compte, qu'un visiteur n'a pas. Le tri par note remplace le
+ * tri par temps de préparation.
+ */
+export const discoverRecipesSchema = z.object({
+  q: recipeFilterFields.q,
+  tags: recipeFilterFields.tags,
+  sort: z.enum(['relevance', 'rating', 'recent']).optional(),
+  page: recipeFilterFields.page,
+  pageSize: recipeFilterFields.pageSize,
+});
+
+/**
+ * Ce que les constructeurs de requête SQL lisent réellement, indépendamment du
+ * périmètre : chaque schéma en restreint les valeurs à ce qu'il accepte.
+ */
+export interface RecipeFilters {
+  q?: string;
+  tags?: string[];
+  ingredients?: string[];
+  maxPrep?: number;
+  maxCook?: number;
+  sort?: 'relevance' | 'recent' | 'prepTime' | 'rating';
+  page: number;
+  pageSize: number;
+}
+
 export type IngredientLineInput = z.infer<typeof ingredientLineSchema>;
 export type CreateRecipeInput = z.infer<typeof createRecipeSchema>;
 export type UpdateRecipeInput = z.infer<typeof updateRecipeSchema>;
 export type ListRecipesQuery = z.infer<typeof listRecipesSchema>;
+export type DiscoverRecipesQuery = z.infer<typeof discoverRecipesSchema>;

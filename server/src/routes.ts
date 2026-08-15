@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import { discoverRouter } from './modules/discover/discover.routes';
 import { docsRouter } from './modules/docs/docs.routes';
 import { healthRouter } from './modules/health/health.routes';
 import { authRouter } from './modules/auth/auth.routes';
@@ -23,6 +24,7 @@ router.use('/health', healthRouter);
 router.use('/swagger', docsRouter);
 router.use('/auth', authRouter);
 router.use('/users', usersRouter);
+router.use('/discover', discoverRouter);
 router.use('/recipes', recipesRouter);
 router.use('/cookbooks', cookbooksRouter);
 router.use('/invitations', invitationsRouter);

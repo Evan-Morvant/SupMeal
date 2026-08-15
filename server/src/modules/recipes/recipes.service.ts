@@ -1,5 +1,5 @@
 import fs from 'fs/promises';
-import { Op, Transaction, col, fn, where as sqlWhere } from 'sequelize';
+import { Op, Transaction, WhereOptions, col, fn, where as sqlWhere } from 'sequelize';
 import {
   CookbookRecipe,
   Favorite,
@@ -15,6 +15,7 @@ import { AppError } from '../../common/app-error';
 import { recipeImageDiskPath, recipeImagePath } from '../../common/uploads';
 import {
   accessibleRecipesCondition,
+  buildPublicRecipeWhere,
   buildRecipeOrder,
   buildRecipeWhere,
   editableRecipesCondition,
@@ -22,8 +23,10 @@ import {
 } from './recipes.filters';
 import type {
   CreateRecipeInput,
+  DiscoverRecipesQuery,
   IngredientLineInput,
   ListRecipesQuery,
+  RecipeFilters,
   UpdateRecipeInput,
 } from './recipes.schemas';
 
@@ -445,12 +448,14 @@ export interface RecipePageWithFavorites extends RecipePage {
 }
 
 /**
- * Recherche paginée dans les recettes accessibles à l'utilisateur.
+ * Recherche paginée sur un périmètre donné. Le `where` est fourni par
+ * l'appelant : c'est la seule chose qui distingue la liste personnelle de la
+ * découverte publique.
  */
-export async function searchRecipes(userId: string, query: ListRecipesQuery): Promise<RecipePage> {
+async function searchIn(where: WhereOptions, query: RecipeFilters): Promise<RecipePage> {
   const { page, pageSize } = query;
   const { rows, count } = await Recipe.findAndCountAll({
-    where: buildRecipeWhere(userId, query),
+    where,
     order: buildRecipeOrder(query),
     limit: pageSize,
     offset: (page - 1) * pageSize,
@@ -475,19 +480,40 @@ export async function searchRecipes(userId: string, query: ListRecipesQuery): Pr
   return { items, total: count, page, pageSize };
 }
 
+export function searchRecipes(userId: string, query: ListRecipesQuery): Promise<RecipePage> {
+  return searchIn(buildRecipeWhere(userId, query), query);
+}
+
+/** Recherche dans les recettes publiques, ouverte aux visiteurs. */
+export function searchPublicRecipes(query: DiscoverRecipesQuery): Promise<RecipePage> {
+  return searchIn(buildPublicRecipeWhere(query), query);
+}
+
 /**
- * Recherche destinée à l'affichage : la page et l'état « favori » de chacune de
- * ses entrées. Sert aussi bien la liste générale que la recherche interne d'un
- * cookbook, qui n'en diffère que par le filtre imposé.
+ * Page accompagnée de l'état « favori » de ses entrées. `userId` est facultatif :
+ * un visiteur anonyme n'a pas de favoris, la page lui revient telle quelle.
  */
-export async function searchRecipesForUser(
-  userId: string,
-  query: ListRecipesQuery,
+export async function withFavorites(
+  page: RecipePage,
+  userId?: string,
 ): Promise<RecipePageWithFavorites> {
-  const page = await searchRecipes(userId, query);
+  if (userId === undefined) {
+    return { ...page, favoriteIds: new Set<string>() };
+  }
   const favoriteIds = await findFavoriteRecipeIds(
     userId,
     page.items.map((recipe) => recipe.id),
   );
   return { ...page, favoriteIds };
+}
+
+/**
+ * Recherche destinée à l'affichage. Sert aussi bien la liste générale que la
+ * recherche interne d'un cookbook, qui n'en diffère que par le filtre imposé.
+ */
+export async function searchRecipesForUser(
+  userId: string,
+  query: ListRecipesQuery,
+): Promise<RecipePageWithFavorites> {
+  return withFavorites(await searchRecipes(userId, query), userId);
 }

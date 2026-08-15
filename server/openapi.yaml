@@ -293,13 +293,7 @@ paths:
           description: OK
           content:
             application/json:
-              schema:
-                type: object
-                properties:
-                  items: { type: array, items: { $ref: '#/components/schemas/Recipe' } }
-                  total: { type: integer }
-                  page: { type: integer }
-                  pageSize: { type: integer }
+              schema: { $ref: '#/components/schemas/RecipePage' }
     post:
       tags: [Recipes]
       summary: Créer une recette personnelle
@@ -554,10 +548,14 @@ paths:
     get:
       tags: [Discovery]
       summary: Rechercher les recettes publiques
+      description: >
+        Catalogue des recettes `public`, ouvert aux visiteurs. Un jeton reste
+        accepté : il renseigne alors `isFavorite`, sans élargir le périmètre.
+        Ni `cookbookId` ni `favorite` : ils désignent le périmètre d'un compte.
       security: []
       parameters:
         - { in: query, name: q, schema: { type: string } }
-        - { in: query, name: tags, schema: { type: string } }
+        - { in: query, name: tags, description: Liste séparée par des virgules., schema: { type: string } }
         - { in: query, name: sort, schema: { type: string, enum: [relevance, rating, recent] } }
         - { $ref: '#/components/parameters/Page' }
         - { $ref: '#/components/parameters/PageSize' }
@@ -566,12 +564,17 @@ paths:
           description: OK
           content:
             application/json:
-              schema: { type: array, items: { $ref: '#/components/schemas/Recipe' } }
+              schema: { $ref: '#/components/schemas/RecipePage' }
+        '400': { $ref: '#/components/responses/ValidationError' }
   /discover/recipes/{id}:
     parameters: [ { $ref: '#/components/parameters/Id' } ]
     get:
       tags: [Discovery]
       summary: Détail public d'une recette publique
+      description: >
+        Une recette non publique répond **404**, comme une recette inexistante :
+        la route est anonyme et adressable par n'importe quel identifiant, un 403
+        confirmerait son existence. Le créateur la consulte par `/recipes/{id}`.
       security: []
       responses:
         '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/Recipe' } } } }
@@ -1254,6 +1257,16 @@ components:
         isFavorite: { type: boolean }
         createdAt: { type: string, format: date-time }
         updatedAt: { type: string, format: date-time }
+    RecipePage:
+      description: >
+        Page de résultats de recherche, quel qu'en soit le périmètre. Les entrées
+        sont des résumés : tags compris, ingrédients et étapes exclus.
+      type: object
+      properties:
+        items: { type: array, items: { $ref: '#/components/schemas/Recipe' } }
+        total: { type: integer }
+        page: { type: integer }
+        pageSize: { type: integer }
     RecipeInput:
       type: object
       required: [title]
