@@ -97,12 +97,14 @@ La route est déclarée **avant** `/recipes/:id`, qui capterait sinon « suggest
 | `cookbookId` | uuid | Restreint à un cookbook. |
 | `tags` | csv | Filtre par tags/catégories, insensible à la casse. Valeurs cumulées en **ET**. |
 | `ingredients` | csv | Filtre par ingrédients, cumulés en **ET** (« qu'est-ce que je peux faire avec ce que j'ai »). |
-
-Les valeurs de `tags` et `ingredients` sont ramenées à leur forme de comparaison (casse et espaces neutralisés, comme à l'écriture) puis dédupliquées : `?tags=Dessert,dessert` vaut `?tags=dessert`, et non un ET impossible à satisfaire.
 | `maxPrep` / `maxCook` | int | Temps de préparation / cuisson max (min). Exclut les recettes sans temps renseigné. |
 | `favorite` | bool | Uniquement les favoris de l'utilisateur. |
 | `sort` | enum | `relevance` \| `recent` \| `prepTime`. Défaut : `relevance` si `q`, sinon `recent`. |
 | `page` / `pageSize` | int | Pagination (`page` ≤ 10 000, `pageSize` ≤ 100). |
+
+Les valeurs de `tags` et `ingredients` sont ramenées à leur forme de comparaison (casse et espaces neutralisés, comme à l'écriture) puis dédupliquées : `?tags=Dessert,dessert` vaut `?tags=dessert`, et non un ET impossible à satisfaire.
+
+**Périmètre du plein texte.** Le `search_vector` agrège le titre (poids A), la description (B) et les noms d'ingrédients (C), maintenu par trigger et servi par un index GIN. **Les étapes en sont volontairement exclues** : ce sont des instructions verbeuses et génériques — « mélanger », « ajouter », « laisser reposer » — dont l'indexation dégraderait la pertinence plus qu'elle n'élargirait le rappel. La description tient le rôle de résumé cherchable, et l'auteur maîtrise ce qu'il y écrit. Les tags, eux, ne sont pas dans le vecteur non plus : ils ont leur filtre dédié `?tags=`, exact et cumulable, plus précis qu'une correspondance floue en plein texte.
 
 > **Périmètre** : ses propres recettes et celles des cookbooks dont on est membre.
 > Les entrées renvoyées sont des résumés (tags oui, ingrédients et étapes non) ;
@@ -117,12 +119,13 @@ Navigation publique des recettes `visibility = public`. Lecture sans authentific
 
 | Méthode | Route | Description | Auth | Middlewares |
 |---|---|---|:---:|---|
-| GET | `/discover/recipes` | Lister/rechercher les recettes publiques (`q`, `tags`, tri) | ❌ | `authenticateOptional`, `validate` |
+| GET | `/discover/recipes` | Lister/rechercher les recettes publiques (`q`, `tags`, `maxPrep`, `maxCook`, tri) | ❌ | `authenticateOptional`, `validate` |
 | GET | `/discover/recipes/:id` | Détail public d'une recette `public` | ❌ | `authenticateOptional`, `validate` |
 
 **Règles de gestion :**
 - **Le périmètre est la seule différence avec `/recipes`** : `visibility = 'public'` remplace le périmètre du compte, et les filtres de contenu (plein texte, tags, temps) sont les mêmes fonctions, partagées dans `recipes.filters.ts`.
 - **`cookbookId` et `favorite` en sont absents** : ils désignent le périmètre d'un compte, qu'un visiteur n'a pas. Le tri accepte `relevance`, `rating` et `recent` — `prepTime` reste à la liste personnelle.
+- **`ingredients` en est absent aussi**, pour une autre raison : filtrer par ingrédient répond à « qu'est-ce que je peux faire avec ce que j'ai », question qui suppose un placard, donc un compte. `maxPrep` et `maxCook`, eux, sont ouverts au visiteur : « j'ai vingt minutes » se demande sans être inscrit.
 - **Tri `rating`** : `avg_rating DESC NULLS LAST`, servi par l'index partiel `recipes_rating_idx` posé sur les seules recettes publiques.
 - **`authenticateOptional`** : un jeton est accepté sans être exigé. Il renseigne alors `isFavorite`, sans jamais élargir le périmètre — le créateur d'une recette privée ne la voit pas non plus dans la découverte, il la lit par `/recipes`.
 - **Le détail répond 404 sur une recette non publique**, jamais 403. La route est anonyme et adressable par n'importe quel identifiant : un 403 confirmerait l'existence de la recette à qui la cherche, et les identifiants fuient légitimement (l'export de `/users/me/data` liste les siens).
@@ -270,9 +273,13 @@ Générer sur une période sans aucun repas planifié répond `422` plutôt que 
 | Méthode | Route | Description | Auth | Middlewares |
 |---|---|---|:---:|---|
 | GET | `/ingredients?q=&limit=` | Recherche d'ingrédients (autocomplétion) | ✅ | `authenticate`, `validate` |
-| GET | `/tags?type=` | Lister les tags par type | ✅ | `authenticate`, `validate` |
+| GET | `/tags?type=` | Lister les tags par type | ❌* | `authenticateOptional`, `validate` |
 
-**Un vocabulaire partagé, sans propriétaire.** Ingrédients et tags ne sont cloisonnés par aucun utilisateur : les restreindre à ce que l'utilisateur a déjà écrit viderait l'autocomplétion sur un compte neuf, précisément quand elle sert le plus. Ce sont des noms communs, pas des données personnelles. Les deux routes restent fermées à l'anonyme : c'est le vocabulaire de l'application, pas une page publique.
+**Un vocabulaire partagé, sans propriétaire.** Ingrédients et tags ne sont cloisonnés par aucun utilisateur : les restreindre à ce que l'utilisateur a déjà écrit viderait l'autocomplétion sur un compte neuf, précisément quand elle sert le plus.
+
+**`/ingredients` reste fermée à l'anonyme** : c'est le vocabulaire de l'application, pas une page publique, et la découverte n'expose aucun filtre par ingrédient — personne n'en a besoin sans compte.
+
+\* **`/tags` s'ouvre au visiteur, mais réduite.** Les filtres de la découverte ont besoin d'une liste de tags à proposer. Rendre la table entière ne convenait pas : un tag `custom` est de la saisie libre (50 caractères, aucune liste fermée) et naît aussi bien d'une recette privée que publique — « anniversaire de Marie » a autant sa place en base que « végétarien ». Un visiteur anonyme ne reçoit donc que les tags portés par **au moins une recette `public`** ; un utilisateur authentifié reçoit le vocabulaire entier. Le périmètre suit la visibilité des recettes : rendre une recette privée retire son tag de la liste publique s'il n'est porté par aucune autre.
 
 **Autocomplétion par fragment.** « olive » retrouve « huile d'olive » — un préfixe seul échouerait sur les noms composés. Les noms qui *commencent* par la saisie passent devant, le reste suit par ordre alphabétique. La casse est ignorée (les noms sont normalisés en minuscules à l'écriture) et les jokers `LIKE` sont neutralisés, sans quoi un `%` tapé dans le champ ferait remonter tout le catalogue. `limit` vaut 20 par défaut, 50 au maximum. Sans `q`, la route rend le début du catalogue par ordre alphabétique.
 
@@ -285,7 +292,7 @@ La recherche s'appuie sur un **index trigramme** (`pg_trgm`, GIN) posé par la m
 | Méthode | Route | Description | Auth | Middlewares |
 |---|---|---|:---:|---|
 | GET | `/export?format=json\|csv\|mealie` | Exporter toutes ses recettes & cookbooks (données en clair) | ✅ | `authenticate`, `validate` |
-| GET | `/recipes/:id/export?format=` | Exporter une seule recette | ✅ | `authenticate`, `requireRecipeAccess`, `validate` |
+| GET | `/recipes/:id/export?format=` | Exporter une seule recette | ✅ | `authenticate`, `validate`, `requireRecipeAccess` |
 | GET | `/cookbooks/:id/export?format=` | Exporter un cookbook et ses recettes | ✅ | `authenticate`, `loadMembership`, `requireRole(READER)`, `validate` |
 | POST | `/import` | Importer un fichier (importeur = créateur) | ✅ | `authenticate`, `upload`, `validate` |
 

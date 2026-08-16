@@ -123,8 +123,34 @@ async function run() {
   await call('GET', '/tags', { token: cuisinier.token, query: { type: 'inexistant' }, expect: 400 });
   check(true, 'un type inconnu est refusé en 400');
 
-  await call('GET', '/tags', { expect: 401 });
-  check(true, "la liste des tags est fermée à l'anonyme (401)");
+  section('Ce qu un visiteur voit');
+  // Un tag « custom » est de la saisie libre : celui qui ne vit que sur une
+  // recette privée ne doit pas se retrouver dans une liste publique.
+  const avantPublication = await call('GET', '/tags');
+  check(
+    !names(avantPublication).includes('Rapide ' + RUN),
+    "le tag d'une recette privée n'apparaît pas pour un visiteur anonyme",
+  );
+
+  const VITRINE = 'Vitrine ' + RUN;
+  await call('POST', '/recipes', {
+    token: cuisinier.token,
+    body: { title: 'Vitrine ' + RUN, tags: [VITRINE], visibility: 'public' },
+  });
+
+  const apresPublication = await call('GET', '/tags');
+  check(
+    names(apresPublication).includes(VITRINE),
+    'publier une recette rend son tag visible de tous',
+  );
+  check(
+    !names(apresPublication).includes('Rapide ' + RUN),
+    'tandis que celui de la recette privée reste invisible',
+  );
+  check(
+    names(await call('GET', '/tags', { token: cuisinier.token })).includes('Rapide ' + RUN),
+    'un utilisateur authentifié, lui, reçoit le vocabulaire entier',
+  );
 }
 
 main('Catalogue', run);

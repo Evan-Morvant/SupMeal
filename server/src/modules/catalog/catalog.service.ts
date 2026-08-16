@@ -50,10 +50,38 @@ export function searchIngredients(query: ListIngredientsQuery): Promise<Ingredie
   });
 }
 
-/** Tags du catalogue, groupés par type puis par ordre alphabétique. */
-export function listTags(query: ListTagsQuery): Promise<Tag[]> {
+/**
+ * Tags portés par au moins une recette publique.
+ *
+ * Un tag `custom` naît de la saisie libre d'un utilisateur, y compris sur une
+ * recette privée : rendre la table entière à un visiteur publierait ce
+ * vocabulaire-là. Ce filtre borne la réponse au vocabulaire du catalogue
+ * public, celui que la découverte permet déjà de parcourir.
+ */
+function onPublicRecipeCondition() {
+  return literal(`EXISTS (
+    SELECT 1
+    FROM recipe_tags rt
+    JOIN recipes r ON r.id = rt.recipe_id
+    WHERE rt.tag_id = "Tag"."id" AND r.visibility = 'public'
+  )`);
+}
+
+/**
+ * Tags du catalogue, groupés par type puis par ordre alphabétique. Un visiteur
+ * anonyme n'en voit que la part publique.
+ */
+export function listTags(query: ListTagsQuery, isAuthenticated: boolean): Promise<Tag[]> {
+  const conditions = [];
+  if (query.type !== undefined) {
+    conditions.push({ type: query.type });
+  }
+  if (!isAuthenticated) {
+    conditions.push(onPublicRecipeCondition());
+  }
+
   return Tag.findAll({
-    where: query.type === undefined ? undefined : { type: query.type },
+    where: conditions.length === 0 ? undefined : { [Op.and]: conditions },
     order: [
       ['type', 'ASC'],
       ['name', 'ASC'],

@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { authenticate } from '../../middlewares/authenticate';
+import { authenticate, authenticateOptional } from '../../middlewares/authenticate';
 import { validateQuery } from '../../middlewares/validate';
 import { asyncHandler } from '../../common/async-handler';
 import * as catalogController from './catalog.controller';
@@ -11,8 +11,10 @@ import { listIngredientsSchema, listTagsSchema } from './catalog.schemas';
  * nature — un vocabulaire partagé, alimenté par l'usage — les rassemble dans ce
  * module.
  *
- * Ni l'un ni l'autre n'est ouvert à l'anonyme : c'est le vocabulaire de
- * l'application, pas une page publique.
+ * Les ingrédients restent fermés à l'anonyme : c'est le vocabulaire de
+ * l'application, pas une page publique, et la découverte n'expose pas de filtre
+ * par ingrédient. Les tags s'ouvrent au visiteur, réduits à ceux que porte au
+ * moins une recette publique, pour alimenter les filtres de la découverte.
  */
 
 export const ingredientsRouter = Router();
@@ -28,7 +30,7 @@ export const tagsRouter = Router();
 
 tagsRouter.get(
   '/',
-  authenticate,
+  authenticateOptional,
   validateQuery(listTagsSchema),
   asyncHandler(catalogController.listTags),
 );

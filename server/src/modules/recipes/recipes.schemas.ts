@@ -89,6 +89,8 @@ export const listRecipesSchema = z.object({
 export const discoverRecipesSchema = z.object({
   q: recipeFilterFields.q,
   tags: recipeFilterFields.tags,
+  maxPrep: recipeFilterFields.maxPrep,
+  maxCook: recipeFilterFields.maxCook,
   sort: z.enum(['relevance', 'rating', 'recent']).optional(),
   page: recipeFilterFields.page,
   pageSize: recipeFilterFields.pageSize,

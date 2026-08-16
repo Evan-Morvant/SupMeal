@@ -11,6 +11,6 @@ export async function listIngredients(req: Request, res: Response): Promise<void
 
 export async function listTags(req: Request, res: Response): Promise<void> {
   const query = req.query as unknown as ListTagsQuery;
-  const tags = await catalogService.listTags(query);
+  const tags = await catalogService.listTags(query, req.user !== undefined);
   res.json(tags.map(serializeTag));
 }

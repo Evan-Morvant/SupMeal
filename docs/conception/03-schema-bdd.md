@@ -208,7 +208,7 @@ erDiagram
 
 | Élément | But |
 |---|---|
-| `GIN (search_vector)` sur `RECIPE` | Recherche plein texte rapide (titre + description + ingrédients agrégés). |
+| `GIN (search_vector)` sur `RECIPE` | Recherche plein texte rapide (titre + description + ingrédients agrégés). Étapes et tags volontairement hors du vecteur, cf. `06-api-endpoints.md`. |
 | `UNIQUE (name)` sur `INGREDIENT` | Évite les doublons d'ingrédients, accélère filtrage et agrégation. |
 | `UNIQUE (token_hash)` + index `user_id` sur `REFRESH_TOKEN` | Recherche indexée du refresh token par empreinte HMAC (jamais stocké en clair) ; révocation au logout/rotation sans le supprimer (audit, détection de réutilisation). |
 | `UNIQUE (cookbook_id, recipe_id)` sur `COOKBOOK_RECIPE` | Une recette n'est liée qu'une fois à un cookbook donné. |

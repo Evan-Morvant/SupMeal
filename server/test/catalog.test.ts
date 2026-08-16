@@ -145,9 +145,43 @@ describe('Catalogue des ingrédients', () => {
 });
 
 describe('Catalogue des tags', () => {
-  it('exige une authentification', async () => {
-    const res = await request(app).get('/api/v1/tags');
-    expect(res.status).toBe(401);
+  // Un tag custom naît de la saisie libre d un utilisateur : celui qui ne vit
+  // que sur une recette privée ne doit pas se retrouver dans une liste publique.
+  it('un visiteur ne voit que les tags portés par une recette publique', async () => {
+    const token = await registerUser('tag0@test.fr');
+    await request(app)
+      .post('/api/v1/recipes')
+      .set('Authorization', bearer(token))
+      .send({ title: 'Vitrine', tags: ['Publiable'], visibility: 'public' });
+    await request(app)
+      .post('/api/v1/recipes')
+      .set('Authorization', bearer(token))
+      .send({ title: 'Carnet', tags: ['Anniversaire de Marie'] });
+
+    const anonyme = await request(app).get('/api/v1/tags');
+    const connecte = await request(app).get('/api/v1/tags').set('Authorization', bearer(token));
+
+    expect(anonyme.status).toBe(200);
+    expect(names(anonyme.body)).toEqual(['Publiable']);
+    expect(names(connecte.body)).toEqual(
+      expect.arrayContaining(['Publiable', 'Anniversaire de Marie']),
+    );
+  });
+
+  it('rendre une recette privée retire son tag de la liste publique', async () => {
+    const token = await registerUser('tag0b@test.fr');
+    const creation = await request(app)
+      .post('/api/v1/recipes')
+      .set('Authorization', bearer(token))
+      .send({ title: 'Bascule', tags: ['Ephemere'], visibility: 'public' });
+    expect(names((await request(app).get('/api/v1/tags')).body)).toEqual(['Ephemere']);
+
+    await request(app)
+      .patch('/api/v1/recipes/' + creation.body.id)
+      .set('Authorization', bearer(token))
+      .send({ visibility: 'private' });
+
+    expect(names((await request(app).get('/api/v1/tags')).body)).toEqual([]);
   });
 
   it('rend les tags de référence posés par la migration', async () => {

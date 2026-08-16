@@ -127,6 +127,27 @@ describe('Découverte des recettes publiques', () => {
     expect(res.status).toBe(400);
   });
 
+  it('filtre par temps de cuisson, sans authentification', async () => {
+    const token = await registerUser('dc7b@test.fr');
+    await createRecipe(token, { title: 'Rapide au four', cookTimeMin: 20 });
+    await createRecipe(token, { title: 'Longue au four', cookTimeMin: 120 });
+
+    const res = await request(app).get(base).query({ maxCook: 30, q: 'four' });
+
+    expect(res.status).toBe(200);
+    expect(titles(res.body)).toEqual(['Rapide au four']);
+  });
+
+  it('une recette sans temps renseigné sort du filtre de durée', async () => {
+    const token = await registerUser('dc7c@test.fr');
+    await createRecipe(token, { title: 'Chronometree', prepTimeMin: 10 });
+    await createRecipe(token, { title: 'Non chronometree' });
+
+    const res = await request(app).get(base).query({ maxPrep: 60, q: 'chronometree' });
+
+    expect(titles(res.body)).toEqual(['Chronometree']);
+  });
+
   it('ignore les critères propres à un compte', async () => {
     const token = await registerUser('dc8@test.fr');
     await createRecipe(token, { title: 'Publique quand même' });

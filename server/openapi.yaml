@@ -561,10 +561,15 @@ paths:
         Catalogue des recettes `public`, ouvert aux visiteurs. Un jeton reste
         accepté : il renseigne alors `isFavorite`, sans élargir le périmètre.
         Ni `cookbookId` ni `favorite` : ils désignent le périmètre d'un compte.
+        `ingredients` non plus : le filtre par ingrédient reste réservé à la
+        liste personnelle, où il répond à « qu'est-ce que je peux faire avec ce
+        que j'ai ».
       security: []
       parameters:
         - { in: query, name: q, schema: { type: string } }
         - { in: query, name: tags, description: Liste séparée par des virgules., schema: { type: string } }
+        - { in: query, name: maxPrep, description: Temps de préparation maximal (min). Exclut les recettes sans temps renseigné., schema: { type: integer, minimum: 0, maximum: 10000 } }
+        - { in: query, name: maxCook, description: Temps de cuisson maximal (min). Exclut les recettes sans temps renseigné., schema: { type: integer, minimum: 0, maximum: 10000 } }
         - { in: query, name: sort, schema: { type: string, enum: [relevance, rating, recent] } }
         - { $ref: '#/components/parameters/Page' }
         - { $ref: '#/components/parameters/PageSize' }
@@ -1044,9 +1049,14 @@ paths:
       tags: [Catalog]
       summary: Lister les tags
       description: >
-        Vocabulaire partagé, rendu en entier et groupé par type puis par ordre
-        alphabétique. Les tags de type `course` (entrée, plat, dessert...) sont
-        posés par la migration initiale ; les tags `custom` naissent des recettes.
+        Vocabulaire partagé, groupé par type puis par ordre alphabétique. Les
+        tags de type `course` (entrée, plat, dessert...) sont posés par la
+        migration initiale ; les tags `custom` naissent des recettes, en saisie
+        libre. **Le périmètre dépend de l'appelant** : un visiteur anonyme ne
+        reçoit que les tags portés par au moins une recette `public`, un
+        utilisateur authentifié reçoit le vocabulaire entier — un tag écrit sur
+        une recette privée serait sinon publié avec la liste.
+      security: []
       parameters:
         - in: query
           name: type
@@ -1058,7 +1068,6 @@ paths:
             application/json:
               schema: { type: array, items: { $ref: '#/components/schemas/Tag' } }
         '400': { $ref: '#/components/responses/ValidationError' }
-        '401': { $ref: '#/components/responses/Unauthorized' }
 
   # ----------------------------- Import / Export -----------------------------
   /export:
