@@ -1,4 +1,5 @@
 import { spawn, spawnSync } from 'node:child_process';
+import { randomBytes } from 'node:crypto';
 import { rmSync } from 'node:fs';
 
 /**
@@ -56,6 +57,9 @@ async function main() {
     AUTH_RATE_LIMIT_MAX: '1000',
     UPLOAD_DIR: UPLOAD_DIR,
     API_PUBLIC_URL: 'http://localhost:4000',
+    // Secrets propres à la suite : les tests ne doivent pas dépendre du .env local.
+    JWT_ACCESS_SECRET: randomBytes(32).toString('hex'),
+    JWT_REFRESH_SECRET: randomBytes(32).toString('hex'),
     GITHUB_CLIENT_ID: 'test_github_id',
     GITHUB_CLIENT_SECRET: 'test_github_secret',
     GOOGLE_CLIENT_ID: 'test_google_id',

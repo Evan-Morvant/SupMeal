@@ -36,10 +36,37 @@ Trois briques distinctes (cf. sujet) : **client web** (n'interagit qu'avec l'API
 | Temps réel | Socket.io (messagerie) |
 | Déploiement | Docker Compose |
 
+## Prérequis
+
+Docker et Docker Compose (ou, hors Docker, Node.js 20 et PostgreSQL 16).
+
+**Génération des secrets de signature.** `JWT_ACCESS_SECRET` et `JWT_REFRESH_SECRET`
+n'ont aucune valeur par défaut : le serveur refuse de démarrer tant qu'elles ne sont
+pas renseignées, avec au minimum 32 caractères.
+
+Générer **une valeur différente pour chacun** :
+
+```bash
+openssl rand -hex 32
+# ou, sans openssl :
+node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+```
+
+puis reporter les deux valeurs dans le `.env` :
+
+```dotenv
+JWT_ACCESS_SECRET=<première valeur générée>
+JWT_REFRESH_SECRET=<seconde valeur générée>
+```
+
+Changer ces secrets invalide les sessions ouvertes et les invitations de cookbook en
+attente (leur empreinte est calculée avec le secret de refresh) : il faut se
+reconnecter.
+
 ## Démarrage rapide (Docker)
 
 ```bash
-cp .env.example .env      # puis renseigner les secrets
+cp .env.example .env      # puis générer et renseigner les secrets (cf. Prérequis)
 docker compose up --build
 ```
 
@@ -64,5 +91,14 @@ cd client && npm install && npm run dev
 
 ## Sécurité
 
-Aucun secret n'est versionné (`.env` est ignoré). Les mots de passe sont hashés.
+Aucun secret n'est versionné (`.env` est ignoré) et aucun n'a de valeur de repli dans
+le code : les secrets JWT sont un prérequis d'installation, le serveur s'arrête avec un
+message explicite s'ils manquent. Les mots de passe sont hashés.
+
+Les jetons sont signés avec **trois clés distinctes** : `JWT_ACCESS_SECRET` pour les
+access tokens, `JWT_REFRESH_SECRET` pour les refresh tokens et l'empreinte HMAC des
+jetons stockés, et une clé dérivée du secret d'accès pour le `state` OAuth2. Cette
+dernière séparation est nécessaire : le `state` transite dans une redirection publique,
+signé avec la clé d'accès il vaudrait access token.
+
 Voir [`.env.example`](.env.example) pour la liste des variables à configurer.

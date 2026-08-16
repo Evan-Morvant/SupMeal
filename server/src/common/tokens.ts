@@ -21,7 +21,12 @@ export function signAccessToken(user: AccessTokenUser): string {
  * deux portes d'entrée reconnaissent exactement les mêmes jetons.
  */
 export function verifyAccessToken(token: string): AccessTokenUser {
-  return jwt.verify(token, env.JWT_ACCESS_SECRET) as AccessTokenUser;
+  const claims = jwt.verify(token, env.JWT_ACCESS_SECRET) as Partial<AccessTokenUser>;
+  // Un simple cast laisserait passer tout jeton signé de la même clé, `id` vide.
+  if (typeof claims?.id !== 'string' || claims.id === '' || typeof claims.email !== 'string') {
+    throw new Error('Payload access token invalide');
+  }
+  return { id: claims.id, email: claims.email };
 }
 
 export interface SignedRefreshToken {
@@ -43,7 +48,11 @@ export function signRefreshToken(user: { id: string }): SignedRefreshToken {
 
 /** Vérifie la signature et l'expiration d'un refresh token. Lève si invalide. */
 export function verifyRefreshToken(token: string): { id: string } {
-  return jwt.verify(token, env.JWT_REFRESH_SECRET) as { id: string };
+  const claims = jwt.verify(token, env.JWT_REFRESH_SECRET) as Partial<{ id: string }>;
+  if (typeof claims?.id !== 'string' || claims.id === '') {
+    throw new Error('Payload refresh token invalide');
+  }
+  return { id: claims.id };
 }
 
 /**
@@ -60,17 +69,26 @@ export interface OAuthState {
 }
 
 /**
+ * Clé propre au `state`, dérivée du secret d'accès : le state circule en clair
+ * dans une redirection publique, il ne doit pas valoir access token.
+ */
+const OAUTH_STATE_SECRET = crypto
+  .createHmac('sha256', env.JWT_ACCESS_SECRET)
+  .update('oauth_state')
+  .digest('hex');
+
+/**
  * Paramètre `state` OAuth (anti-CSRF) : JWT court et signé, lié au provider.
  * Stateless (aucune session serveur nécessaire). Porte aussi l'utilisateur à
  * qui lier le compte lorsque le flux part des paramètres du profil.
  */
 export function signOAuthState(provider: string, linkUserId?: string): string {
-  return jwt.sign({ provider, linkUserId }, env.JWT_ACCESS_SECRET, { expiresIn: '10m' });
+  return jwt.sign({ provider, linkUserId }, OAUTH_STATE_SECRET, { expiresIn: '10m' });
 }
 
 /** Vérifie le `state` reçu au callback et qu'il correspond bien au provider. */
 export function verifyOAuthState(state: string, provider: string): OAuthState {
-  const decoded = jwt.verify(state, env.JWT_ACCESS_SECRET) as {
+  const decoded = jwt.verify(state, OAUTH_STATE_SECRET) as {
     provider?: string;
     linkUserId?: string;
   };
