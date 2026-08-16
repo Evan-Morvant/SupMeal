@@ -71,7 +71,8 @@ export const recipeFilterFields = {
   maxCook: z.coerce.number().int().min(0).max(10000).optional(),
   favorite: booleanParam.optional(),
   sort: z.enum(['relevance', 'recent', 'prepTime']).optional(),
-  page: z.coerce.number().int().min(1).default(1),
+  // Plafond nécessaire : sans lui, un OFFSET démesuré casse la requête (500).
+  page: z.coerce.number().int().min(1).max(10000).default(1),
   pageSize: z.coerce.number().int().min(1).max(100).default(20),
 };
 
@@ -107,6 +108,9 @@ export interface RecipeFilters {
   page: number;
   pageSize: number;
 }
+
+/** Partagé par `/recipes/:id`, ses sous-routes et `/discover/recipes/:id`. */
+export const recipeParamsSchema = z.object({ id: z.string().uuid() });
 
 export type IngredientLineInput = z.infer<typeof ingredientLineSchema>;
 export type CreateRecipeInput = z.infer<typeof createRecipeSchema>;

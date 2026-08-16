@@ -6,7 +6,7 @@ import {
   requireRecipeOwner,
 } from '../../middlewares/recipe-access';
 import { uploadRecipeImage } from '../../middlewares/upload';
-import { validateBody, validateQuery } from '../../middlewares/validate';
+import { validateBody, validateParams, validateQuery } from '../../middlewares/validate';
 import { asyncHandler } from '../../common/async-handler';
 import * as importExportController from '../import-export/import-export.controller';
 import { exportQuerySchema } from '../import-export/import-export.schemas';
@@ -14,7 +14,12 @@ import { reviewsRouter } from '../reviews/reviews.routes';
 import * as suggestionsController from '../suggestions/suggestions.controller';
 import { listSuggestionsSchema } from '../suggestions/suggestions.schemas';
 import * as recipesController from './recipes.controller';
-import { createRecipeSchema, listRecipesSchema, updateRecipeSchema } from './recipes.schemas';
+import {
+  createRecipeSchema,
+  listRecipesSchema,
+  recipeParamsSchema,
+  updateRecipeSchema,
+} from './recipes.schemas';
 
 export const recipesRouter = Router();
 
@@ -44,17 +49,20 @@ recipesRouter.get(
 
 recipesRouter.get(
   '/:id',
+  validateParams(recipeParamsSchema),
   asyncHandler(requireRecipeAccess),
   asyncHandler(recipesController.detail),
 );
 recipesRouter.patch(
   '/:id',
+  validateParams(recipeParamsSchema),
   asyncHandler(requireRecipeEditor),
   validateBody(updateRecipeSchema),
   asyncHandler(recipesController.update),
 );
 recipesRouter.delete(
   '/:id',
+  validateParams(recipeParamsSchema),
   asyncHandler(requireRecipeOwner),
   asyncHandler(recipesController.remove),
 );
@@ -63,6 +71,7 @@ recipesRouter.delete(
 // fichier produit se réimporte par /import sans traitement particulier.
 recipesRouter.get(
   '/:id/export',
+  validateParams(recipeParamsSchema),
   asyncHandler(requireRecipeAccess),
   validateQuery(exportQuerySchema),
   asyncHandler(importExportController.exportRecipe),
@@ -70,6 +79,7 @@ recipesRouter.get(
 
 recipesRouter.post(
   '/:id/image',
+  validateParams(recipeParamsSchema),
   asyncHandler(requireRecipeOwner),
   uploadRecipeImage,
   asyncHandler(recipesController.setImage),
@@ -77,11 +87,13 @@ recipesRouter.post(
 
 recipesRouter.post(
   '/:id/favorite',
+  validateParams(recipeParamsSchema),
   asyncHandler(requireRecipeAccess),
   asyncHandler(recipesController.addFavorite),
 );
 
 recipesRouter.delete(
   '/:id/favorite',
+  validateParams(recipeParamsSchema),
   asyncHandler(recipesController.removeFavorite),
 );

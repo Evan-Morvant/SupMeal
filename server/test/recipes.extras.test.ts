@@ -85,6 +85,15 @@ describe('Favoris', () => {
     expect(res.status).toBe(204);
   });
 
+  it('retirer un favori sur un identifiant mal formé répond 400, jamais 500', async () => {
+    const token = await registerUser('fav3b@test.fr');
+
+    const res = await request(app)
+      .delete(base + '/pas-un-uuid/favorite')
+      .set('Authorization', bearer(token));
+    expect(res.status).toBe(400);
+  });
+
   it('la liste indique le statut de favori', async () => {
     const token = await registerUser('fav4@test.fr');
     const garde = await createRecipe(token, 'Gardee');

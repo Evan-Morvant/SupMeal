@@ -312,6 +312,7 @@ paths:
       summary: Détail d'une recette
       responses:
         '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/Recipe' } } } }
+        '400': { $ref: '#/components/responses/ValidationError' }
         '403': { $ref: '#/components/responses/Forbidden' }
         '404': { $ref: '#/components/responses/NotFound' }
     patch:
@@ -329,12 +330,14 @@ paths:
         content: { application/json: { schema: { $ref: '#/components/schemas/RecipeInput' } } }
       responses:
         '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/Recipe' } } } }
+        '400': { $ref: '#/components/responses/ValidationError' }
         '403': { $ref: '#/components/responses/Forbidden' }
     delete:
       tags: [Recipes]
       summary: Supprimer la recette (créateur uniquement)
       responses:
         '204': { description: Supprimé }
+        '400': { $ref: '#/components/responses/ValidationError' }
         '403': { $ref: '#/components/responses/Forbidden' }
   /recipes/{id}/image:
     parameters: [ { $ref: '#/components/parameters/Id' } ]
@@ -356,7 +359,7 @@ paths:
               properties: { file: { type: string, format: binary } }
       responses:
         '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/Recipe' } } } }
-        '400': { description: Fichier manquant ou format non supporté }
+        '400': { description: Identifiant invalide, fichier manquant ou format non supporté }
         '403': { $ref: '#/components/responses/Forbidden' }
         '413': { description: Image trop volumineuse }
   /recipes/suggestions:
@@ -426,6 +429,7 @@ paths:
               schema: { $ref: '#/components/schemas/ExportFile' }
             text/csv:
               schema: { type: string }
+        '400': { $ref: '#/components/responses/ValidationError' }
         '403': { $ref: '#/components/responses/Forbidden' }
         '404': { $ref: '#/components/responses/NotFound' }
   /recipes/{id}/favorite:
@@ -436,6 +440,7 @@ paths:
       description: Idempotent — marquer deux fois reste un succès.
       responses:
         '204': { description: Ajouté aux favoris }
+        '400': { $ref: '#/components/responses/ValidationError' }
         '403': { $ref: '#/components/responses/Forbidden' }
     delete:
       tags: [Recipes]
@@ -445,6 +450,7 @@ paths:
         une recette ne doit pas empêcher de la retirer de ses propres favoris.
       responses:
         '204': { description: Retiré }
+        '400': { $ref: '#/components/responses/ValidationError' }
 
   # ----------------------------- Comments (privés au cookbook) -----------------------------
   /cookbooks/{id}/recipes/{recipeId}/comments:
@@ -521,6 +527,7 @@ paths:
                     description: "`null` sans avis : non notée n'est pas notée zéro."
                   reviewCount: { type: integer }
                   items: { type: array, items: { $ref: '#/components/schemas/Review' } }
+        '400': { $ref: '#/components/responses/ValidationError' }
         '403': { $ref: '#/components/responses/Forbidden' }
         '404': { $ref: '#/components/responses/NotFound' }
     put:
@@ -534,6 +541,7 @@ paths:
         content: { application/json: { schema: { $ref: '#/components/schemas/ReviewInput' } } }
       responses:
         '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/Review' } } } }
+        '400': { $ref: '#/components/responses/ValidationError' }
         '403': { $ref: '#/components/responses/Forbidden' }
         '404': { $ref: '#/components/responses/NotFound' }
     delete:
@@ -541,6 +549,7 @@ paths:
       summary: Supprimer son avis
       responses:
         '204': { description: Supprimé }
+        '400': { $ref: '#/components/responses/ValidationError' }
         '404': { description: Aucun avis de cet utilisateur sur cette recette }
 
   # ----------------------------- Discovery (public) -----------------------------
@@ -578,6 +587,7 @@ paths:
       security: []
       responses:
         '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/Recipe' } } } }
+        '400': { $ref: '#/components/responses/ValidationError' }
         '404': { $ref: '#/components/responses/NotFound' }
 
   # ----------------------------- Cookbooks -----------------------------
@@ -1135,7 +1145,7 @@ components:
     Page:
       in: query
       name: page
-      schema: { type: integer, default: 1, minimum: 1 }
+      schema: { type: integer, default: 1, minimum: 1, maximum: 10000 }
     PageSize:
       in: query
       name: pageSize

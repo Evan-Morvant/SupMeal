@@ -1,8 +1,9 @@
 import { Router } from 'express';
 import { authenticate, authenticateOptional } from '../../middlewares/authenticate';
 import { requireRecipeAccess } from '../../middlewares/recipe-access';
-import { validateBody } from '../../middlewares/validate';
+import { validateBody, validateParams } from '../../middlewares/validate';
 import { asyncHandler } from '../../common/async-handler';
+import { recipeParamsSchema } from '../recipes/recipes.schemas';
 import * as reviewsController from './reviews.controller';
 import { reviewSchema } from './reviews.schemas';
 
@@ -16,6 +17,7 @@ export const reviewsRouter = Router({ mergeParams: true });
 reviewsRouter.get(
   '/',
   authenticateOptional,
+  validateParams(recipeParamsSchema),
   asyncHandler(requireRecipeAccess),
   asyncHandler(reviewsController.list),
 );
@@ -23,6 +25,7 @@ reviewsRouter.get(
 reviewsRouter.put(
   '/',
   authenticate,
+  validateParams(recipeParamsSchema),
   asyncHandler(requireRecipeAccess),
   validateBody(reviewSchema),
   asyncHandler(reviewsController.upsert),
@@ -30,4 +33,9 @@ reviewsRouter.put(
 
 // Sans garde d'accès : perdre l'accès à une recette ne doit pas y laisser un
 // avis qu'on ne pourrait plus effacer.
-reviewsRouter.delete('/', authenticate, asyncHandler(reviewsController.remove));
+reviewsRouter.delete(
+  '/',
+  authenticate,
+  validateParams(recipeParamsSchema),
+  asyncHandler(reviewsController.remove),
+);

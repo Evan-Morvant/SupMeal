@@ -70,12 +70,12 @@ servie par l'API sur `/api/v1/swagger` (Swagger UI).
 | GET | `/recipes` | Liste + **recherche plein texte** + filtres (voir query) | ✅ | `authenticate`, `validate` |
 | POST | `/recipes` | Créer une recette **personnelle** (owner = user) | ✅ | `authenticate`, `validate` |
 | GET | `/recipes/suggestions` | **Suggestions** classées (bonus) | ✅ | `authenticate`, `validate` |
-| GET | `/recipes/:id` | Détail d'une recette | ✅ | `authenticate`, `requireRecipeAccess` |
-| PATCH | `/recipes/:id` | Modifier une recette | ✅ | `authenticate`, `requireRecipeEditor`** |
-| DELETE | `/recipes/:id` | Supprimer la recette (entité) | ✅ | `authenticate`, `requireRecipeOwner` |
-| POST | `/recipes/:id/image` | Uploader l'image | ✅ | `authenticate`, `requireRecipeOwner`, `upload` |
-| POST | `/recipes/:id/favorite` | Marquer favori | ✅ | `authenticate`, `requireRecipeAccess` |
-| DELETE | `/recipes/:id/favorite` | Retirer des favoris | ✅ | `authenticate` |
+| GET | `/recipes/:id` | Détail d'une recette | ✅ | `authenticate`, `validate`, `requireRecipeAccess` |
+| PATCH | `/recipes/:id` | Modifier une recette | ✅ | `authenticate`, `validate`, `requireRecipeEditor`** |
+| DELETE | `/recipes/:id` | Supprimer la recette (entité) | ✅ | `authenticate`, `validate`, `requireRecipeOwner` |
+| POST | `/recipes/:id/image` | Uploader l'image | ✅ | `authenticate`, `validate`, `requireRecipeOwner`, `upload` |
+| POST | `/recipes/:id/favorite` | Marquer favori | ✅ | `authenticate`, `validate`, `requireRecipeAccess` |
+| DELETE | `/recipes/:id/favorite` | Retirer des favoris | ✅ | `authenticate`, `validate` |
 
 **Suggestions (bonus).** Le vivier est celui que l'utilisateur peut lire — ses recettes et celles de ses cookbooks. On ne suggère jamais ce qui n'est pas accessible : une suggestion menant à un 403 serait pire que pas de suggestion.
 
@@ -100,7 +100,7 @@ La route est déclarée **avant** `/recipes/:id`, qui capterait sinon « suggest
 | `maxPrep` / `maxCook` | int | Temps de préparation / cuisson max (min). Exclut les recettes sans temps renseigné. |
 | `favorite` | bool | Uniquement les favoris de l'utilisateur. |
 | `sort` | enum | `relevance` \| `recent` \| `prepTime`. Défaut : `relevance` si `q`, sinon `recent`. |
-| `page` / `pageSize` | int | Pagination (`pageSize` ≤ 100). |
+| `page` / `pageSize` | int | Pagination (`page` ≤ 10 000, `pageSize` ≤ 100). |
 
 > **Périmètre** : ses propres recettes et celles des cookbooks dont on est membre.
 > Les entrées renvoyées sont des résumés (tags oui, ingrédients et étapes non) ;
@@ -116,7 +116,7 @@ Navigation publique des recettes `visibility = public`. Lecture sans authentific
 | Méthode | Route | Description | Auth | Middlewares |
 |---|---|---|:---:|---|
 | GET | `/discover/recipes` | Lister/rechercher les recettes publiques (`q`, `tags`, tri) | ❌ | `authenticateOptional`, `validate` |
-| GET | `/discover/recipes/:id` | Détail public d'une recette `public` | ❌ | `authenticateOptional` |
+| GET | `/discover/recipes/:id` | Détail public d'une recette `public` | ❌ | `authenticateOptional`, `validate` |
 
 **Règles de gestion :**
 - **Le périmètre est la seule différence avec `/recipes`** : `visibility = 'public'` remplace le périmètre du compte, et les filtres de contenu (plein texte, tags, temps) sont les mêmes fonctions, partagées dans `recipes.filters.ts`.
@@ -151,9 +151,9 @@ Attachés à la recette, visibles partout où elle l'est. Un avis par utilisateu
 
 | Méthode | Route | Description | Auth | Middlewares |
 |---|---|---|:---:|---|
-| GET | `/recipes/:id/reviews` | Lister les avis + note moyenne | ❌* | `requireRecipeAccess` |
-| PUT | `/recipes/:id/reviews` | Créer / mettre à jour **son** avis (note 1–5 + texte) | ✅ | `authenticate`, `requireRecipeAccess`, `validate` |
-| DELETE | `/recipes/:id/reviews` | Supprimer son avis | ✅ | `authenticate` |
+| GET | `/recipes/:id/reviews` | Lister les avis + note moyenne | ❌* | `validate`, `requireRecipeAccess` |
+| PUT | `/recipes/:id/reviews` | Créer / mettre à jour **son** avis (note 1–5 + texte) | ✅ | `authenticate`, `validate`, `requireRecipeAccess` |
+| DELETE | `/recipes/:id/reviews` | Supprimer son avis | ✅ | `authenticate`, `validate` |
 
 \* lecture autorisée sans authentification si la recette est `public`.
 

@@ -204,6 +204,12 @@ describe('Détail public d une recette', () => {
     expect(parRecipes.status).toBe(200);
   });
 
+  it('répond 400 sur un identifiant mal formé, jamais 500', async () => {
+    const res = await request(app).get(base + '/pas-un-uuid');
+
+    expect(res.status).toBe(400);
+  });
+
   it('porte la note moyenne', async () => {
     const auteur = await registerUser('dd4@test.fr');
     const recipeId = await createRecipe(auteur, { title: 'Notée publiquement' });

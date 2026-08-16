@@ -227,6 +227,13 @@ describe('Filtres', () => {
     expect(res.status).toBe(400);
   });
 
+  // Sans plafond, l OFFSET calculé dépasse ce que Postgres accepte -> 500.
+  it('page démesurée -> 400', async () => {
+    const token = await registerUser('f13@test.fr');
+    const res = await search(token, '?page=1e21');
+    expect(res.status).toBe(400);
+  });
+
   it('cookbookId mal formé -> 400', async () => {
     const token = await registerUser('f13@test.fr');
     const res = await search(token, '?cookbookId=pas-un-uuid');

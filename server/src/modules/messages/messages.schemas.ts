@@ -10,7 +10,7 @@ export const messageSchema = z.object({
  * les plus récents, la suivante remonte la conversation.
  */
 export const listMessagesSchema = z.object({
-  page: z.coerce.number().int().min(1).default(1),
+  page: z.coerce.number().int().min(1).max(10000).default(1),
   pageSize: z.coerce.number().int().min(1).max(100).default(50),
 });
 
