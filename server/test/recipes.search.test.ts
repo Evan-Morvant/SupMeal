@@ -155,12 +155,31 @@ describe('Filtres', () => {
     expect(titles(res)).toEqual(['Tarte aux pommes']);
   });
 
+  it('un tag répété dans deux casses reste un seul tag', async () => {
+    const token = await registerUser('f3b@test.fr');
+    await seedRecipes(token);
+
+    const res = await search(token, '?tags=Dessert,dessert');
+    expect(titles(res)).toEqual(['Tarte aux pommes']);
+  });
+
   it('par ingrédient', async () => {
     const token = await registerUser('f4@test.fr');
     await seedRecipes(token);
 
     const res = await search(token, '?ingredients=tomate');
     expect(res.body.total).toBe(2);
+  });
+
+  it('les espaces superflus ne cachent pas un ingrédient', async () => {
+    const token = await registerUser('f5b@test.fr');
+    await createRecipe(token, {
+      title: 'Tapenade',
+      ingredients: [{ name: 'Huile  d olive' }],
+    });
+
+    const res = await search(token, '?ingredients=huile%20%20%20d%20olive');
+    expect(titles(res)).toEqual(['Tapenade']);
   });
 
   it('plusieurs ingrédients se cumulent (ET)', async () => {

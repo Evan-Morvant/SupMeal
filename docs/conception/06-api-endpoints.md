@@ -97,6 +97,8 @@ La route est déclarée **avant** `/recipes/:id`, qui capterait sinon « suggest
 | `cookbookId` | uuid | Restreint à un cookbook. |
 | `tags` | csv | Filtre par tags/catégories, insensible à la casse. Valeurs cumulées en **ET**. |
 | `ingredients` | csv | Filtre par ingrédients, cumulés en **ET** (« qu'est-ce que je peux faire avec ce que j'ai »). |
+
+Les valeurs de `tags` et `ingredients` sont ramenées à leur forme de comparaison (casse et espaces neutralisés, comme à l'écriture) puis dédupliquées : `?tags=Dessert,dessert` vaut `?tags=dessert`, et non un ET impossible à satisfaire.
 | `maxPrep` / `maxCook` | int | Temps de préparation / cuisson max (min). Exclut les recettes sans temps renseigné. |
 | `favorite` | bool | Uniquement les favoris de l'utilisateur. |
 | `sort` | enum | `relevance` \| `recent` \| `prepTime`. Défaut : `relevance` si `q`, sinon `recent`. |

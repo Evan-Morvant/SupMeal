@@ -1,5 +1,6 @@
 import { Op, Order, WhereOptions, literal } from 'sequelize';
 import { sequelize } from '../../models';
+import { matchName } from '../../common/normalize';
 import { ROLE_LEVEL } from '../../middlewares/require-role';
 import type { DiscoverRecipesQuery, ListRecipesQuery, RecipeFilters } from './recipes.schemas';
 
@@ -24,6 +25,15 @@ function quote(value: string | number): string {
 /** Liste échappée, prête pour un `IN (...)`. */
 function quoteList(values: string[]): string {
   return values.map(quote).join(', ');
+}
+
+/**
+ * Valeurs de filtre ramenées à leur forme de comparaison et dédupliquées :
+ * le comptage qui exprime le ET se fait sur des noms distincts, un doublon
+ * fixerait un seuil que la recette ne peut pas atteindre.
+ */
+function matchList(names: string[]): string[] {
+  return [...new Set(names.map(matchName))];
 }
 
 /**
@@ -69,28 +79,26 @@ export function editableRecipesCondition(userId: string) {
  * correspondances distinctes exprime le ET
  */
 function allTagsCondition(names: string[]) {
+  const wanted = matchList(names);
   return literal(`(
     SELECT COUNT(DISTINCT t.id)
     FROM recipe_tags rt
     JOIN tags t ON t.id = rt.tag_id
-    WHERE rt.recipe_id = "Recipe"."id" AND lower(t.name) IN (${quoteList(
-      names.map((name) => name.toLowerCase()),
-    )})
-  ) = ${names.length}`);
+    WHERE rt.recipe_id = "Recipe"."id" AND lower(t.name) IN (${quoteList(wanted)})
+  ) = ${wanted.length}`);
 }
 
 /**
  * Recettes contenant **tous** les ingrédients demandés
  */
 function allIngredientsCondition(names: string[]) {
+  const wanted = matchList(names);
   return literal(`(
     SELECT COUNT(DISTINCT i.id)
     FROM recipe_ingredients ri
     JOIN ingredients i ON i.id = ri.ingredient_id
-    WHERE ri.recipe_id = "Recipe"."id" AND i.name IN (${quoteList(
-      names.map((name) => name.trim().toLowerCase()),
-    )})
-  ) = ${names.length}`);
+    WHERE ri.recipe_id = "Recipe"."id" AND i.name IN (${quoteList(wanted)})
+  ) = ${wanted.length}`);
 }
 
 /** Recherche plein texte sur le tsvector maintenu par trigger. */

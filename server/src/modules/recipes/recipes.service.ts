@@ -12,6 +12,7 @@ import {
   sequelize,
 } from '../../models';
 import { AppError } from '../../common/app-error';
+import { matchName } from '../../common/normalize';
 import { recipeImageDiskPath, recipeImagePath } from '../../common/uploads';
 import {
   accessibleRecipesCondition,
@@ -41,11 +42,9 @@ const FULL_INCLUDES = [
   { model: Tag, as: 'tags', through: { attributes: [] } },
 ];
 
-/**
- * Nom d'ingrédient normalisé.
- */
+/** Nom d'ingrédient normalisé. */
 export function normalizeIngredientName(raw: string): string {
-  return raw.trim().toLowerCase().replace(/\s+/g, ' ');
+  return matchName(raw);
 }
 
 /** Un tag garde sa casse d'origine (les tags de référence sont capitalisés). */
