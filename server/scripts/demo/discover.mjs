@@ -62,6 +62,30 @@ async function run() {
   const parTag = await call('GET', BASE, { query: { q: cuisine, tags: 'Végétarien' } });
   checkEqual(titres(parTag), [cuisine + ' vegetarienne'], 'le filtre par tag opère');
 
+  section('Filtres de durée');
+  const chrono = 'Chrono ' + Date.now();
+  await creer(auteur.token, { title: chrono + ' express', prepTimeMin: 5, cookTimeMin: 15 });
+  await creer(auteur.token, { title: chrono + ' mijotee', prepTimeMin: 40, cookTimeMin: 180 });
+  await creer(auteur.token, { title: chrono + ' sans duree' });
+
+  const cuisson = await call('GET', BASE, { query: { q: chrono, maxCook: 30 } });
+  checkEqual(
+    titres(cuisson),
+    [chrono + ' express'],
+    'un visiteur filtre sur le temps de cuisson, sans compte',
+  );
+  check(
+    !titres(cuisson).includes(chrono + ' sans duree'),
+    'une recette sans temps renseigné sort du filtre : elle ne peut pas tenir en moins de 30 min',
+  );
+
+  const preparation = await call('GET', BASE, { query: { q: chrono, maxPrep: 10 } });
+  checkEqual(
+    titres(preparation),
+    [chrono + ' express'],
+    'le temps de préparation se filtre de la même façon',
+  );
+
   section('Tri par note');
   const notes = 'Notes ' + Date.now();
   const bonne = await creer(auteur.token, { title: notes + ' excellente' });
@@ -109,6 +133,8 @@ async function run() {
   section('Critères refusés');
   await call('GET', BASE, { query: { sort: 'prepTime' }, expect: 400 });
   check(true, 'un tri hors de la liste est refusé (400)');
+  await call('GET', BASE + '/pas-un-uuid', { expect: 400 });
+  check(true, 'un identifiant mal formé est refusé en 400, jamais en 500');
 }
 
 main('Découverte publique', run);
