@@ -35,13 +35,22 @@ async function waitReady(timeoutMs) {
 async function main() {
   cleanup();
   console.log('Démarrage du Postgres de test...');
+  // Base jetable, recréée à chaque exécution : la durabilité n'a rien à
+  // protéger ici. Données en RAM et fsync coupé, sinon chaque COMMIT et chacun
+  // des TRUNCATE de `setup.ts` attend le disque de l'hôte — c'est ce qui domine
+  // la durée de la suite, et ce qui la rend sensible à l'état de la machine.
   const run = docker([
     'run', '-d', '--name', CONTAINER,
     '-e', 'POSTGRES_USER=supmeal',
     '-e', 'POSTGRES_PASSWORD=test',
     '-e', 'POSTGRES_DB=supmeal_test',
+    '-e', 'PGDATA=/var/lib/postgresql/data/pgdata',
+    '--tmpfs', '/var/lib/postgresql/data',
     '-p', PORT + ':5432',
     'postgres:16-alpine',
+    '-c', 'fsync=off',
+    '-c', 'synchronous_commit=off',
+    '-c', 'full_page_writes=off',
   ]);
   if (run.status !== 0) {
     console.error(run.stderr);
