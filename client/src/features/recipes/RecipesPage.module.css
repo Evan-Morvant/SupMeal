@@ -1,0 +1,49 @@
+.head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--space-4);
+  flex-wrap: wrap;
+  margin-bottom: var(--space-6);
+}
+
+.title {
+  display: grid;
+  gap: var(--space-1);
+}
+
+.lede {
+  color: var(--ink-soft);
+}
+
+.filters {
+  margin-bottom: var(--space-6);
+}
+
+.legend {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: var(--space-3);
+}
+
+.grid {
+  display: grid;
+  gap: var(--space-5);
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+}
+
+/* Chargement d'une page suivante : la grille pâlit sans disparaître. */
+.stale {
+  opacity: 0.55;
+  transition: opacity var(--dur) var(--ease);
+}
+
+@media (max-width: 640px) {
+  .head {
+    margin-bottom: var(--space-4);
+  }
+
+  .grid {
+    grid-template-columns: 1fr;
+  }
+}

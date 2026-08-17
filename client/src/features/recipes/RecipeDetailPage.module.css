@@ -1,0 +1,199 @@
+.head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-5);
+  flex-wrap: wrap;
+  margin-bottom: var(--space-5);
+}
+
+.heading {
+  min-width: 0;
+  display: grid;
+  gap: var(--space-3);
+}
+
+.back {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-size: var(--text-sm);
+  color: var(--ink-soft);
+  text-decoration: none;
+}
+
+.back:hover {
+  color: var(--violet);
+}
+
+.title {
+  font-size: var(--text-3xl);
+}
+
+.actions {
+  display: flex;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+.description {
+  max-width: 68ch;
+  color: var(--ink-soft);
+  margin-bottom: var(--space-6);
+}
+
+/* Bandeau de mesures : le cadran, les portions, la note, la visibilité. */
+.facts {
+  display: flex;
+  align-items: center;
+  gap: var(--space-6);
+  flex-wrap: wrap;
+  padding: var(--space-4) var(--space-5);
+  margin-bottom: var(--space-6);
+}
+
+.fact {
+  display: grid;
+  gap: 2px;
+}
+
+.factLabel {
+  font-size: var(--text-xs);
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+
+.factValue {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: var(--text-lg);
+}
+
+/* Icône et texte sur la même ligne de base. */
+.inline {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.dialBlock {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.image {
+  width: 100%;
+  max-height: 420px;
+  object-fit: cover;
+  border-radius: var(--radius-md);
+  margin-bottom: var(--space-6);
+}
+
+.columns {
+  display: grid;
+  gap: var(--space-8);
+  grid-template-columns: minmax(240px, 320px) 1fr;
+  align-items: start;
+}
+
+.sectionTitle {
+  font-size: var(--text-xl);
+  margin-bottom: var(--space-4);
+}
+
+/* --- Ingrédients --- */
+
+.ingredients {
+  display: grid;
+  gap: var(--space-1);
+}
+
+.ingredient {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-3);
+  padding: var(--space-2) 0;
+  border-bottom: 1px solid var(--violet-line);
+}
+
+.ingredient:last-child {
+  border-bottom: 0;
+}
+
+/*
+ * Colonne de quantités en chasse fixe et alignée à droite : c'est ce qui rend
+ * une liste d'ingrédients lisible en diagonale au moment de sortir le matériel.
+ */
+.quantity {
+  flex: none;
+  min-width: 5.5ch;
+  text-align: right;
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  color: var(--violet);
+  font-weight: 500;
+}
+
+.ingredientName {
+  flex: 1;
+}
+
+.note {
+  display: block;
+  font-size: var(--text-sm);
+  color: var(--ink-faint);
+}
+
+/* --- Étapes : une vraie séquence, donc numérotée. --- */
+
+.steps {
+  display: grid;
+  gap: var(--space-4);
+  counter-reset: step;
+}
+
+.step {
+  display: flex;
+  gap: var(--space-4);
+}
+
+.stepNumber {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  background: var(--violet);
+  border-radius: var(--radius-pill);
+  color: #fff;
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  font-weight: 500;
+}
+
+.stepText {
+  padding-top: 4px;
+  max-width: 70ch;
+}
+
+.source {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-top: var(--space-8);
+  font-size: var(--text-sm);
+  color: var(--ink-soft);
+}
+
+.tags {
+  margin-top: var(--space-6);
+}
+
+@media (max-width: 860px) {
+  .columns {
+    grid-template-columns: 1fr;
+    gap: var(--space-6);
+  }
+}

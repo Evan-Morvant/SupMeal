@@ -1,0 +1,161 @@
+.form {
+  display: grid;
+  gap: var(--space-6);
+  max-width: 860px;
+}
+
+.head {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.back {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-size: var(--text-sm);
+  color: var(--ink-soft);
+  text-decoration: none;
+}
+
+.back:hover {
+  color: var(--violet);
+}
+
+.block {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.blockTitle {
+  font-size: var(--text-lg);
+}
+
+.blockNote {
+  font-size: var(--text-sm);
+  color: var(--ink-soft);
+}
+
+/* Trois mesures côte à côte : elles se lisent ensemble. */
+.measures {
+  display: grid;
+  gap: var(--space-4);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.rows {
+  display: grid;
+  gap: var(--space-3);
+}
+
+/*
+ * Ligne d'ingrédient : la quantité et l'unité sont étroites, le nom prend la
+ * place. La note passe dessous, elle n'est pas de même nature.
+ */
+.ingredientRow {
+  display: grid;
+  gap: var(--space-2);
+  grid-template-columns: 5rem 6rem 1fr auto;
+  align-items: start;
+}
+
+.stepRow {
+  display: grid;
+  gap: var(--space-2);
+  grid-template-columns: 30px 1fr auto;
+  align-items: start;
+}
+
+.stepNumber {
+  display: grid;
+  place-items: center;
+  height: 42px;
+  color: var(--violet);
+  font-family: var(--font-mono);
+  font-weight: 500;
+}
+
+.rowActions {
+  display: flex;
+  gap: var(--space-1);
+}
+
+/* Le chevron « descendre » retourné sert de chevron « remonter ». */
+.flip {
+  transform: rotate(180deg);
+}
+
+/* La précision passe sous le nom : elle n'est pas de même nature. */
+.ingredientNote {
+  grid-column: 3;
+}
+
+.rowError {
+  grid-column: 1 / -1;
+  font-size: var(--text-sm);
+  color: var(--danger);
+}
+
+/* --- Image --- */
+
+.imageBlock {
+  display: flex;
+  align-items: center;
+  gap: var(--space-5);
+  flex-wrap: wrap;
+}
+
+.preview {
+  width: 200px;
+  aspect-ratio: 16 / 10;
+  object-fit: cover;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--violet-line);
+}
+
+.previewEmpty {
+  display: grid;
+  place-items: center;
+  width: 200px;
+  aspect-ratio: 16 / 10;
+  background: var(--violet-soft);
+  border-radius: var(--radius-sm);
+  color: var(--violet);
+  opacity: 0.4;
+}
+
+.fileHint {
+  font-size: var(--text-sm);
+  color: var(--ink-soft);
+}
+
+/* Le champ natif est masqué : c'est le bouton qui porte l'action. */
+.file {
+  display: none;
+}
+
+.actions {
+  display: flex;
+  gap: var(--space-3);
+  justify-content: flex-end;
+  padding-top: var(--space-2);
+}
+
+@media (max-width: 720px) {
+  .measures {
+    grid-template-columns: 1fr;
+  }
+
+  .ingredientRow {
+    grid-template-columns: 4.5rem 5rem 1fr;
+  }
+
+  .ingredientRow .rowActions {
+    grid-column: 1 / -1;
+    justify-content: flex-end;
+  }
+
+  .ingredientNote {
+    grid-column: 1 / -1;
+  }
+}

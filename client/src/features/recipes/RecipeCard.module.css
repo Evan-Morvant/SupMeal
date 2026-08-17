@@ -1,0 +1,142 @@
+.card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.media {
+  position: relative;
+  aspect-ratio: 16 / 10;
+  background: var(--violet-soft);
+  overflow: hidden;
+}
+
+.image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Sans photo, la marque tient la place plutôt qu'un aplat vide. */
+.placeholder {
+  display: grid;
+  place-items: center;
+  height: 100%;
+  color: var(--violet);
+  opacity: 0.18;
+}
+
+.favorite {
+  position: absolute;
+  top: var(--space-2);
+  right: var(--space-2);
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  background: #fffffff0;
+  border: 1px solid var(--violet-line);
+  border-radius: var(--radius-pill);
+  color: var(--ink-faint);
+  transition:
+    color var(--dur-fast) var(--ease),
+    transform var(--dur-fast) var(--ease);
+}
+
+.favorite:hover {
+  color: var(--coral);
+  transform: scale(1.08);
+}
+
+.favoriteOn {
+  color: var(--coral);
+}
+
+.body {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-4);
+  padding: var(--space-4);
+  flex: 1;
+}
+
+/* Le cadran garde son air : collé au bord, son arc paraîtrait rogné. */
+.dial {
+  margin-top: 2px;
+}
+
+.text {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  gap: var(--space-2);
+}
+
+.title {
+  font-family: var(--font-display);
+  font-size: var(--text-lg);
+  font-weight: 600;
+  line-height: var(--leading-snug);
+  letter-spacing: var(--tracking-tight);
+}
+
+/*
+ * Lien étiré : la carte entière est cliquable sans imbriquer le bouton de
+ * favori dans le lien, ce qui serait invalide et impossible à atteindre au
+ * clavier.
+ */
+.link {
+  color: inherit;
+  text-decoration: none;
+}
+
+.link::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+}
+
+.meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+  font-size: var(--text-sm);
+  color: var(--ink-soft);
+}
+
+.servings {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.number {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+.tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+  font-size: var(--text-xs);
+  color: var(--violet);
+}
+
+.tag {
+  padding: 2px var(--space-2);
+  background: var(--violet-soft);
+  border-radius: var(--radius-pill);
+}
+
+/* Visibilité : signalée seulement quand elle sort de l'ordinaire (publique). */
+.public {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  color: var(--success);
+}
