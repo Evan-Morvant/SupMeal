@@ -1,0 +1,62 @@
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  height: 30px;
+  padding: 0 var(--space-3);
+  background: var(--surface);
+  border: 1px solid var(--violet-line);
+  border-radius: var(--radius-pill);
+  color: var(--ink);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  white-space: nowrap;
+  text-decoration: none;
+  transition:
+    background-color var(--dur-fast) var(--ease),
+    border-color var(--dur-fast) var(--ease),
+    color var(--dur-fast) var(--ease);
+}
+
+/* Puce cliquable : filtre qu'on active ou désactive. */
+.selectable:hover {
+  border-color: var(--violet);
+  background: var(--violet-soft);
+}
+
+.selected {
+  background: var(--violet);
+  border-color: var(--violet);
+  color: #fff;
+}
+
+.selected:hover {
+  background: var(--violet-dark);
+  border-color: var(--violet-dark);
+}
+
+/* Jeton d'une saisie : porte sa croix de retrait. */
+.remove {
+  display: grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  margin-right: -4px;
+  padding: 0;
+  background: transparent;
+  border: 0;
+  border-radius: var(--radius-pill);
+  color: inherit;
+  opacity: 0.65;
+}
+
+.remove:hover {
+  opacity: 1;
+  background: #0000001a;
+}
+
+.list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}

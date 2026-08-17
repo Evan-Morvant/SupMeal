@@ -1,0 +1,59 @@
+.wrap {
+  position: relative;
+  display: grid;
+  gap: var(--space-2);
+}
+
+.tokens {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.field {
+  position: relative;
+}
+
+.loading {
+  position: absolute;
+  top: 50%;
+  right: var(--space-3);
+  margin-top: -9px;
+  color: var(--violet);
+}
+
+/* Liste de suggestions : superposée, jamais poussant le formulaire. */
+.list {
+  position: absolute;
+  z-index: var(--z-sticky);
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  max-height: 240px;
+  overflow-y: auto;
+  margin: 0;
+  padding: var(--space-1);
+  background: var(--surface);
+  border: 1px solid var(--violet-line);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-lg);
+  list-style: none;
+}
+
+.option {
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-xs);
+  font-size: var(--text-sm);
+  cursor: pointer;
+}
+
+.option:hover,
+.active {
+  background: var(--violet-soft);
+}
+
+.empty {
+  padding: var(--space-2) var(--space-3);
+  font-size: var(--text-sm);
+  color: var(--ink-faint);
+}

@@ -1,0 +1,87 @@
+.mark {
+  display: block;
+  color: inherit;
+  overflow: visible;
+}
+
+/* L'assiette prend la couleur courante, les couverts portent l'accent. */
+.plate {
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+}
+
+.cutlery {
+  fill: var(--coral);
+  stroke: var(--coral);
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* Sur une surface déjà colorée : des couverts corail sur corail se perdraient. */
+.mono .cutlery {
+  fill: currentColor;
+  stroke: currentColor;
+}
+
+/* Seule la couronne tourne : c'est l'assiette qui pivote sous les couverts. */
+.crown {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+.spinning .crown {
+  animation: turn 4s linear infinite;
+}
+
+/* Accusé de réception au survol, dans la navigation. */
+.hoverable .crown,
+.mark:where(a:hover *, button:hover *) .crown {
+  transition: transform var(--dur-slow) var(--ease);
+}
+
+.hoverable:hover .crown,
+.mark:where(a:hover *, button:hover *) .crown {
+  transform: rotate(45deg);
+}
+
+@keyframes turn {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Sans mouvement, l'attente se signale par une respiration d'opacité. */
+@media (prefers-reduced-motion: reduce) {
+  .spinning .crown {
+    animation: breathe 1.6s ease-in-out infinite;
+  }
+
+  @keyframes breathe {
+    0%,
+    100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.3;
+    }
+  }
+}
+
+/* --- Verrouillage complet : marque et mot --- */
+
+.lockup {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-3);
+  color: inherit;
+}
+
+.word {
+  font-family: var(--font-display);
+  font-optical-sizing: auto;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  line-height: 1;
+  white-space: nowrap;
+}

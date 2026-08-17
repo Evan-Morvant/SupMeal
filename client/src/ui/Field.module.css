@@ -1,0 +1,105 @@
+.field {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.label {
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.optional {
+  margin-left: var(--space-2);
+  font-weight: 400;
+  color: var(--ink-faint);
+}
+
+/* Un exemple montre, il n'explique pas : il reste court et sous le champ. */
+.hint {
+  font-size: var(--text-sm);
+  color: var(--ink-soft);
+}
+
+.error {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--text-sm);
+  color: var(--danger);
+}
+
+.control {
+  width: 100%;
+  padding: 0 var(--space-3);
+  height: 42px;
+  background: var(--surface);
+  border: 1px solid var(--violet-line);
+  border-radius: var(--radius-sm);
+  color: var(--ink);
+  transition:
+    border-color var(--dur-fast) var(--ease),
+    box-shadow var(--dur-fast) var(--ease);
+}
+
+.control::placeholder {
+  color: var(--ink-faint);
+}
+
+.control:hover:not(:disabled) {
+  border-color: var(--violet);
+}
+
+.control:focus {
+  outline: none;
+  border-color: var(--violet);
+  box-shadow: 0 0 0 3px var(--violet-soft);
+}
+
+.control:disabled {
+  background: var(--bg);
+  color: var(--ink-faint);
+  cursor: not-allowed;
+}
+
+.invalid,
+.invalid:hover {
+  border-color: var(--danger);
+}
+
+.invalid:focus {
+  box-shadow: 0 0 0 3px var(--danger-soft);
+}
+
+/*
+ * La hauteur vient de l'attribut `rows`, pas d'un minimum en dur : une zone de
+ * deux lignes imposée à 120 px donnerait le même gabarit à un résumé et à une
+ * étape de recette.
+ */
+.textarea {
+  height: auto;
+  padding: var(--space-3);
+  line-height: var(--leading-normal);
+  resize: vertical;
+}
+
+/* Le chevron est dessine dans le fond : un select natif reste un select. */
+.select {
+  appearance: none;
+  padding-right: var(--space-8);
+  background-image: linear-gradient(45deg, transparent 50%, var(--violet) 50%),
+    linear-gradient(135deg, var(--violet) 50%, transparent 50%);
+  background-position:
+    calc(100% - 18px) 19px,
+    calc(100% - 13px) 19px;
+  background-size:
+    5px 5px,
+    5px 5px;
+  background-repeat: no-repeat;
+}
+
+/* Le champ numerique porte des chiffres : il les compose en chasse fixe. */
+.numeric {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}

@@ -1,0 +1,29 @@
+.rating {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-size: var(--text-sm);
+  color: var(--ink-soft);
+}
+
+.star {
+  color: var(--coral);
+  flex: none;
+}
+
+.value {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-weight: 500;
+  color: var(--ink);
+}
+
+.count {
+  color: var(--ink-faint);
+}
+
+/* Non notée n'est pas notée zéro : on le dit, on n'affiche pas 0. */
+.unrated {
+  font-size: var(--text-sm);
+  color: var(--ink-faint);
+}

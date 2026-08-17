@@ -1,0 +1,69 @@
+.dial {
+  flex: none;
+  display: block;
+}
+
+.track {
+  fill: none;
+  stroke: var(--violet-soft);
+}
+
+.arc {
+  fill: none;
+  stroke-linecap: round;
+  transition: stroke-dashoffset var(--dur) var(--ease);
+}
+
+/* Cuisson a l'exterieur, preparation a l'interieur : la cuisson vient apres. */
+.cook {
+  stroke: var(--coral);
+}
+
+.prep {
+  stroke: var(--violet);
+}
+
+.total {
+  fill: var(--ink);
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-weight: 500;
+  text-anchor: middle;
+}
+
+.unit {
+  fill: var(--ink-faint);
+  font-family: var(--font-mono);
+  text-anchor: middle;
+}
+
+/* --- Legende, sur les ecrans qui ont la place de l'afficher --- */
+
+.legend {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  font-size: var(--text-sm);
+  color: var(--ink-soft);
+}
+
+.legendItem {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.swatch {
+  width: 10px;
+  height: 10px;
+  border-radius: var(--radius-pill);
+  flex: none;
+}
+
+.swatchPrep {
+  background: var(--violet);
+}
+
+.swatchCook {
+  background: var(--coral);
+}

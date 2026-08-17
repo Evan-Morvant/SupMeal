@@ -1,0 +1,82 @@
+/* Attente pleine page : la marque tourne, rien d'autre ne bouge. */
+.pageLoader {
+  display: grid;
+  place-items: center;
+  gap: var(--space-4);
+  min-height: 60vh;
+  color: var(--violet);
+}
+
+.pageLoaderText {
+  font-size: var(--text-sm);
+  color: var(--ink-soft);
+}
+
+/*
+ * Un ecran vide est une invitation a agir : il dit ce qui manque et propose
+ * le geste suivant, il ne se contente pas d'annoncer « aucun resultat ».
+ */
+.state {
+  display: grid;
+  justify-items: center;
+  gap: var(--space-3);
+  padding: var(--space-12) var(--space-6);
+  text-align: center;
+  color: var(--ink-soft);
+}
+
+.stateTitle {
+  font-family: var(--font-display);
+  font-size: var(--text-xl);
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.stateBody {
+  max-width: 44ch;
+}
+
+.stateAction {
+  margin-top: var(--space-2);
+}
+
+/* --- Message pose au-dessus d'un formulaire --- */
+
+.alert {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  font-size: var(--text-sm);
+}
+
+.alertError {
+  background: var(--danger-soft);
+  border-color: var(--danger);
+  color: var(--danger);
+}
+
+.alertWarning {
+  background: var(--warning-soft);
+  border-color: var(--warning);
+  color: var(--warning);
+}
+
+.alertSuccess {
+  background: var(--success-soft);
+  border-color: var(--success);
+  color: var(--success);
+}
+
+.alertInfo {
+  background: var(--violet-soft);
+  border-color: var(--violet-line);
+  color: var(--ink);
+}
+
+.alertIcon {
+  flex: none;
+  margin-top: 1px;
+}

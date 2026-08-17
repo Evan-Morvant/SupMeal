@@ -1,0 +1,110 @@
+.base {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  font-family: var(--font-body);
+  font-weight: 600;
+  line-height: 1;
+  text-decoration: none;
+  white-space: nowrap;
+  transition:
+    background-color var(--dur-fast) var(--ease),
+    border-color var(--dur-fast) var(--ease),
+    color var(--dur-fast) var(--ease),
+    transform var(--dur-fast) var(--ease);
+}
+
+.base:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+.base:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+/* --- Tailles --- */
+
+.sm {
+  padding: 0 var(--space-3);
+  height: 34px;
+  font-size: var(--text-sm);
+}
+
+.md {
+  padding: 0 var(--space-5);
+  height: 42px;
+  font-size: var(--text-base);
+}
+
+/* --- Variantes. Une seule action corail par ecran : c'est la principale. --- */
+
+.primary {
+  background: var(--coral);
+  color: #fff;
+}
+
+.primary:hover:not(:disabled) {
+  background: var(--coral-dark);
+}
+
+.secondary {
+  background: var(--violet);
+  color: #fff;
+}
+
+.secondary:hover:not(:disabled) {
+  background: var(--violet-dark);
+}
+
+.outline {
+  background: transparent;
+  border-color: var(--violet-line);
+  color: var(--violet);
+}
+
+.outline:hover:not(:disabled) {
+  background: var(--violet-soft);
+  border-color: var(--violet);
+}
+
+.ghost {
+  background: transparent;
+  color: var(--violet);
+}
+
+.ghost:hover:not(:disabled) {
+  background: var(--violet-soft);
+}
+
+.danger {
+  background: transparent;
+  border-color: var(--danger);
+  color: var(--danger);
+}
+
+.danger:hover:not(:disabled) {
+  background: var(--danger-soft);
+}
+
+.block {
+  width: 100%;
+}
+
+/* Bouton reduit a son icone : garde une cible tactile de 42 px. */
+.iconOnly {
+  padding: 0;
+  width: 42px;
+}
+
+.iconOnly.sm {
+  width: 34px;
+}
+
+/* La couronne du logo tourne pendant l'attente, l'intitule reste lisible. */
+.spinner {
+  flex: none;
+}

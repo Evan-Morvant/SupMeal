@@ -1,0 +1,17 @@
+.wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-4);
+  margin-top: var(--space-8);
+}
+
+.status {
+  font-size: var(--text-sm);
+  color: var(--ink-soft);
+}
+
+.page {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
