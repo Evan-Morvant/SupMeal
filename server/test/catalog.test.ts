@@ -215,6 +215,97 @@ describe('Catalogue des tags', () => {
     expect(course.body.some((tag: { name: string }) => tag.name === 'Rapide')).toBe(false);
   });
 
+  /*
+   * `mine` sert les filtres de recherche : proposer un tag qu'aucune recette
+   * accessible ne porte donnerait un critère qui ne renvoie jamais rien.
+   */
+  it('mine ne rend que les tags des recettes accessibles', async () => {
+    const moi = await registerUser('tag4@test.fr');
+    const autre = await registerUser('tag5@test.fr');
+
+    await request(app)
+      .post('/api/v1/recipes')
+      .set('Authorization', bearer(moi))
+      .send({ title: 'Mon curry', tags: ['MonTag'] });
+    // Recette d'autrui, publique : son tag entre au vocabulaire commun, mais
+    // pas dans le périmètre filtrable de l'appelant.
+    await request(app)
+      .post('/api/v1/recipes')
+      .set('Authorization', bearer(autre))
+      .send({ title: 'Sa vitrine', tags: ['SonTag'], visibility: 'public' });
+
+    const complet = await request(app).get('/api/v1/tags').set('Authorization', bearer(moi));
+    expect(names(complet.body)).toEqual(expect.arrayContaining(['MonTag', 'SonTag']));
+
+    const restreint = await request(app)
+      .get('/api/v1/tags')
+      .query({ mine: 'true' })
+      .set('Authorization', bearer(moi));
+
+    expect(restreint.status).toBe(200);
+    expect(names(restreint.body)).toContain('MonTag');
+    expect(names(restreint.body)).not.toContain('SonTag');
+    // Les tags de référence sans recette accessible disparaissent aussi.
+    expect(names(restreint.body)).not.toContain('Dessert');
+  });
+
+  it('mine suit le partage : un tag entre avec la recette rangée au cookbook', async () => {
+    const proprietaire = await registerUser('tag6@test.fr');
+    const membre = await registerUser('tag7@test.fr');
+
+    const recette = await request(app)
+      .post('/api/v1/recipes')
+      .set('Authorization', bearer(proprietaire))
+      .send({ title: 'Partagée', tags: ['TagPartage'] });
+    const cookbook = await request(app)
+      .post('/api/v1/cookbooks')
+      .set('Authorization', bearer(proprietaire))
+      .send({ name: 'Famille' });
+    await request(app)
+      .put('/api/v1/cookbooks/' + cookbook.body.id + '/recipes/' + recette.body.id)
+      .set('Authorization', bearer(proprietaire));
+
+    const avant = await request(app)
+      .get('/api/v1/tags')
+      .query({ mine: 'true' })
+      .set('Authorization', bearer(membre));
+    expect(names(avant.body)).not.toContain('TagPartage');
+
+    const invitation = await request(app)
+      .post('/api/v1/cookbooks/' + cookbook.body.id + '/invitations')
+      .set('Authorization', bearer(proprietaire))
+      .send({ email: 'tag7@test.fr', role: 'READER' });
+    await request(app)
+      .post('/api/v1/invitations/' + invitation.body.token + '/accept')
+      .set('Authorization', bearer(membre));
+
+    const apres = await request(app)
+      .get('/api/v1/tags')
+      .query({ mine: 'true' })
+      .set('Authorization', bearer(membre));
+    expect(names(apres.body)).toContain('TagPartage');
+  });
+
+  it('mine exige une authentification', async () => {
+    const res = await request(app).get('/api/v1/tags').query({ mine: 'true' });
+    expect(res.status).toBe(401);
+  });
+
+  it('mine se combine avec le filtre par type', async () => {
+    const token = await registerUser('tag8@test.fr');
+    await request(app)
+      .post('/api/v1/recipes')
+      .set('Authorization', bearer(token))
+      .send({ title: 'Gateau', tags: ['Dessert', 'FaitMaison'] });
+
+    const res = await request(app)
+      .get('/api/v1/tags')
+      .query({ mine: 'true', type: 'custom' })
+      .set('Authorization', bearer(token));
+
+    expect(names(res.body)).toEqual(['FaitMaison']);
+  });
+
   it('refuse un type inconnu', async () => {
     const token = await registerUser('tag3@test.fr');
     const res = await request(app)

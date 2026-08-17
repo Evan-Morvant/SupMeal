@@ -1,5 +1,6 @@
 import { Op, literal } from 'sequelize';
 import { Ingredient, Tag, sequelize } from '../../models';
+import { accessibleRecipesSql } from '../recipes/recipes.filters';
 import type { ListIngredientsQuery, ListTagsQuery } from './catalog.schemas';
 
 /**
@@ -68,16 +69,35 @@ function onPublicRecipeCondition() {
 }
 
 /**
- * Tags du catalogue, groupés par type puis par ordre alphabétique. Un visiteur
- * anonyme n'en voit que la part publique.
+ * Tags portés par au moins une recette que `userId` peut atteindre : le
+ * vocabulaire proposé en filtre doit être celui des recettes filtrables.
  */
-export function listTags(query: ListTagsQuery, isAuthenticated: boolean): Promise<Tag[]> {
+function onAccessibleRecipeCondition(userId: string) {
+  return literal(`EXISTS (
+    SELECT 1
+    FROM recipe_tags rt
+    JOIN recipes r ON r.id = rt.recipe_id
+    WHERE rt.tag_id = "Tag"."id" AND ${accessibleRecipesSql(userId, 'r')}
+  )`);
+}
+
+/**
+ * Tags du catalogue, groupés par type puis par ordre alphabétique.
+ *
+ * Trois périmètres, selon qui demande et pour quoi faire : un visiteur anonyme
+ * n'en voit que la part publique ; un utilisateur connecté reçoit le
+ * vocabulaire entier, dont son autocomplétion a besoin ; avec `mine`, il ne
+ * reçoit que les tags de ses propres recettes, ce dont ses filtres ont besoin.
+ */
+export function listTags(query: ListTagsQuery, userId: string | undefined): Promise<Tag[]> {
   const conditions = [];
   if (query.type !== undefined) {
     conditions.push({ type: query.type });
   }
-  if (!isAuthenticated) {
+  if (userId === undefined) {
     conditions.push(onPublicRecipeCondition());
+  } else if (query.mine === true) {
+    conditions.push(onAccessibleRecipeCondition(userId));
   }
 
   return Tag.findAll({

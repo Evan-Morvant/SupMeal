@@ -37,20 +37,26 @@ function matchList(names: string[]): string[] {
 }
 
 /**
- * Périmètre de visibilité : ses propres recettes, ou celles rattachées à un
- * cookbook dont on est membre. Les recettes publiques d'autrui relèvent de
- * `/discover`, pas de la liste personnelle.
+ * Périmètre de visibilité, en SQL brut : ses propres recettes, ou celles
+ * rattachées à un cookbook dont on est membre — les recettes publiques
+ * d'autrui relèvent de `/discover`. L'alias est un paramètre parce que le
+ * catalogue de tags applique la même règle à une sous-requête sur `recipes`.
  */
-export function accessibleRecipesCondition(userId: string) {
-  return literal(`(
-    "Recipe"."owner_id" = ${quote(userId)}
+export function accessibleRecipesSql(userId: string, recipe = '"Recipe"'): string {
+  return `(
+    ${recipe}."owner_id" = ${quote(userId)}
     OR EXISTS (
       SELECT 1
       FROM cookbook_recipes cr
       JOIN cookbook_memberships cm ON cm.cookbook_id = cr.cookbook_id
-      WHERE cr.recipe_id = "Recipe"."id" AND cm.user_id = ${quote(userId)}
+      WHERE cr.recipe_id = ${recipe}."id" AND cm.user_id = ${quote(userId)}
     )
-  )`);
+  )`;
+}
+
+/** La même règle, prête à entrer dans un `where` Sequelize. */
+export function accessibleRecipesCondition(userId: string) {
+  return literal(accessibleRecipesSql(userId));
 }
 
 /** Rôles autorisés à modifier le contenu d'un cookbook, déduits de la hiérarchie. */

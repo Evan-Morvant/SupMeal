@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { booleanParam } from '../../common/schemas';
 import { TAG_TYPES } from '../../models/tag.model';
 
 /** Schémas de validation du catalogue : ingrédients et tags. */
@@ -17,9 +18,15 @@ export const listIngredientsSchema = z.object({
   limit: z.coerce.number().int().min(1).max(50).default(20),
 });
 
-/** Les tags sont peu nombreux : ils se rendent en entier, filtrés par type. */
+/**
+ * Les tags sont peu nombreux : ils se rendent en entier, filtrés par type.
+ *
+ * `mine` restreint la réponse aux tags portés par au moins une recette que
+ * l'appelant peut atteindre.
+ */
 export const listTagsSchema = z.object({
   type: z.enum(TAG_TYPES).optional(),
+  mine: booleanParam.optional(),
 });
 
 export type ListIngredientsQuery = z.infer<typeof listIngredientsSchema>;

@@ -273,7 +273,7 @@ Générer sur une période sans aucun repas planifié répond `422` plutôt que 
 | Méthode | Route | Description | Auth | Middlewares |
 |---|---|---|:---:|---|
 | GET | `/ingredients?q=&limit=` | Recherche d'ingrédients (autocomplétion) | ✅ | `authenticate`, `validate` |
-| GET | `/tags?type=` | Lister les tags par type | ❌* | `authenticateOptional`, `validate` |
+| GET | `/tags?type=&mine=` | Lister les tags par type | ❌* | `authenticateOptional`, `validate` |
 
 **Un vocabulaire partagé, sans propriétaire.** Ingrédients et tags ne sont cloisonnés par aucun utilisateur : les restreindre à ce que l'utilisateur a déjà écrit viderait l'autocomplétion sur un compte neuf, précisément quand elle sert le plus.
 
@@ -286,6 +286,10 @@ Générer sur une période sans aucun repas planifié répond `422` plutôt que 
 La recherche s'appuie sur un **index trigramme** (`pg_trgm`, GIN) posé par la migration `0003` : l'index d'unicité sur `name` est un btree, inutilisable pour un `LIKE '%…%'`. Mesuré sur 200 000 ingrédients : 36 ms en parcours séquentiel contre 0,7 ms via l'index, que le planificateur choisit de lui-même.
 
 **Tags.** Rendus en entier, groupés par type puis par ordre alphabétique. Le type `course` (entrée, plat, dessert...) est posé par la migration initiale ; les tags `custom` naissent des recettes.
+
+**`?mine=true` : le vocabulaire filtrable.** Le vocabulaire entier convient à l'**autocomplétion d'un formulaire**, où proposer un tag qu'on n'a jamais écrit est précisément le service rendu. Il ne convient pas à un **filtre de recherche** : `GET /recipes` ne couvre que ses propres recettes et celles de ses cookbooks, si bien qu'un tag né chez quelqu'un d'autre y donne un critère qui ne renvoie jamais rien — et l'interface proposerait des puces stériles, en nombre croissant avec l'usage de l'application. `mine=true` borne donc la réponse aux tags portés par au moins une recette **accessible à l'appelant**, selon la règle de périmètre de `accessibleRecipesSql` (`recipes.filters.ts`), qui n'est pas redite ici : deux définitions du même périmètre finiraient par diverger.
+
+Le paramètre se combine avec `type`. Il **exige une authentification** (401 sinon) : « les miens » suppose de savoir qui demande, et la route reste par ailleurs ouverte au visiteur. Effet de bord assumé, un tag de référence que ne porte aucune recette accessible disparaît lui aussi de la réponse — c'est le sens du paramètre.
 
 ## 9. Import / Export — `/import`, `/export`
 

@@ -151,6 +151,38 @@ async function run() {
     names(await call('GET', '/tags', { token: cuisinier.token })).includes('Rapide ' + RUN),
     'un utilisateur authentifié, lui, reçoit le vocabulaire entier',
   );
+
+  section('Vocabulaire filtrable (mine)');
+  /*
+   * Le vocabulaire entier sert l'autocomplétion d'un formulaire. Un filtre de
+   * recherche a besoin de l'inverse : ne proposer que ce qui peut donner un
+   * résultat, `/recipes` ne couvrant que ses propres recettes et celles de
+   * ses cookbooks.
+   */
+  const TAG_VOISIN = 'Voisinage ' + RUN;
+  await call('POST', '/recipes', {
+    token: voisin.token,
+    body: { title: 'Chez le voisin ' + RUN, tags: [TAG_VOISIN], visibility: 'public' },
+  });
+
+  const entier = names(await call('GET', '/tags', { token: cuisinier.token }));
+  check(entier.includes(TAG_VOISIN), 'le tag du voisin entre au vocabulaire commun');
+
+  const filtrable = names(
+    await call('GET', '/tags', { token: cuisinier.token, query: { mine: 'true' } }),
+  );
+  check(filtrable.includes('Rapide ' + RUN), 'mine conserve les tags de ses propres recettes');
+  check(
+    !filtrable.includes(TAG_VOISIN),
+    "mine écarte le tag d'une recette qu'on ne peut pas filtrer",
+  );
+
+  const anonyme = await call('GET', '/tags', { query: { mine: 'true' }, expect: 401 });
+  checkEqual(
+    anonyme.error.code,
+    'UNAUTHORIZED',
+    'mine exige une authentification : « les miens » suppose un compte',
+  );
 }
 
 main('Catalogue', run);

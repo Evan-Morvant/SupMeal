@@ -359,7 +359,7 @@ paths:
               properties: { file: { type: string, format: binary } }
       responses:
         '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/Recipe' } } } }
-        '400': { description: Identifiant invalide, fichier manquant ou format non supporté }
+        '400': { description: 'Identifiant invalide, fichier manquant ou format non supporté' }
         '403': { $ref: '#/components/responses/Forbidden' }
         '413': { description: Image trop volumineuse }
   /recipes/suggestions:
@@ -1056,11 +1056,26 @@ paths:
         reçoit que les tags portés par au moins une recette `public`, un
         utilisateur authentifié reçoit le vocabulaire entier — un tag écrit sur
         une recette privée serait sinon publié avec la liste.
+
+
+        `mine=true` restreint la réponse aux tags portés par au moins une
+        recette accessible à l'appelant. Le vocabulaire entier convient à
+        l'autocomplétion d'un formulaire, où proposer un tag qu'on n'a jamais
+        écrit est le service rendu ; il ne convient pas à un filtre de
+        recherche, `GET /recipes` ne couvrant que ses propres recettes et
+        celles de ses cookbooks — un tag né ailleurs y donnerait un critère
+        qui ne renvoie jamais rien.
       security: []
       parameters:
         - in: query
           name: type
           schema: { type: string, enum: [cuisine, diet, difficulty, course, custom] }
+        - in: query
+          name: mine
+          description: >
+            Limite aux tags portés par une recette accessible. Exige une
+            authentification.
+          schema: { type: string, enum: ['true', 'false'] }
       responses:
         '200':
           description: OK
@@ -1068,6 +1083,7 @@ paths:
             application/json:
               schema: { type: array, items: { $ref: '#/components/schemas/Tag' } }
         '400': { $ref: '#/components/responses/ValidationError' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
 
   # ----------------------------- Import / Export -----------------------------
   /export:
