@@ -24,11 +24,8 @@
   padding-left: var(--space-10);
 }
 
-/*
- * Les contrôles de formulaire prennent toute la largeur par défaut, ce qui
- * dans une barre horizontale pousse les voisins à la ligne suivante : le tri
- * reprend donc sa largeur propre.
- */
+/* Un contrôle de formulaire prend toute la largeur : dans une barre, il
+   pousserait ses voisins à la ligne. */
 .sort {
   flex: 0 0 auto;
   width: auto;

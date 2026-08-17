@@ -1,41 +1,3 @@
-.head {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: var(--space-5);
-  flex-wrap: wrap;
-  margin-bottom: var(--space-5);
-}
-
-.heading {
-  min-width: 0;
-  display: grid;
-  gap: var(--space-3);
-}
-
-.back {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-1);
-  font-size: var(--text-sm);
-  color: var(--ink-soft);
-  text-decoration: none;
-}
-
-.back:hover {
-  color: var(--violet);
-}
-
-.title {
-  font-size: var(--text-3xl);
-}
-
-.actions {
-  display: flex;
-  gap: var(--space-2);
-  flex-wrap: wrap;
-}
-
 .description {
   max-width: 68ch;
   color: var(--ink-soft);
@@ -70,7 +32,6 @@
   font-size: var(--text-lg);
 }
 
-/* Icône et texte sur la même ligne de base. */
 .inline {
   display: inline-flex;
   align-items: center;
@@ -123,8 +84,8 @@
 }
 
 /*
- * Colonne de quantités en chasse fixe et alignée à droite : c'est ce qui rend
- * une liste d'ingrédients lisible en diagonale au moment de sortir le matériel.
+ * Quantités en chasse fixe alignées à droite : c'est ce qui rend la liste
+ * lisible en diagonale au moment de sortir le matériel.
  */
 .quantity {
   flex: none;
@@ -151,7 +112,6 @@
 .steps {
   display: grid;
   gap: var(--space-4);
-  counter-reset: step;
 }
 
 .step {
