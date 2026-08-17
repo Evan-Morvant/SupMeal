@@ -1,0 +1,102 @@
+.head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-5);
+  flex-wrap: wrap;
+  margin-bottom: var(--space-5);
+}
+
+.heading {
+  min-width: 0;
+  display: grid;
+  gap: var(--space-2);
+}
+
+.back {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-size: var(--text-sm);
+  color: var(--ink-soft);
+  text-decoration: none;
+}
+
+.back:hover {
+  color: var(--violet);
+}
+
+.titleRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+
+.description {
+  max-width: 68ch;
+  color: var(--ink-soft);
+}
+
+.actions {
+  display: flex;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+/* --- Onglets : de vraies routes, donc partageables et réversibles. --- */
+
+.tabs {
+  display: flex;
+  gap: var(--space-1);
+  border-bottom: 1px solid var(--violet-line);
+  margin-bottom: var(--space-6);
+}
+
+.tab {
+  position: relative;
+  padding: var(--space-3) var(--space-4);
+  color: var(--ink-soft);
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.tab:hover {
+  color: var(--violet);
+}
+
+.tab[aria-current='page'] {
+  color: var(--violet);
+}
+
+.tab[aria-current='page']::after {
+  content: '';
+  position: absolute;
+  inset: auto 0 -1px 0;
+  height: 2px;
+  background: var(--coral);
+  border-radius: var(--radius-pill);
+}
+
+.tabCount {
+  margin-left: var(--space-2);
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  color: var(--ink-faint);
+}
+
+/* Messages reçus pendant qu'on regardait un autre onglet. */
+.badge {
+  display: inline-grid;
+  place-items: center;
+  min-width: 20px;
+  height: 20px;
+  margin-left: var(--space-2);
+  padding: 0 6px;
+  background: var(--coral);
+  border-radius: var(--radius-pill);
+  color: #fff;
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  font-weight: 500;
+}

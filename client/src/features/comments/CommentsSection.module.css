@@ -1,0 +1,83 @@
+.section {
+  margin-top: var(--space-12);
+  padding-top: var(--space-8);
+  border-top: 1px solid var(--violet-line);
+}
+
+.title {
+  font-size: var(--text-xl);
+  margin-bottom: var(--space-2);
+}
+
+.note {
+  color: var(--ink-soft);
+  font-size: var(--text-sm);
+  margin-bottom: var(--space-5);
+}
+
+.form {
+  display: grid;
+  gap: var(--space-3);
+  margin-bottom: var(--space-6);
+}
+
+.formActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-3);
+}
+
+.list {
+  display: grid;
+  gap: var(--space-5);
+}
+
+.comment {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+
+.author {
+  font-weight: 600;
+}
+
+.date {
+  font-size: var(--text-sm);
+  color: var(--ink-faint);
+}
+
+.edited {
+  font-size: var(--text-xs);
+  color: var(--ink-faint);
+}
+
+/* Les commandes n'apparaissent qu'au survol du commentaire, ou au clavier. */
+.actions {
+  display: flex;
+  gap: var(--space-1);
+  margin-left: auto;
+  opacity: 0;
+  transition: opacity var(--dur-fast) var(--ease);
+}
+
+.comment:hover .actions,
+.comment:focus-within .actions {
+  opacity: 1;
+}
+
+.body {
+  max-width: 70ch;
+  color: var(--ink-soft);
+  white-space: pre-wrap;
+}
+
+.empty {
+  color: var(--ink-soft);
+}

@@ -1,0 +1,19 @@
+.panel {
+  display: grid;
+  gap: var(--space-4);
+  max-width: 520px;
+  margin: var(--space-12) auto;
+  justify-items: start;
+}
+
+.title {
+  font-family: var(--font-display);
+  font-size: var(--text-2xl);
+  font-weight: 600;
+}
+
+.actions {
+  display: flex;
+  gap: var(--space-3);
+  align-self: end;
+}

@@ -1,0 +1,126 @@
+.block {
+  margin-bottom: var(--space-10);
+}
+
+.blockHead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-4);
+  flex-wrap: wrap;
+  margin-bottom: var(--space-2);
+}
+
+.blockTitle {
+  font-size: var(--text-xl);
+}
+
+.note {
+  color: var(--ink-soft);
+  font-size: var(--text-sm);
+  margin-bottom: var(--space-4);
+}
+
+/* Qui peut quoi, dit une fois : la phrase seule ne relie rien a personne. */
+.legend {
+  display: grid;
+  gap: var(--space-1);
+  margin: 0 0 var(--space-5);
+  font-size: var(--text-sm);
+}
+
+.legendRow {
+  display: flex;
+  gap: var(--space-3);
+}
+
+.legendRole {
+  flex: none;
+  min-width: 8.5rem;
+  font-weight: 600;
+}
+
+.legendHelp {
+  margin: 0;
+  color: var(--ink-soft);
+}
+
+.rows {
+  display: grid;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+  padding: var(--space-3) 0;
+  border-bottom: 1px solid var(--violet-line);
+}
+
+.row:last-child {
+  border-bottom: 0;
+}
+
+.identity {
+  min-width: 0;
+  display: grid;
+}
+
+.name {
+  font-weight: 600;
+}
+
+.email {
+  font-size: var(--text-sm);
+  color: var(--ink-faint);
+}
+
+.you {
+  font-size: var(--text-sm);
+  color: var(--violet);
+}
+
+.spacer {
+  flex: 1;
+}
+
+.roleSelect {
+  width: auto;
+  min-width: 180px;
+}
+
+.status {
+  font-size: var(--text-sm);
+  color: var(--ink-soft);
+}
+
+/* --- Lien d'invitation, montré une seule fois --- */
+
+.token {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.tokenLink {
+  padding: var(--space-3);
+  background: var(--violet-soft);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  word-break: break-all;
+  color: var(--ink);
+}
+
+.inviteForm {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+  margin-bottom: var(--space-5);
+}
+
+.inviteEmail {
+  flex: 1;
+  min-width: 240px;
+}
