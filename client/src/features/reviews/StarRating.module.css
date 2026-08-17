@@ -1,0 +1,60 @@
+.stars {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  border: 0;
+  padding: 0;
+  margin: 0;
+}
+
+.star {
+  color: var(--violet-line);
+}
+
+.on {
+  color: var(--coral);
+}
+
+/* --- Saisie : cinq boutons radio déguisés en étoiles --- */
+
+.option {
+  position: relative;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  padding: 2px;
+  border-radius: var(--radius-xs);
+  color: var(--violet-line);
+  transition: color var(--dur-fast) var(--ease), transform var(--dur-fast) var(--ease);
+}
+
+.option:hover {
+  transform: scale(1.12);
+}
+
+.optionOn {
+  color: var(--coral);
+}
+
+/*
+ * Le bouton radio reste dans le flux mais invisible : le supprimer priverait
+ * l'ensemble de la navigation par flèches et du focus au clavier.
+ */
+.input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.input:focus-visible + .icon {
+  outline: 2px solid var(--violet);
+  outline-offset: 2px;
+  border-radius: var(--radius-xs);
+}
+
+.value {
+  margin-left: var(--space-2);
+  font-size: var(--text-sm);
+  color: var(--ink-soft);
+}

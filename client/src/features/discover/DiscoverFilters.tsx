@@ -1,11 +1,11 @@
 import { useCallback, useState } from 'react';
-import type { RecipeFilters as Criteria } from '../../api/types';
+import { Link } from 'react-router-dom';
+import type { DiscoverFilters as Criteria } from '../../api/types';
+import { useAuth } from '../../auth/auth-context';
 import { Button } from '../../ui/Button';
 import { Card } from '../../ui/Card';
-import { ChipToggle } from '../../ui/Chip';
 import { Icon } from '../../ui/Icon';
-import { TokenInput } from '../../ui/TokenInput';
-import { useIngredientSearch, useTags } from '../catalog/catalog.hooks';
+import { useTags } from '../catalog/catalog.hooks';
 import {
   DurationFilters,
   SortSelect,
@@ -14,24 +14,22 @@ import {
   type SortOption,
 } from '../search/filter-parts';
 import { SearchField } from '../search/SearchField';
-import type { RecipeFiltersState } from './useRecipeFilters';
+import type { DiscoverFiltersState } from './useDiscoverFilters';
 
-/** Ordres de tri, avec le libellé que comprend quelqu'un qui cherche. */
 const SORTS: SortOption[] = [
   { value: '', label: 'Tri automatique' },
+  { value: 'rating', label: 'Les mieux notées' },
   { value: 'recent', label: 'Plus récentes' },
-  { value: 'prepTime', label: 'Préparation la plus courte' },
   { value: 'relevance', label: 'Pertinence' },
 ];
 
-export function RecipeFilters({ state }: { state: RecipeFiltersState }): JSX.Element {
+export function DiscoverFilters({ state }: { state: DiscoverFiltersState }): JSX.Element {
   const { filters, patch, clear, activeCount } = state;
+  const { status } = useAuth();
   const [open, setOpen] = useState(activeCount > 0);
-  const [ingredientQuery, setIngredientQuery] = useState('');
-  const ingredients = useIngredientSearch(ingredientQuery);
-  // Périmètre restreint : une puce qui ne peut donner aucun résultat n'a rien
-  // à faire dans un filtre.
-  const tags = useTags({ mine: true });
+  // Catalogue public : un visiteur ne reçoit que les tags portés par une
+  // recette publique, ce qui est exactement le périmètre de cet écran.
+  const tags = useTags();
 
   const setQuery = useCallback(
     (value: string | undefined) => patch({ q: value }, { replace: true }),
@@ -44,8 +42,8 @@ export function RecipeFilters({ state }: { state: RecipeFiltersState }): JSX.Ele
         <SearchField
           value={filters.q}
           onChange={setQuery}
-          label="Rechercher dans mes recettes"
-          placeholder="Rechercher un titre, une description, un ingrédient"
+          label="Rechercher parmi les recettes publiques"
+          placeholder="Rechercher un plat, un ingrédient"
         />
 
         <SortSelect
@@ -67,21 +65,6 @@ export function RecipeFilters({ state }: { state: RecipeFiltersState }): JSX.Ele
 
       {open && (
         <Card className={styles.panel}>
-          <div className={styles.group}>
-            <p className={styles.groupTitle}>Ingrédients</p>
-            <TokenInput
-              label="Filtrer par ingrédients"
-              values={filters.ingredients}
-              onChange={(values) => patch({ ingredients: values })}
-              suggestions={(ingredients.data ?? []).map((item) => item.name)}
-              onQueryChange={setIngredientQuery}
-              loading={ingredients.isFetching}
-              placeholder="tomate, basilic…"
-              hint="Cumulés : une recette doit contenir tous les ingrédients listés."
-              max={20}
-            />
-          </div>
-
           <TagFilter
             tags={tags.data ?? []}
             selected={filters.tags}
@@ -95,11 +78,17 @@ export function RecipeFilters({ state }: { state: RecipeFiltersState }): JSX.Ele
           />
 
           <div className={styles.footer}>
-            <ChipToggle
-              label="Mes favoris seulement"
-              selected={filters.favorite === true}
-              onToggle={() => patch({ favorite: filters.favorite === true ? undefined : true })}
-            />
+            {/*
+             * Les filtres manquants sont annoncés plutôt que masqués : un
+             * visiteur qui cherche par ingrédient doit comprendre où le
+             * trouver, pas se demander si l'application sait le faire.
+             */}
+            {status !== 'authenticated' && (
+              <p className={styles.groupNote}>
+                Filtrer par ingrédient ou par favori demande un compte.{' '}
+                <Link to="/register">Créer un compte</Link>
+              </p>
+            )}
             {activeCount > 0 && (
               <Button variant="ghost" size="sm" onClick={clear}>
                 Effacer les critères

@@ -16,9 +16,19 @@ interface RecipeCardProps {
   to: string;
   /** Absent chez un visiteur : le favori suppose un compte. */
   onToggleFavorite?: (favorite: boolean) => void;
+  /**
+   * Signale les recettes publiques. Inutile là où elles le sont toutes — sur
+   * la découverte, le badge n'apprendrait rien.
+   */
+  showVisibility?: boolean;
 }
 
-export function RecipeCard({ recipe, to, onToggleFavorite }: RecipeCardProps): JSX.Element {
+export function RecipeCard({
+  recipe,
+  to,
+  onToggleFavorite,
+  showVisibility = true,
+}: RecipeCardProps): JSX.Element {
   const extraTags = recipe.tags.length - TAGS_SHOWN;
 
   return (
@@ -67,7 +77,7 @@ export function RecipeCard({ recipe, to, onToggleFavorite }: RecipeCardProps): J
                 <span className={styles.number}>{recipe.servings}</span> pers.
               </span>
             )}
-            {recipe.visibility === 'public' && (
+            {showVisibility && recipe.visibility === 'public' && (
               <span className={styles.public}>
                 <Icon name="monde" size={15} />
                 Publique

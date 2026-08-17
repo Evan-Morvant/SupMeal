@@ -1,0 +1,100 @@
+.section {
+  margin-top: var(--space-12);
+  padding-top: var(--space-8);
+  border-top: 1px solid var(--violet-line);
+}
+
+.head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-4);
+  flex-wrap: wrap;
+  margin-bottom: var(--space-5);
+}
+
+.title {
+  font-size: var(--text-xl);
+}
+
+.average {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.averageValue {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: var(--text-2xl);
+  font-weight: 500;
+}
+
+.averageCount {
+  font-size: var(--text-sm);
+  color: var(--ink-soft);
+}
+
+/* --- Son propre avis --- */
+
+.mine {
+  display: grid;
+  gap: var(--space-4);
+  margin-bottom: var(--space-6);
+}
+
+.mineHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+
+.mineTitle {
+  font-weight: 600;
+}
+
+.actions {
+  display: flex;
+  gap: var(--space-3);
+  justify-content: flex-end;
+}
+
+/* --- Fil des avis --- */
+
+.list {
+  display: grid;
+  gap: var(--space-5);
+}
+
+.review {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.reviewHead {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+
+.author {
+  font-weight: 600;
+}
+
+.date {
+  font-size: var(--text-sm);
+  color: var(--ink-faint);
+}
+
+.body {
+  max-width: 70ch;
+  color: var(--ink-soft);
+  white-space: pre-wrap;
+}
+
+.empty {
+  color: var(--ink-soft);
+}
