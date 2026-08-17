@@ -1,0 +1,87 @@
+.wrap {
+  display: grid;
+  place-items: center;
+  padding: var(--space-8) 0;
+}
+
+.panel {
+  width: 100%;
+  max-width: 420px;
+  display: grid;
+  gap: var(--space-5);
+}
+
+.head {
+  display: grid;
+  gap: var(--space-2);
+  justify-items: center;
+  text-align: center;
+  color: var(--violet);
+}
+
+.title {
+  margin-top: var(--space-3);
+  font-size: var(--text-2xl);
+  color: var(--ink);
+}
+
+.subtitle {
+  color: var(--ink-soft);
+  font-size: var(--text-sm);
+}
+
+.form {
+  display: grid;
+  gap: var(--space-4);
+}
+
+/* Separateur entre les deux voies d'entree : formulaire et fournisseurs. */
+.divider {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  font-size: var(--text-sm);
+  color: var(--ink-faint);
+}
+
+.divider::before,
+.divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--violet-line);
+}
+
+.providers {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.provider {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+  height: 42px;
+  background: var(--surface);
+  border: 1px solid var(--violet-line);
+  border-radius: var(--radius-sm);
+  color: var(--ink);
+  font-weight: 600;
+  font-size: var(--text-sm);
+  text-decoration: none;
+  transition:
+    border-color var(--dur-fast) var(--ease),
+    background-color var(--dur-fast) var(--ease);
+}
+
+.provider:hover {
+  border-color: var(--violet);
+  background: var(--violet-soft);
+}
+
+.swap {
+  text-align: center;
+  font-size: var(--text-sm);
+  color: var(--ink-soft);
+}
