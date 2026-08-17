@@ -27,6 +27,19 @@ installé. Par défaut le client est attendu sur `http://localhost:5173`.
 | `CHROME_PATH` | détecté | Chemin de l'exécutable Chrome. |
 | `HEADFUL` | absent | `1` pour voir le navigateur travailler. |
 
+## Limiteur d'authentification
+
+Chaque scénario crée ses comptes : la suite complète fait une quinzaine
+d'inscriptions et de connexions. Le limiteur anti-bruteforce du serveur
+(20 requêtes par quart d'heure et par IP sur `/auth/register` et `/auth/login`)
+la coupe donc en cours de route, avec un `429` qui ressemble à un défaut
+d'interface — le scénario échoue sur une attente d'écran, pas sur un message
+clair.
+
+Démarrer l'API avec `AUTH_RATE_LIMIT_MAX=100000` le temps de la série lève
+l'obstacle. C'est un réglage de développement : il n'a rien à faire dans le
+`.env` du rendu.
+
 ## Sorties
 
 Les captures vont dans `client/screenshots/<scénario>/`, **ignoré par Git** :
@@ -50,3 +63,11 @@ Deux points à connaître avant d'écrire un scénario :
 - **`page.fill` pose la valeur par le setter natif puis émet `input`.** Un
   simple `el.value = …` ne prévient pas React : le champ paraîtrait rempli à
   l'écran et vide à la soumission.
+- **`page.goto` recharge la page, `clickText` reste dans l'application.** La
+  différence n'est pas cosmétique : un rechargement vide le cache de requêtes,
+  et masque donc tout défaut lié à des données servies depuis ce cache. Pour
+  éprouver un parcours tel qu'un utilisateur le vit, il faut **cliquer** les
+  liens.
+- **`page.fork()` ouvre une seconde page** dans son propre contexte de
+  navigation : stockage isolé, donc session et compte distincts. C'est ce qui
+  permet de faire dialoguer deux utilisateurs dans un même scénario.

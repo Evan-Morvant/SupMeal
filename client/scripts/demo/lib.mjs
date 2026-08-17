@@ -390,32 +390,55 @@ function makePage(cdp) {
 export async function main(run, options = {}) {
   const started = Date.now();
   let chrome;
-  let cdp;
+  let browser;
+  const opened = [];
 
   try {
     chrome = await launchChrome();
-    const targets = await (await fetch(`http://127.0.0.1:${chrome.port}/json/list`)).json();
-    const target = targets.find((entry) => entry.type === 'page');
-    cdp = await connect(target.webSocketDebuggerUrl);
+    const version = await (await fetch(`http://127.0.0.1:${chrome.port}/json/version`)).json();
+    browser = await connect(version.webSocketDebuggerUrl);
 
-    await cdp.send('Page.enable');
-    await cdp.send('Runtime.enable');
-    await cdp.send('Emulation.setDeviceMetricsOverride', {
-      width: options.width ?? 1280,
-      height: options.height ?? 900,
-      deviceScaleFactor: 1,
-      mobile: false,
-    });
+    /*
+     * Chaque page ouverte vit dans son propre contexte de navigation : stockage
+     * et cookies isolés, donc **une session par page**. C'est ce qui permet à
+     * un scénario de faire dialoguer deux comptes à la fois, seule façon
+     * d'éprouver une diffusion temps réel.
+     */
+    async function openPage() {
+      const { browserContextId } = await browser.send('Target.createBrowserContext');
+      const { targetId } = await browser.send('Target.createTarget', {
+        url: 'about:blank',
+        browserContextId,
+      });
+      const cdp = await connect(
+        `ws://127.0.0.1:${chrome.port}/devtools/page/${targetId}`,
+      );
 
-    // Posé avant toute navigation : une erreur muette à l'écran doit se voir.
-    await cdp.send('Page.addScriptToEvaluateOnNewDocument', {
-      source: `window.__demoErrors = [];
-        window.addEventListener('error', (e) => window.__demoErrors.push(String(e.message)));
-        window.addEventListener('unhandledrejection', (e) => window.__demoErrors.push(String(e.reason)));`,
-    });
+      await cdp.send('Page.enable');
+      await cdp.send('Runtime.enable');
+      await cdp.send('Emulation.setDeviceMetricsOverride', {
+        width: options.width ?? 1280,
+        height: options.height ?? 900,
+        deviceScaleFactor: 1,
+        mobile: false,
+      });
+
+      // Posé avant toute navigation : une erreur muette à l'écran doit se voir.
+      await cdp.send('Page.addScriptToEvaluateOnNewDocument', {
+        source: `window.__demoErrors = [];
+          window.addEventListener('error', (e) => window.__demoErrors.push(String(e.message)));
+          window.addEventListener('unhandledrejection', (e) => window.__demoErrors.push(String(e.reason)));`,
+      });
+
+      const page = makePage(cdp);
+      /** Ouvre une seconde page, indépendante : autre session, autre compte. */
+      page.fork = openPage;
+      opened.push({ cdp, browserContextId });
+      return page;
+    }
 
     console.log('=== ' + SCENARIO + ' — ' + WEB);
-    await run(makePage(cdp));
+    await run(await openPage());
 
     const seconds = ((Date.now() - started) / 1000).toFixed(1);
     console.log(
@@ -425,7 +448,13 @@ export async function main(run, options = {}) {
     console.error('\nECHEC — ' + error.message);
     process.exitCode = 1;
   } finally {
-    cdp?.close();
+    for (const entry of opened) {
+      entry.cdp.close();
+      await browser
+        ?.send('Target.disposeBrowserContext', { browserContextId: entry.browserContextId })
+        .catch(() => undefined);
+    }
+    browser?.close();
     chrome?.child.kill();
     if (chrome !== undefined) {
       await sleep(400);
