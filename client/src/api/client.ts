@@ -7,6 +7,15 @@ import type { Tokens } from './types';
 export const API_URL: string = import.meta.env.VITE_API_URL ?? 'http://localhost:4000/api/v1';
 
 /**
+ * Origine de l'API sans son préfixe de version : Socket.io écoute à la racine,
+ * pas sous `/api/v1`.
+ */
+export const API_ORIGIN: string = (() => {
+  const root = API_URL.replace(/\/api\/v1\/?$/, '');
+  return root === '' || root.startsWith('/') ? window.location.origin : root;
+})();
+
+/**
  * L'API attend les listes en virgules (`tags=a,b`), là où axios écrirait
  * `tags[]=a&tags[]=b`. Les valeurs vides sont écartées pour qu'un filtre
  * effacé disparaisse de l'URL.
