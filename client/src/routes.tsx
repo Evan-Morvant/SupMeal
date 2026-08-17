@@ -3,6 +3,15 @@ import { RequireAuth } from './auth/RequireAuth';
 import { LoginPage } from './features/auth/LoginPage';
 import { OAuthCallbackPage } from './features/auth/OAuthCallbackPage';
 import { RegisterPage } from './features/auth/RegisterPage';
+import { CookbookLayout } from './features/cookbooks/CookbookLayout';
+import { CookbookMembersTab } from './features/cookbooks/CookbookMembersTab';
+import { CookbookRecipePage } from './features/cookbooks/CookbookRecipePage';
+import { CookbookRecipesTab } from './features/cookbooks/CookbookRecipesTab';
+import { CookbooksPage } from './features/cookbooks/CookbooksPage';
+import { InvitationPage } from './features/cookbooks/InvitationPage';
+import { DiscoverPage } from './features/discover/DiscoverPage';
+import { ChatTab } from './features/messages/ChatTab';
+import { DiscoverRecipePage } from './features/discover/DiscoverRecipePage';
 import { RecipeDetailPage } from './features/recipes/RecipeDetailPage';
 import { RecipeEditPage } from './features/recipes/RecipeEditPage';
 import { RecipeNewPage } from './features/recipes/RecipeNewPage';
@@ -26,8 +35,8 @@ export const router = createBrowserRouter([
     element: <AdaptiveLayout />,
     children: [
       { path: '/', element: <HomePage /> },
-      { path: '/discover', element: <PlaceholderPage title="Découvrir" /> },
-      { path: '/discover/:id', element: <PlaceholderPage title="Recette publique" /> },
+      { path: '/discover', element: <DiscoverPage /> },
+      { path: '/discover/:id', element: <DiscoverRecipePage /> },
     ],
   },
   {
@@ -50,7 +59,19 @@ export const router = createBrowserRouter([
           { path: '/recipes/new', element: <RecipeNewPage /> },
           { path: '/recipes/:id', element: <RecipeDetailPage /> },
           { path: '/recipes/:id/edit', element: <RecipeEditPage /> },
-          { path: '/cookbooks', element: <PlaceholderPage title="Cookbooks" /> },
+          { path: '/cookbooks', element: <CookbooksPage /> },
+          {
+            path: '/cookbooks/:id',
+            element: <CookbookLayout />,
+            children: [
+              { index: true, element: <CookbookRecipesTab /> },
+              { path: 'membres', element: <CookbookMembersTab /> },
+              { path: 'discussion', element: <ChatTab /> },
+            ],
+          },
+          // Hors de la coque a onglets : la recette occupe l'ecran entier.
+          { path: '/cookbooks/:id/recipes/:recipeId', element: <CookbookRecipePage /> },
+          { path: '/invitations/:token', element: <InvitationPage /> },
           { path: '/planning', element: <PlaceholderPage title="Planning" /> },
           { path: '/shopping-lists', element: <PlaceholderPage title="Listes de courses" /> },
           { path: '/settings', element: <PlaceholderPage title="Paramètres" /> },
