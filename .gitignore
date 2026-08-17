@@ -21,6 +21,9 @@ yarn-error.log*
 server/uploads/
 server/test-uploads/
 
+# Captures produites par les scénarios de démonstration du client
+client/screenshots/
+
 # Couverture de tests
 coverage/
 
