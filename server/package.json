@@ -12,7 +12,8 @@
     "migrate:undo": "tsx src/db/migrate.ts down",
     "migrate:status": "tsx src/db/migrate.ts status",
     "test": "node scripts/run-tests.mjs",
-    "demo": "node scripts/demo/run-all.mjs"
+    "demo": "node scripts/demo/run-all.mjs",
+    "seed": "node scripts/seed/seed.mjs"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",
