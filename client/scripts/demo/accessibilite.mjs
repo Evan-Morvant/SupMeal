@@ -164,6 +164,7 @@ main(async (page) => {
   await auditer(page, '/discover', 'découverte');
   await auditer(page, '/login', 'connexion');
   await auditer(page, '/register', 'inscription');
+  await auditer(page, '/cgu', 'conditions d’utilisation');
 
   section('Espace connecté');
   await page.goto('/register');

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { errorMessage } from '../../api/errors';
 import type { OAuthProvider } from '../../api/types';
 import { useAuth } from '../../auth/auth-context';
@@ -230,6 +230,10 @@ export function AccountTab(): JSX.Element {
       <ProfileSection />
       <PasswordSection />
       <OAuthSection />
+      {/* Les conditions doivent rester atteignables après l'inscription. */}
+      <p className={styles.note}>
+        <Link to="/cgu">Conditions générales d'utilisation</Link>
+      </p>
     </>
   );
 }

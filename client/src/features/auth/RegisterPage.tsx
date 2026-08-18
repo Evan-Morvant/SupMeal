@@ -99,6 +99,11 @@ export function RegisterPage(): JSX.Element {
         <Button type="submit" block loading={isSubmitting}>
           Créer mon compte
         </Button>
+
+        <p className={styles.terms}>
+          En créant un compte, vous acceptez les{' '}
+          <Link to="/cgu">conditions générales d'utilisation</Link>.
+        </p>
       </form>
     </AuthPanel>
   );

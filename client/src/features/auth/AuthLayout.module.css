@@ -85,3 +85,10 @@
   font-size: var(--text-sm);
   color: var(--ink-soft);
 }
+
+/* Mention d'acceptation, sous le bouton qui la déclenche. */
+.terms {
+  font-size: var(--text-sm);
+  color: var(--ink-soft);
+  text-align: center;
+}

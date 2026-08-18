@@ -1,4 +1,4 @@
-import { Outlet } from 'react-router-dom';
+import { Link, Outlet } from 'react-router-dom';
 import { AppHeader } from './AppHeader';
 import styles from './PublicLayout.module.css';
 
@@ -15,7 +15,10 @@ export function PublicLayout(): JSX.Element {
         <Outlet />
       </main>
 
-      <footer className={styles.footer}>SUPMEAL — recettes et planification de repas</footer>
+      <footer className={styles.footer}>
+        SUPMEAL — recettes et planification de repas ·{' '}
+        <Link to="/cgu">Conditions d'utilisation</Link>
+      </footer>
     </div>
   );
 }

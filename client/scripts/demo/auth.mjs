@@ -25,7 +25,22 @@ main(async (page) => {
   section('Création de compte');
   await page.goto('/register');
   await page.waitFor('form');
+  check(
+    (await page.text('form')).includes('vous acceptez les'),
+    'le formulaire d’inscription renvoie aux conditions d’utilisation',
+  );
   await page.shot('02-inscription');
+
+  // Le lien doit mener quelque part : une mention sans page ne vaut rien.
+  await page.clickText('form a', 'conditions');
+  await page.waitForText('main', 'Conditions générales');
+  check(
+    (await page.text('main')).includes('privée par défaut'),
+    'les conditions décrivent la visibilité réelle des recettes',
+  );
+  await page.shot('03-conditions', { full: true });
+  await page.goto('/register');
+  await page.waitFor('form');
 
   const email = account('demo');
   await page.fill('input[autocomplete="name"]', 'Marie Dupont');
@@ -40,7 +55,7 @@ main(async (page) => {
     (await page.text('header')).includes('Marie Dupont'),
     'l’en-tête affiche le nom du compte',
   );
-  await page.shot('03-espace-connecte');
+  await page.shot('04-espace-connecte');
 
   section('Rail replié');
   await page.click('button[aria-label$="la navigation"]');
@@ -52,7 +67,7 @@ main(async (page) => {
     'true',
     'le rail se replie sur les icônes seules',
   );
-  await page.shot('04-rail-replie');
+  await page.shot('05-rail-replie');
 
   /*
    * Le bouton de repli avait perdu ses dimensions : un fragment de selecteur
@@ -76,7 +91,7 @@ main(async (page) => {
     ),
     "la barre d'onglets remplace le rail sous 860 px",
   );
-  await page.shot('05-mobile-onglets');
+  await page.shot('06-mobile-onglets');
   await page.resize(1280, 900);
 
   section('Session reprise après rechargement');

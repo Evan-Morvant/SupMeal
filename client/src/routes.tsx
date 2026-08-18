@@ -28,6 +28,7 @@ import { AppShell } from './layout/AppShell';
 import { PublicLayout } from './layout/PublicLayout';
 import { HomePage } from './pages/HomePage';
 import { NotFoundPage } from './pages/NotFoundPage';
+import { TermsPage } from './pages/TermsPage';
 
 /*
  * Trois familles de routes, et donc trois coques :
@@ -43,6 +44,7 @@ export const router = createBrowserRouter([
       { path: '/', element: <HomePage /> },
       { path: '/discover', element: <DiscoverPage /> },
       { path: '/discover/:id', element: <DiscoverRecipePage /> },
+      { path: '/cgu', element: <TermsPage /> },
     ],
   },
   {

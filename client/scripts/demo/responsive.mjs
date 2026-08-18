@@ -37,6 +37,7 @@ main(
     await verifier(page, '/', 'accueil');
     await verifier(page, '/discover', 'decouverte');
     await verifier(page, '/login', 'connexion');
+    await verifier(page, '/cgu', 'conditions');
 
     section('Espace connecté');
     await page.goto('/register');
