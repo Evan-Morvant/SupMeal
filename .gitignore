@@ -34,3 +34,6 @@ Thumbs.db
 *.swp
 .vscode/*
 !.vscode/extensions.json
+
+# Écarts locaux de compose (ports publiés, etc.)
+docker-compose.override.yml
