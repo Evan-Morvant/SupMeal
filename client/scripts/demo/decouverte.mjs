@@ -73,7 +73,7 @@ main(async (page) => {
   checkEqual(await page.count('article'), 1, 'la recherche publique retrouve la recette publiée');
   await page.shot('02-decouverte');
 
-  await page.clickText('h3 a', TITRE);
+  await page.clickText('h2 a', TITRE);
   await page.waitFor('h1');
   await page.wait(700);
   checkEqual(await page.text('h1'), TITRE, 'le détail public s’ouvre sans compte');

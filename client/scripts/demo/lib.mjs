@@ -313,6 +313,21 @@ function makePage(cdp) {
       return page.evaluate(`document.querySelector(${JSON.stringify(selector)}) !== null`);
     },
 
+    /**
+     * Présent **et** affiché. `exists` ne dit que la présence dans le DOM :
+     * un élément masqué en CSS y reste, et ne concerne pourtant personne.
+     */
+    async visible(selector) {
+      return page.evaluate(`(() => {
+        const el = document.querySelector(${JSON.stringify(selector)});
+        if (el === null) { return false; }
+        const style = getComputedStyle(el);
+        // getClientRects et non offsetParent : ce dernier vaut null pour tout
+        // element en position fixed, comme la barre d'onglets.
+        return style.visibility !== 'hidden' && el.getClientRects().length > 0;
+      })()`);
+    },
+
     async count(selector) {
       return page.evaluate(`document.querySelectorAll(${JSON.stringify(selector)}).length`);
     },

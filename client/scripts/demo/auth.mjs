@@ -37,8 +37,8 @@ main(async (page) => {
   await page.waitFor('nav[aria-label="Navigation principale"]');
   checkEqual(await page.path(), '/recipes', "l'inscription mène à ses recettes");
   check(
-    (await page.text('nav[aria-label="Navigation principale"]')).includes('Marie Dupont'),
-    'le rail affiche le nom du compte',
+    (await page.text('header')).includes('Marie Dupont'),
+    'l’en-tête affiche le nom du compte',
   );
   await page.shot('03-espace-connecte');
 
@@ -53,6 +53,18 @@ main(async (page) => {
     'le rail se replie sur les icônes seules',
   );
   await page.shot('04-rail-replie');
+
+  /*
+   * Le bouton de repli avait perdu ses dimensions : un fragment de selecteur
+   * orphelin le stylait uniquement rail replie. Un controle de geometrie
+   * attrape ce qu'un controle de presence laisse passer.
+   */
+  const taille = await page.evaluate(`(() => {
+    const b = document.querySelector('button[aria-label$="la navigation"]');
+    const r = b.getBoundingClientRect();
+    return Math.round(r.width) + 'x' + Math.round(r.height);
+  })()`);
+  checkEqual(taille, '34x34', 'le bouton de repli garde sa taille, replie comme deplie');
   await page.click('button[aria-label$="la navigation"]');
   await page.wait(400);
 

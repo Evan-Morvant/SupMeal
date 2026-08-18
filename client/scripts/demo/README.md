@@ -27,6 +27,20 @@ installé. Par défaut le client est attendu sur `http://localhost:5173`.
 | `CHROME_PATH` | détecté | Chemin de l'exécutable Chrome. |
 | `HEADFUL` | absent | `1` pour voir le navigateur travailler. |
 
+## Les scénarios
+
+| Scénario | Ce qu'il éprouve |
+|---|---|
+| `auth` | Accueil visiteur, garde des routes privées, inscription, session reprise, déconnexion. |
+| `recettes` | Création complète avec photo, détail, favori, recherche et filtres, modification, suppression. |
+| `decouverte` | Publication, découverte publique, avis et notation, refus opposé au créateur. |
+| `cookbooks` | Invitations, rôles, permissions par action, commentaires du groupe. |
+| `messagerie` | **Deux sessions simultanées** : diffusion temps réel, pastille de non-lus, salon fermé au Lecteur. |
+| `planning` | Semaine, déplacement d'un repas, liste de courses, période sans repas. |
+| `parametres` | Profil, préférences, **aller-retour export → import** dans les trois formats, portabilité. |
+| `accessibilite` | Titres, noms accessibles, libellés, repères, **contrastes WCAG AA** sur treize écrans. |
+| `responsive` | Débordement horizontal et bascule du rail vers la barre d'onglets, en largeur de téléphone. |
+
 ## Limiteur d'authentification
 
 Chaque scénario crée ses comptes : la suite complète fait une quinzaine

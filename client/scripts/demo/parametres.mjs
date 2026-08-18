@@ -44,8 +44,8 @@ main(async (page) => {
   await page.clickText('button', 'Enregistrer');
   await page.wait(1200);
   check(
-    (await page.text('nav[aria-label="Navigation principale"]')).includes('Camille Durand'),
-    'le nom change aussi dans le rail, sans rechargement',
+    (await page.text('header')).includes('Camille Durand'),
+    'le nom change aussi dans l’en-tête, sans rechargement',
   );
   await page.shot('01-compte');
 

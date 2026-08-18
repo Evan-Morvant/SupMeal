@@ -1,4 +1,9 @@
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { PASSWORD, account, check, checkEqual, main, section } from './lib.mjs';
+
+/** Le logo de la charte fait une photo de test valable : un vrai JPEG. */
+const IMAGE = join(dirname(fileURLToPath(import.meta.url)), '..', '..', '..', 'docs', 'chartes', 'logo Supmeal.jpg');
 
 /**
  * Parcours des recettes : création complète, consultation, favori, recherche,
@@ -66,6 +71,9 @@ main(async (page) => {
       (await page.count('button[aria-label="Retirer dessert"]')) === 1,
     'un tag saisi devient un jeton retirable',
   );
+  // La photo part après l'enregistrement : la route d'image exige un identifiant.
+  await page.upload('input[type="file"]', IMAGE);
+  await page.wait(400);
   await page.shot('02-formulaire', { full: true });
   await page.clickText('button[type="submit"]', 'Enregistrer la recette');
 
@@ -88,6 +96,18 @@ main(async (page) => {
     (await page.text('main')).includes("Pas encore d'avis"),
     'une recette non notée n’affiche pas une note de zéro',
   );
+  /*
+   * L'image est servie hors de `/api/v1`, à la racine de l'API : vérifier
+   * qu'elle est *chargée* et non seulement présente est le seul moyen de
+   * détecter une URL que le navigateur ne sait pas atteindre.
+   */
+  const photo = await page.evaluate(`(() => {
+    const img = document.querySelector('main img');
+    if (img === null) { return 'absente'; }
+    return img.complete && img.naturalWidth > 0 ? 'chargee' : 'cassee';
+  })()`);
+  checkEqual(photo, 'chargee', 'la photo téléversée est servie et s’affiche');
+
   await page.shot('03-detail', { full: true });
 
   section('Favori');
