@@ -11,6 +11,13 @@ import { CookbooksPage } from './features/cookbooks/CookbooksPage';
 import { InvitationPage } from './features/cookbooks/InvitationPage';
 import { DiscoverPage } from './features/discover/DiscoverPage';
 import { ChatTab } from './features/messages/ChatTab';
+import { PlanningPage } from './features/meal-plan/PlanningPage';
+import { ShoppingListPage } from './features/shopping-lists/ShoppingListPage';
+import { ShoppingListsPage } from './features/shopping-lists/ShoppingListsPage';
+import { AccountTab } from './features/settings/AccountTab';
+import { DataTab } from './features/settings/DataTab';
+import { PreferencesTab } from './features/settings/PreferencesTab';
+import { SettingsLayout } from './features/settings/SettingsLayout';
 import { DiscoverRecipePage } from './features/discover/DiscoverRecipePage';
 import { RecipeDetailPage } from './features/recipes/RecipeDetailPage';
 import { RecipeEditPage } from './features/recipes/RecipeEditPage';
@@ -21,7 +28,6 @@ import { AppShell } from './layout/AppShell';
 import { PublicLayout } from './layout/PublicLayout';
 import { HomePage } from './pages/HomePage';
 import { NotFoundPage } from './pages/NotFoundPage';
-import { PlaceholderPage } from './pages/PlaceholderPage';
 
 /*
  * Trois familles de routes, et donc trois coques :
@@ -72,9 +78,18 @@ export const router = createBrowserRouter([
           // Hors de la coque a onglets : la recette occupe l'ecran entier.
           { path: '/cookbooks/:id/recipes/:recipeId', element: <CookbookRecipePage /> },
           { path: '/invitations/:token', element: <InvitationPage /> },
-          { path: '/planning', element: <PlaceholderPage title="Planning" /> },
-          { path: '/shopping-lists', element: <PlaceholderPage title="Listes de courses" /> },
-          { path: '/settings', element: <PlaceholderPage title="Paramètres" /> },
+          { path: '/planning', element: <PlanningPage /> },
+          { path: '/shopping-lists', element: <ShoppingListsPage /> },
+          { path: '/shopping-lists/:id', element: <ShoppingListPage /> },
+          {
+            path: '/settings',
+            element: <SettingsLayout />,
+            children: [
+              { index: true, element: <AccountTab /> },
+              { path: 'preferences', element: <PreferencesTab /> },
+              { path: 'donnees', element: <DataTab /> },
+            ],
+          },
         ],
       },
     ],
