@@ -5,6 +5,7 @@ import { Button, buttonClass } from '../../ui/Button';
 import { ConfirmDialog } from '../../ui/Dialog';
 import { Alert, ErrorState, PageLoader } from '../../ui/Feedback';
 import { Icon } from '../../ui/Icon';
+import { AddToPlanDialog } from '../meal-plan/AddToPlanDialog';
 import { CommentsSection } from '../comments/CommentsSection';
 import { RecipeBody } from '../recipes/RecipeBody';
 import { useRecipe, useToggleFavorite } from '../recipes/recipes.hooks';
@@ -25,6 +26,7 @@ export function CookbookRecipePage(): JSX.Element {
   const unlinkRecipe = useUnlinkRecipe(id ?? '');
   const toggleFavorite = useToggleFavorite();
   const [confirming, setConfirming] = useState(false);
+  const [planning, setPlanning] = useState(false);
 
   if (cookbookQuery.isPending || recipeQuery.isPending) {
     return <PageLoader label="Chargement de la recette…" />;
@@ -59,6 +61,10 @@ export function CookbookRecipePage(): JSX.Element {
         </div>
 
         <div className={styles.actions}>
+          <Button variant="outline" onClick={() => setPlanning(true)}>
+            <Icon name="planning" size={20} />
+            Planifier
+          </Button>
           <Button
             variant={recipe.isFavorite ? 'secondary' : 'outline'}
             onClick={() => toggleFavorite.mutate({ id: recipe.id, favorite: !recipe.isFavorite })}
@@ -92,6 +98,12 @@ export function CookbookRecipePage(): JSX.Element {
         cookbookId={cookbook.id}
         recipeId={recipe.id}
         myRole={cookbook.myRole}
+      />
+
+      <AddToPlanDialog
+        recipe={recipe}
+        open={planning}
+        onClose={() => setPlanning(false)}
       />
 
       <ConfirmDialog

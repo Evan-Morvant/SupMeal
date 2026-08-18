@@ -6,6 +6,7 @@ import { Button, buttonClass } from '../../ui/Button';
 import { ConfirmDialog } from '../../ui/Dialog';
 import { Alert, ErrorState, PageLoader } from '../../ui/Feedback';
 import { Icon } from '../../ui/Icon';
+import { AddToPlanDialog } from '../meal-plan/AddToPlanDialog';
 import { ReviewsSection } from '../reviews/ReviewsSection';
 import { RecipeBody } from './RecipeBody';
 import { useDeleteRecipe, useRecipe, useToggleFavorite } from './recipes.hooks';
@@ -19,6 +20,7 @@ export function RecipeDetailPage(): JSX.Element {
   const toggleFavorite = useToggleFavorite();
   const deleteRecipe = useDeleteRecipe();
   const [confirming, setConfirming] = useState(false);
+  const [planning, setPlanning] = useState(false);
 
   if (recipeQuery.isPending) {
     return <PageLoader label="Chargement de la recette…" />;
@@ -52,6 +54,10 @@ export function RecipeDetailPage(): JSX.Element {
         </div>
 
         <div className={styles.actions}>
+          <Button variant="outline" onClick={() => setPlanning(true)}>
+            <Icon name="planning" size={20} />
+            Planifier
+          </Button>
           <Button
             variant={recipe.isFavorite ? 'secondary' : 'outline'}
             onClick={() => toggleFavorite.mutate({ id: recipe.id, favorite: !recipe.isFavorite })}
@@ -86,6 +92,12 @@ export function RecipeDetailPage(): JSX.Element {
       <ReviewsSection recipe={recipe} />
 
       {deleteRecipe.isError && <Alert>{errorMessage(deleteRecipe.error)}</Alert>}
+
+      <AddToPlanDialog
+        recipe={recipe}
+        open={planning}
+        onClose={() => setPlanning(false)}
+      />
 
       <ConfirmDialog
         open={confirming}
