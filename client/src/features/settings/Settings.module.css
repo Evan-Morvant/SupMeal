@@ -1,0 +1,151 @@
+.head {
+  display: grid;
+  gap: var(--space-1);
+  margin-bottom: var(--space-5);
+}
+
+.lede {
+  color: var(--ink-soft);
+}
+
+.tabs {
+  display: flex;
+  gap: var(--space-1);
+  border-bottom: 1px solid var(--violet-line);
+  margin-bottom: var(--space-6);
+}
+
+.tab {
+  position: relative;
+  padding: var(--space-3) var(--space-4);
+  color: var(--ink-soft);
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.tab:hover {
+  color: var(--violet);
+}
+
+.tab[aria-current='page'] {
+  color: var(--violet);
+}
+
+.tab[aria-current='page']::after {
+  content: '';
+  position: absolute;
+  inset: auto 0 -1px 0;
+  height: 2px;
+  background: var(--coral);
+  border-radius: var(--radius-pill);
+}
+
+/* --- Sections --- */
+
+.section {
+  max-width: 640px;
+  display: grid;
+  gap: var(--space-4);
+  margin-bottom: var(--space-8);
+}
+
+.sectionTitle {
+  font-size: var(--text-xl);
+}
+
+.note {
+  color: var(--ink-soft);
+  font-size: var(--text-sm);
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-3);
+}
+
+/* --- Comptes liés --- */
+
+.accounts {
+  display: grid;
+}
+
+.account {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) 0;
+  border-bottom: 1px solid var(--violet-line);
+}
+
+.account:last-child {
+  border-bottom: 0;
+}
+
+.provider {
+  font-weight: 600;
+  text-transform: capitalize;
+}
+
+.since {
+  font-size: var(--text-sm);
+  color: var(--ink-faint);
+}
+
+.spacer {
+  flex: 1;
+}
+
+/* --- Import / export --- */
+
+.formats {
+  display: flex;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+  align-items: flex-end;
+}
+
+.formatSelect {
+  width: auto;
+  min-width: 220px;
+}
+
+.file {
+  display: none;
+}
+
+.report {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.counts {
+  display: flex;
+  gap: var(--space-5);
+  flex-wrap: wrap;
+}
+
+.count {
+  display: grid;
+}
+
+.countValue {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: var(--text-2xl);
+  font-weight: 500;
+}
+
+.countLabel {
+  font-size: var(--text-xs);
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+
+.errors {
+  margin: 0;
+  padding-left: var(--space-5);
+  font-size: var(--text-sm);
+  color: var(--danger);
+}
