@@ -52,6 +52,7 @@ function Showcase({ title, note }: { title: string; note: string }): JSX.Element
           recipe={recipe}
           to={'/discover/' + recipe.id}
           showVisibility={false}
+          headingLevel={3}
           onToggleFavorite={
             status === 'authenticated'
               ? (favorite) => toggleFavorite.mutate({ id: recipe.id, favorite })
@@ -124,6 +125,7 @@ function Suggestions(): JSX.Element {
           <RecipeCard
             recipe={suggestion.recipe}
             to={'/recipes/' + suggestion.recipe.id}
+            headingLevel={3}
             onToggleFavorite={(favorite) =>
               toggleFavorite.mutate({ id: suggestion.recipe.id, favorite })
             }

@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import type { IngredientLine, Recipe } from '../../api/types';
 import { Card } from '../../ui/Card';
 import { Chip, ChipList } from '../../ui/Chip';
@@ -22,6 +23,8 @@ function quantityOf(line: IngredientLine): string {
 
 export function RecipeBody({ recipe }: { recipe: Recipe }): JSX.Element {
   const total = (recipe.prepTimeMin ?? 0) + (recipe.cookTimeMin ?? 0);
+  // Une photo qui ne répond plus s'efface : mieux vaut rien qu'une icône de rupture.
+  const [broken, setBroken] = useState(false);
 
   return (
     <>
@@ -64,8 +67,13 @@ export function RecipeBody({ recipe }: { recipe: Recipe }): JSX.Element {
         </div>
       </Card>
 
-      {recipe.imageUrl !== null && (
-        <img className={styles.image} src={recipe.imageUrl} alt={'Photo de ' + recipe.title} />
+      {recipe.imageUrl !== null && !broken && (
+        <img
+          className={styles.image}
+          src={recipe.imageUrl}
+          alt={'Photo de ' + recipe.title}
+          onError={() => setBroken(true)}
+        />
       )}
 
       <div className={styles.columns}>

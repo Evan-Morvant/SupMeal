@@ -13,7 +13,7 @@
 
 /* Le mot qui porte la promesse prend le corail, une fois et une seule. */
 .accent {
-  color: var(--coral);
+  color: var(--coral-text);
 }
 
 .lede {
@@ -76,7 +76,7 @@
   padding: 2px var(--space-3);
   background: var(--coral-soft);
   border-radius: var(--radius-pill);
-  color: var(--coral-dark);
+  color: var(--coral-text);
   font-size: var(--text-xs);
 }
 

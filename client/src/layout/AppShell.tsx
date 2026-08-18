@@ -1,10 +1,7 @@
 import { useCallback, useState } from 'react';
-import { NavLink, Outlet, useNavigate } from 'react-router-dom';
-import { useIsFetching } from '@tanstack/react-query';
-import { useAuth } from '../auth/auth-context';
-import { Avatar } from '../ui/Avatar';
+import { NavLink, Outlet } from 'react-router-dom';
 import { Icon, IconName } from '../ui/Icon';
-import { Logo } from '../ui/Logo';
+import { AppHeader } from './AppHeader';
 import styles from './AppShell.module.css';
 
 /*
@@ -41,13 +38,7 @@ function readCollapsed(): boolean {
 }
 
 export function AppShell(): JSX.Element {
-  const { user, logout } = useAuth();
-  const navigate = useNavigate();
   const [collapsed, setCollapsed] = useState(readCollapsed);
-
-  // La marque est l'indicateur de chargement : sa couronne tourne tant qu'une
-  // requête est en vol.
-  const busy = useIsFetching() > 0;
 
   const toggleRail = useCallback(() => {
     setCollapsed((previous) => {
@@ -61,19 +52,11 @@ export function AppShell(): JSX.Element {
     });
   }, []);
 
-  const signOut = useCallback(async () => {
-    await logout();
-    navigate('/', { replace: true });
-  }, [logout, navigate]);
-
   return (
     <div className={styles.shell}>
-      <nav className={styles.rail} data-collapsed={collapsed} aria-label="Navigation principale">
-        <NavLink to="/" className={styles.brand}>
-          <Logo size={36} spinning={busy} decorative />
-          <span className={styles.brandWord}>SUPMEAL</span>
-        </NavLink>
+      <AppHeader />
 
+      <nav className={styles.rail} data-collapsed={collapsed} aria-label="Navigation principale">
         <div className={styles.nav}>
           {NAV.map((item) => (
             <NavLink
@@ -95,20 +78,6 @@ export function AppShell(): JSX.Element {
           <Icon name="reglages" />
           <span className={styles.itemLabel}>Paramètres</span>
         </NavLink>
-
-        <div className={styles.account}>
-          <Avatar displayName={user?.displayName ?? ''} avatarUrl={user?.avatarUrl} size={32} />
-          <span className={styles.accountName}>{user?.displayName}</span>
-          {/* Le nom accessible est porté par le bouton, non par l'icône. */}
-          <button
-            type="button"
-            className={styles.railButton}
-            onClick={signOut}
-            aria-label="Se déconnecter"
-          >
-            <Icon name="deconnexion" size={20} />
-          </button>
-        </div>
 
         <button
           type="button"

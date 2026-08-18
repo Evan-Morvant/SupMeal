@@ -21,6 +21,8 @@ interface LogoProps {
   /** Tout en couleur courante, pour une pose sur une surface deja coloree. */
   mono?: boolean;
   className?: string;
+  /** Classe du mot, pour que l'appelant puisse le masquer en petite largeur. */
+  wordClassName?: string;
 }
 
 /** Abscisses des dents de la fourchette. */
@@ -94,14 +96,22 @@ function Mark({
   );
 }
 
-export function Logo({ variant = 'mark', size = 40, ...rest }: LogoProps): JSX.Element {
+export function Logo({
+  variant = 'mark',
+  size = 40,
+  wordClassName,
+  ...rest
+}: LogoProps): JSX.Element {
   if (variant === 'mark') {
     return <Mark size={size} {...rest} />;
   }
   return (
     <span className={styles.lockup}>
       <Mark size={size} {...rest} decorative />
-      <span className={styles.word} style={{ fontSize: size * 0.54 }}>
+      <span
+        className={[styles.word, wordClassName ?? ''].filter(Boolean).join(' ')}
+        style={{ fontSize: size * 0.54 }}
+      >
         SUPMEAL
       </span>
     </span>

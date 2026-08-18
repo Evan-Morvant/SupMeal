@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import type { RecipeSummary } from '../../api/types';
 import { cardClass } from '../../ui/Card';
@@ -21,6 +22,12 @@ interface RecipeCardProps {
    * la découverte, le badge n'apprendrait rien.
    */
   showVisibility?: boolean;
+  /**
+   * Niveau du titre de carte. Il dépend de ce qui précède à l'écran : sous le
+   * titre de page c'est un `h2`, à l'intérieur d'une section titrée un `h3`.
+   * Sauter un niveau désoriente qui parcourt la page par ses titres.
+   */
+  headingLevel?: 2 | 3;
 }
 
 export function RecipeCard({
@@ -28,18 +35,32 @@ export function RecipeCard({
   to,
   onToggleFavorite,
   showVisibility = true,
+  headingLevel = 2,
 }: RecipeCardProps): JSX.Element {
+  const Heading = ('h' + headingLevel) as 'h2' | 'h3';
+  /*
+   * Une image peut ne plus répondre — fichier disparu, adresse d'API changée.
+   * Sans repli, le navigateur affiche son icône de rupture, plus laide que
+   * l'absence de photo.
+   */
+  const [broken, setBroken] = useState(false);
   const extraTags = recipe.tags.length - TAGS_SHOWN;
 
   return (
     <article className={cardClass({ flush: true, interactive: true, className: styles.card })}>
       <div className={styles.media}>
-        {recipe.imageUrl === null ? (
+        {recipe.imageUrl === null || broken ? (
           <div className={styles.placeholder}>
             <Logo size={72} decorative mono />
           </div>
         ) : (
-          <img className={styles.image} src={recipe.imageUrl} alt="" loading="lazy" />
+          <img
+            className={styles.image}
+            src={recipe.imageUrl}
+            alt=""
+            loading="lazy"
+            onError={() => setBroken(true)}
+          />
         )}
 
         {onToggleFavorite !== undefined && (
@@ -63,11 +84,11 @@ export function RecipeCard({
 
       <div className={styles.body}>
         <div className={styles.text}>
-          <h3 className={styles.title}>
+          <Heading className={styles.title}>
             <Link to={to} className={styles.link}>
               {recipe.title}
             </Link>
-          </h3>
+          </Heading>
 
           <p className={styles.meta}>
             <Rating avgRating={recipe.avgRating} reviewCount={recipe.reviewCount} />

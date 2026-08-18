@@ -42,9 +42,10 @@
 
 /* --- Variantes. Une seule action corail par ecran : c'est la principale. --- */
 
+/* L'encre sur le corail donne 5,6:1 ; le blanc n'en donnait que 2,8. */
 .primary {
   background: var(--coral);
-  color: #fff;
+  color: var(--ink);
 }
 
 .primary:hover:not(:disabled) {

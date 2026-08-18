@@ -68,22 +68,14 @@
 }
 
 .today {
-  color: var(--coral);
+  color: var(--coral-text);
 }
 
-/*
- * Seule la première lettre passe en capitale : `capitalize` en mettrait une
- * après le trait d'union et rendrait « Petit-Déjeuner ».
- */
 .mealHead {
   display: flex;
   align-items: center;
   font-size: var(--text-sm);
   font-weight: 600;
-}
-
-.mealHead::first-letter {
-  text-transform: uppercase;
 }
 
 .cell {
@@ -158,7 +150,9 @@
 
   /* Les créneaux vides encombreraient : sur un téléphone, on ne montre que
      ce qui est prévu. L'ajout passe par le bouton de la barre. */
-  .cell[data-empty='true'] {
+  /* Et l'en-tête d'un créneau sans repas n'a plus rien à annoncer. */
+  .cell[data-empty='true'],
+  .mealHead[data-empty='true'] {
     display: none;
   }
 

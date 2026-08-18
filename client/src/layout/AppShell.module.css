@@ -1,7 +1,16 @@
+/*
+ * L'en-tete traverse toute la largeur, le rail et le contenu se partagent la
+ * ligne du dessous.
+ */
 .shell {
   display: grid;
   min-height: 100vh;
   grid-template-columns: auto 1fr;
+  grid-template-rows: auto 1fr;
+}
+
+.shell > header {
+  grid-column: 1 / -1;
 }
 
 .content {
@@ -18,13 +27,14 @@
 
 .rail {
   position: sticky;
-  top: 0;
+  /* Sous l'en-tete, qui reste lui aussi colle en haut. */
+  top: var(--header-h);
   z-index: var(--z-rail);
   display: flex;
   flex-direction: column;
   gap: var(--space-2);
   width: var(--rail-w);
-  height: 100vh;
+  height: calc(100vh - var(--header-h));
   padding: var(--space-4) var(--space-3);
   background: var(--violet);
   color: #fff;
@@ -35,23 +45,7 @@
   width: var(--rail-w-min);
 }
 
-.brand {
-  display: flex;
-  align-items: center;
-  gap: var(--space-3);
-  padding: var(--space-2);
-  color: inherit;
-  text-decoration: none;
-  border-radius: var(--radius-sm);
-}
 
-.brandWord {
-  font-family: var(--font-display);
-  font-weight: 700;
-  font-size: var(--text-lg);
-  letter-spacing: 0.01em;
-  white-space: nowrap;
-}
 
 .nav {
   display: flex;
@@ -105,9 +99,7 @@
   overflow: hidden;
 }
 
-.rail[data-collapsed='true'] .itemLabel,
-.rail[data-collapsed='true'] .brandWord,
-.rail[data-collapsed='true'] .accountName {
+.rail[data-collapsed='true'] .itemLabel {
   display: none;
 }
 
@@ -115,35 +107,6 @@
   flex: 1;
 }
 
-.account {
-  display: flex;
-  align-items: center;
-  gap: var(--space-3);
-  padding: var(--space-2) var(--space-3);
-  border-top: 1px solid #ffffff29;
-  margin-top: var(--space-2);
-  padding-top: var(--space-4);
-}
-
-/*
- * Replie, le rail n'offre que 48 px utiles : l'avatar et la déconnexion côte
- * à côte en dépasseraient, ils s'empilent.
- */
-.rail[data-collapsed='true'] .account {
-  flex-direction: column;
-  gap: var(--space-2);
-  padding-left: 0;
-  padding-right: 0;
-}
-
-.accountName {
-  min-width: 0;
-  font-size: var(--text-sm);
-  font-weight: 600;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
 
 .railButton {
   display: flex;

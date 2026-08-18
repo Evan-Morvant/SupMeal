@@ -1,6 +1,7 @@
 import { Fragment, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { MEAL_TYPES, type MealPlanEntry, type MealType } from '../../api/types';
+import { capitalizeFirst } from '../../lib/format';
 import { Button } from '../../ui/Button';
 import { Select } from '../../ui/Field';
 import { ErrorState, PageLoader } from '../../ui/Feedback';
@@ -151,7 +152,12 @@ export function PlanningPage(): JSX.Element {
 
           {MEAL_TYPES.map((meal) => (
             <Fragment key={meal}>
-              <div className={styles.mealHead}>{meal}</div>
+              <div
+                className={styles.mealHead}
+                data-empty={(plan.data ?? []).every((entry) => entry.mealType !== meal)}
+              >
+                {capitalizeFirst(meal)}
+              </div>
               {days.map((day) => {
                 const date = toIso(day);
                 const entries = entriesAt(date, meal);

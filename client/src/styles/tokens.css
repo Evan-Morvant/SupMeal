@@ -17,16 +17,25 @@
   --violet-line: #3b2f9226; /* 15 % : bordures de cartes et de champs */
   --coral-dark: #e5573a; /* survol des actions */
   --coral-soft: #ff6b4a1f;
+  /*
+   * Corail assombri, reserve au **texte**. Le corail de la charte plafonne a
+   * 2,7:1 sur le fond clair : lisible en aplat, insuffisant en lettres.
+   */
+  --coral-text: #b8431e;
   --surface: #ffffff; /* cartes posées sur --bg */
-  --ink-soft: #1a153b99; /* 60 % : textes secondaires */
-  --ink-faint: #1a153b66; /* 40 % : libellés, placeholders */
+  /*
+   * Opacites choisies pour tenir le 4,5:1 de WCAG AA sur `--bg` : 60 % ne
+   * donnait que 2,5:1 sur les libelles, illisible pour beaucoup de monde.
+   */
+  --ink-soft: #1a153bb3; /* 70 % : textes secondaires */
+  --ink-faint: #1a153b99; /* 60 % : libellés, placeholders */
 
   /* --- États. Réservés aux retours système, jamais décoratifs. --- */
   --success: #1f7a5a;
   --success-soft: #1f7a5a1f;
   --danger: #c0392b;
   --danger-soft: #c0392b1f;
-  --warning: #a86b12;
+  --warning: #8f5a0e; /* assombri : #a86b12 plafonnait a 4,2:1 sur son fond */
   --warning-soft: #a86b121f;
 
   /* --- Typographie --- */
