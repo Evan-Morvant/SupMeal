@@ -35,7 +35,7 @@ main(async (chef) => {
   await chef.clickText('button', 'Créer mon premier cookbook');
   await chef.waitFor('dialog[open]');
   await chef.fillByLabel('Nom', NOM);
-  await chef.clickText('dialog button', 'Créer');
+  await chef.clickText('dialog[open] button', 'Créer');
   await chef.wait(1200);
   await chef.clickText('h2 a', NOM);
   await chef.waitFor('nav a[aria-current="page"]');
@@ -107,8 +107,9 @@ main(async (chef) => {
 
   // Le socket reste ouvert sur les autres onglets : la pastille compte.
   await membre.wait(800);
-  check(
-    (await membre.text('nav[aria-label="Sections du cookbook"]')).includes('Discussion1'),
+  checkEqual(
+    await membre.text('nav[aria-label="Sections du cookbook"] span[class*="badge"]'),
+    '1',
     'une pastille annonce le message reçu depuis un autre onglet',
   );
   await membre.shot('03-pastille');
@@ -120,8 +121,9 @@ main(async (chef) => {
     (await membre.text('main')).includes('Je m’occupe du dessert'),
     'les messages dits pendant l’absence apparaissent au retour dans le salon',
   );
-  check(
-    !(await membre.text('nav[aria-label="Sections du cookbook"]')).includes('Discussion1'),
+  checkEqual(
+    await membre.text('nav[aria-label="Sections du cookbook"] span[class*="badge"]'),
+    '',
     'la pastille s’efface une fois le salon rouvert',
   );
   const fil = await membre.text('main');

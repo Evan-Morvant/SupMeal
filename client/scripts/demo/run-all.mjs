@@ -16,7 +16,7 @@ import { fileURLToPath } from 'node:url';
 const HERE = dirname(fileURLToPath(import.meta.url));
 
 /** Ordre de lecture : de l'entrée dans l'application vers ses fonctions. */
-const SCENARIOS = ['auth', 'recettes', 'decouverte', 'cookbooks', 'messagerie'];
+const SCENARIOS = ['auth', 'recettes', 'decouverte', 'cookbooks', 'messagerie', 'planning', 'parametres'];
 
 function runScenario(name) {
   return new Promise((resolve) => {

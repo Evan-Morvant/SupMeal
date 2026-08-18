@@ -46,7 +46,7 @@ main(async (page) => {
   await page.waitFor('dialog[open]');
   await page.fillByLabel('Nom', NOM);
   await page.fillByLabel('Description', 'Ce qu’on cuisine à la maison.');
-  await page.clickText('dialog button', 'Créer');
+  await page.clickText('dialog[open] button', 'Créer');
   await page.wait(1200);
   check((await page.text('main')).includes(NOM), 'le cookbook créé apparaît dans la liste');
   check((await page.text('main')).includes('Créateur'), 'son créateur en est le Créateur');

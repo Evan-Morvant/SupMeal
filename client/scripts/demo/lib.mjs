@@ -1,5 +1,5 @@
 import { spawn } from 'node:child_process';
-import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { basename, dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { tmpdir } from 'node:os';
@@ -214,11 +214,20 @@ function makePage(cdp) {
         const needle = ${JSON.stringify(label)}.trim().toLowerCase();
         const found = [...document.querySelectorAll('label')].find((node) =>
           (node.textContent ?? '').trim().toLowerCase().startsWith(needle));
-        if (found === undefined) { throw new Error('libellé introuvable : ' + needle); }
-        const control = found.htmlFor !== ''
-          ? document.getElementById(found.htmlFor)
-          : found.querySelector('input, select, textarea');
-        if (control === null) { throw new Error('libellé sans contrôle : ' + needle); }
+        let control = null;
+        if (found !== undefined) {
+          control = found.htmlFor !== ''
+            ? document.getElementById(found.htmlFor)
+            : found.querySelector('input, select, textarea');
+        } else {
+          // Un champ peut porter son nom en \`aria-label\` plutôt qu'en <label> :
+          // c'est le même nom accessible, il doit se désigner pareil.
+          control = [...document.querySelectorAll('input[aria-label], select[aria-label], textarea[aria-label]')]
+            .find((node) => node.getAttribute('aria-label').trim().toLowerCase().startsWith(needle)) ?? null;
+        }
+        if (control === null || control === undefined) {
+          throw new Error('champ introuvable pour le libellé : ' + needle);
+        }
         // Marqueur temporaire : donne une prise stable pour l'appel suivant.
         control.dataset.demoTarget = 'y';
         return true;
@@ -308,10 +317,36 @@ function makePage(cdp) {
       return page.evaluate(`document.querySelectorAll(${JSON.stringify(selector)}).length`);
     },
 
+    /*
+     * `innerText` et non `textContent` : il ne rend que ce qui est réellement
+     * affiché. Les boîtes de dialogue fermées et tout ce qui est masqué restent
+     * dans le DOM — les inclure ferait passer des vérifications sur du contenu
+     * invisible.
+     */
     async text(selector) {
       return page.evaluate(
-        `(document.querySelector(${JSON.stringify(selector)})?.textContent ?? '').trim()`,
+        `(document.querySelector(${JSON.stringify(selector)})?.innerText ?? '').trim()`,
       );
+    },
+
+    /**
+     * Valeur d'un champ. `text()` lit ce qui est affiché et ne verra jamais le
+     * contenu d'un `input` : c'est une propriété, pas du texte rendu.
+     */
+    async value(selector) {
+      return page.evaluate(
+        `(document.querySelector(${JSON.stringify(selector)})?.value ?? null)`,
+      );
+    },
+
+    /** La même chose, en désignant le champ par son libellé. */
+    async valueByLabel(label) {
+      await page.controlOfLabel(label);
+      const found = await page.value('[data-demo-target]');
+      await page.evaluate(
+        `document.querySelector('[data-demo-target]').removeAttribute('data-demo-target')`,
+      );
+      return found;
     },
 
     /** Chemin courant, pour vérifier qu'une redirection a bien eu lieu. */
@@ -416,6 +451,7 @@ export async function main(run, options = {}) {
 
       await cdp.send('Page.enable');
       await cdp.send('Runtime.enable');
+      await cdp.send('DOM.enable');
       await cdp.send('Emulation.setDeviceMetricsOverride', {
         width: options.width ?? 1280,
         height: options.height ?? 900,
@@ -433,6 +469,47 @@ export async function main(run, options = {}) {
       const page = makePage(cdp);
       /** Ouvre une seconde page, indépendante : autre session, autre compte. */
       page.fork = openPage;
+
+      /*
+       * Un navigateur sans tête bloque les téléchargements par défaut : il faut
+       * lui désigner un dossier avant d'espérer voir arriver un fichier.
+       */
+      page.acceptDownloads = async (directory) => {
+        mkdirSync(directory, { recursive: true });
+        await browser.send('Browser.setDownloadBehavior', {
+          behavior: 'allow',
+          downloadPath: resolve(directory),
+          browserContextId,
+        });
+      };
+
+      /** Attend qu'un fichier soit complètement écrit, et rend son chemin. */
+      page.waitForDownload = async (directory, timeout = 10000) => {
+        const deadline = Date.now() + timeout;
+        while (Date.now() < deadline) {
+          const files = existsSync(directory) ? readdirSync(directory) : [];
+          // `.crdownload` marque un transfert encore en cours.
+          const done = files.filter((name) => !name.endsWith('.crdownload'));
+          if (done.length > 0) {
+            return join(directory, done[0]);
+          }
+          await sleep(200);
+        }
+        throw new Error('aucun fichier téléchargé dans ' + directory);
+      };
+
+      /** Renseigne un champ de fichier, ce qu'aucune frappe ne peut simuler. */
+      page.upload = async (selector, filePath) => {
+        const { root } = await cdp.send('DOM.getDocument', { depth: 0 });
+        const { nodeId } = await cdp.send('DOM.querySelector', {
+          nodeId: root.nodeId,
+          selector,
+        });
+        if (nodeId === 0) {
+          throw new Error('champ de fichier introuvable : ' + selector);
+        }
+        await cdp.send('DOM.setFileInputFiles', { files: [resolve(filePath)], nodeId });
+      };
       opened.push({ cdp, browserContextId });
       return page;
     }

@@ -142,11 +142,11 @@ main(async (page) => {
   await page.click('button[aria-label="Supprimer la recette"]');
   await page.waitFor('dialog[open]');
   check(
-    (await page.text('dialog')).includes('Tarte aux pommes et cannelle'),
+    (await page.text('dialog[open]')).includes('Tarte aux pommes et cannelle'),
     'la confirmation nomme la recette visée avant d’agir',
   );
   await page.shot('06-confirmation-suppression');
-  await page.clickText('dialog button', 'Supprimer');
+  await page.clickText('dialog[open] button', 'Supprimer');
   await page.wait(1200);
   checkEqual(await page.path(), '/recipes', 'la suppression ramène à la liste');
   check(
