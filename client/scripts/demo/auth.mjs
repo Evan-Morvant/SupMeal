@@ -22,6 +22,14 @@ main(async (page) => {
   await page.waitFor('input[type="password"]');
   checkEqual(await page.path(), '/login', 'une route privée renvoie vers la connexion');
 
+  section('Retour OAuth2 sans session');
+  await page.goto('/oauth/callback#error=state_invalide');
+  await page.waitForText('main', 'Connexion interrompue');
+  check(
+    (await page.text('main')).includes('Le lien a expiré'),
+    'un state périmé est expliqué plutôt que renvoyé en message générique',
+  );
+
   section('Création de compte');
   await page.goto('/register');
   await page.waitFor('form');
@@ -93,6 +101,19 @@ main(async (page) => {
   );
   await page.shot('06-mobile-onglets');
   await page.resize(1280, 900);
+
+  section('Retour OAuth2 en échec');
+  /*
+   * Le fournisseur ne renvoie qu'un code dans le fragment. Ces codes viennent
+   * de `oauth.controller.ts` : si la table du client s'en écarte, l'utilisateur
+   * n'obtient plus qu'un message générique. Une liaison échouée part par
+   * ailleurs d'un compte connecté, qu'il ne faut pas renvoyer vers /login.
+   */
+  await page.goto('/oauth/callback#error=OAUTH_ACCOUNT_TAKEN');
+  await page.waitForText('main', 'Liaison interrompue');
+  const liaison = await page.text('main');
+  check(liaison.includes('déjà rattaché à un autre profil'), 'compte déjà lié : motif explicite');
+  check(liaison.toLowerCase().includes('revenir aux paramètres'), 'un membre connecté est renvoyé vers ses paramètres');
 
   section('Session reprise après rechargement');
   /*

@@ -14,11 +14,14 @@ import { ErrorState, PageLoader } from '../../ui/Feedback';
  *   #error=<code>                  échec
  */
 
+/*
+ * Les seuls codes que le contrôleur place dans le fragment. `oauth_echec` et
+ * tout code inattendu tombent sur le message générique de `describe`.
+ */
 const ERRORS: Record<string, string> = {
-  UNKNOWN_PROVIDER: "Ce fournisseur n'est pas reconnu.",
-  PROVIDER_NOT_CONFIGURED: "Ce fournisseur n'est pas configuré sur ce serveur.",
-  EMAIL_ALREADY_LINKED: 'Cette adresse est déjà rattachée à un autre compte.',
-  oauth_echec: "La connexion avec ce fournisseur n'a pas abouti.",
+  state_invalide: 'Le lien a expiré. Reprenez la connexion depuis le début.',
+  OAUTH_ACCOUNT_TAKEN: 'Ce compte est déjà rattaché à un autre profil SUPMEAL.',
+  UNAUTHORIZED: 'Le compte à lier est introuvable. Reconnectez-vous, puis réessayez.',
 };
 
 function describe(code: string): string {
@@ -26,7 +29,7 @@ function describe(code: string): string {
 }
 
 export function OAuthCallbackPage(): JSX.Element {
-  const { adoptSession } = useAuth();
+  const { adoptSession, status } = useAuth();
   const navigate = useNavigate();
   const [failure, setFailure] = useState<string | null>(null);
   // Le fragment ne doit être consommé qu'une fois, même en mode strict.
@@ -67,13 +70,16 @@ export function OAuthCallbackPage(): JSX.Element {
   }, [adoptSession, navigate]);
 
   if (failure !== null) {
+    // Une liaison échouée part d'un compte déjà connecté : le renvoyer vers la
+    // page de connexion lui ferait quitter sa session pour rien.
+    const linking = status === 'authenticated';
     return (
       <ErrorState
         error={new Error(failure)}
-        title="Connexion interrompue"
+        title={linking ? 'Liaison interrompue' : 'Connexion interrompue'}
         action={
-          <Link to="/login" className={buttonClass()}>
-            Revenir à la connexion
+          <Link to={linking ? '/settings' : '/login'} className={buttonClass()}>
+            {linking ? 'Revenir aux paramètres' : 'Revenir à la connexion'}
           </Link>
         }
       />
