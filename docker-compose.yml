@@ -54,7 +54,10 @@ services:
       - "${API_PORT:-4000}:4000"
 
   # Remplit une base neuve d'un jeu de données plausible, par l'API publique.
+  # Sous un profil : la pile monte vide par défaut, et se peuple à la demande
+  # avec « docker compose --profile seed up -d --build ».
   seed:
+    profiles: ["seed"]
     image: supmeal-api:latest
     build: ./server
     command: ["node", "scripts/seed/seed.mjs"]
