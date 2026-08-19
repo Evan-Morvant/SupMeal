@@ -17,25 +17,32 @@ des écrans vides.
 | Commentaires | 33, dans les cookbooks |
 | Messages | 39, en salves de conversation |
 | Planning | 30 repas, de la semaine dernière à la suivante |
-| Courses | 4 listes, dont deux partiellement cochées |
+| Courses | 4 listes : une soldée, deux en cours, une intacte |
 | Invitations | 2 laissées sans réponse |
 
-Tous les comptes partagent le mot de passe **`motdepasse123`**. Le plus fourni
-est `camille.roux@supmeal.fr` : quatre recettes, deux cookbooks, un planning
-rempli et deux listes de courses.
+Tous les comptes partagent le mot de passe **`Motdepasse123!`**. Le plus fourni
+est `camille.roux@supmeal.fr` : cinq recettes, trois cookbooks où elle tient
+trois rôles différents, un planning rempli et deux listes de courses.
 
 Pour voir l'application depuis un autre angle : `hugo.lemoine@supmeal.fr` mène
 une colocation, `thomas.girard@supmeal.fr` n'est que lecteur dans un cookbook
 et éditeur dans un autre, `awa.diallo@supmeal.fr` a une invitation en attente.
 
-## En Docker : rien à lancer
+## En Docker : un profil
 
 Le compose déclare un service `seed`, joué après que l'API est en bonne santé.
-`docker compose up --build` suffit donc à obtenir une application pleine. Le
-service est rejoué à chaque `up` et sort sans erreur quand le travail est déjà
-fait, si bien qu'une pile qui remonte ne signale pas d'échec.
+Il vit sous un profil : la pile monte vide par défaut, et se peuple à la
+demande.
 
-Pour le rejouer à neuf sur une pile déjà debout :
+```bash
+docker compose up -d --build                  # base vide
+docker compose --profile seed up -d --build   # avec le jeu de données
+```
+
+Le service sort sans erreur quand le travail est déjà fait, si bien que le
+rejouer ne double rien.
+
+Pour repartir d'un jeu de données neuf sur une pile déjà debout :
 
 ```bash
 docker compose run --rm -e SEED_RESET=1 seed
@@ -95,7 +102,8 @@ Deux exceptions assumées, toutes deux en SQL faute d'équivalent dans l'API :
 
 Les images sont peintes par `cover.mjs` : un aplat dérivé du titre, reprenant
 l'assiette du logo. Ce ne sont pas des photographies et elles n'essaient pas de
-le paraître.
+le paraître. Une photo déposée dans [`photos/`](photos/README.md) sous la clé
+de la recette prend sa place ; le dossier peut rester incomplet.
 
 ## Si ça s'arrête
 

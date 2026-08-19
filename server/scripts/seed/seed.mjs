@@ -1,4 +1,5 @@
 import 'dotenv/config';
+import fs from 'fs';
 import { API, call, sendFile } from '../demo/lib.mjs';
 import { appliquerDates, effacerComptes, verifierAcces } from './backdate.mjs';
 import { coverPng } from './cover.mjs';
@@ -33,6 +34,14 @@ import {
  */
 
 const DOMAINE = 'supmeal.fr';
+
+/** Extensions acceptées pour une photo fournie, avec leur type MIME. */
+const TYPES_PHOTO = {
+  '.jpg': 'image/jpeg',
+  '.jpeg': 'image/jpeg',
+  '.png': 'image/png',
+  '.webp': 'image/webp',
+};
 const DATABASE_URL = process.env.DATABASE_URL;
 
 const tokens = new Map();
@@ -78,6 +87,26 @@ function jourDePlanning(semaine, jour) {
   const date = lundiCourant();
   date.setDate(date.getDate() + semaine * 7 + jour);
   return date.toISOString().slice(0, 10);
+}
+
+/**
+ * Illustration d'une recette. Une photo déposée dans `photos/` sous la clé de
+ * la recette l'emporte ; sinon on peint la couverture. Le dossier peut donc se
+ * remplir au fil du temps, sans que rien ne casse tant qu'il est incomplet.
+ */
+function illustration(recette) {
+  for (const [extension, type] of Object.entries(TYPES_PHOTO)) {
+    const chemin = new URL('photos/' + recette.cle + extension, import.meta.url);
+    if (fs.existsSync(chemin)) {
+      return { nom: recette.cle + extension, type, contenu: fs.readFileSync(chemin), photo: true };
+    }
+  }
+  return {
+    nom: recette.cle + '.png',
+    type: 'image/png',
+    contenu: coverPng(recette.titre),
+    photo: false,
+  };
 }
 
 function jeton(cle) {
@@ -201,6 +230,7 @@ function rangeur(recette, cookbookCle) {
 async function creerRecettes() {
   titre('Recettes');
   let liaisons = 0;
+  let photos = 0;
 
   for (const recette of RECETTES) {
     const token = jeton(recette.auteur);
@@ -222,12 +252,16 @@ async function creerRecettes() {
     recettes.set(recette.cle, creee.id);
     horodater('recipes', creee.id, moment(recette.joursAvant, 18, (recette.joursAvant * 7) % 60));
 
+    const image = illustration(recette);
     await sendFile('/recipes/' + creee.id + '/image', {
       token,
-      filename: recette.cle + '.png',
-      contentType: 'image/png',
-      content: coverPng(recette.titre),
+      filename: image.nom,
+      contentType: image.type,
+      content: image.contenu,
     });
+    if (image.photo) {
+      photos += 1;
+    }
 
     for (const cookbookCle of recette.cookbooks) {
       await call('PUT', '/cookbooks/' + cookbooks.get(cookbookCle) + '/recipes/' + creee.id, {
@@ -239,7 +273,9 @@ async function creerRecettes() {
   }
 
   const publiques = RECETTES.filter((r) => r.visibility === 'public').length;
-  ligne(RECETTES.length + ' recettes dont ' + publiques + ' publiques, avec leur couverture');
+  ligne(RECETTES.length + ' recettes dont ' + publiques + ' publiques');
+  const peintes = RECETTES.length - photos;
+  ligne(photos + ' photos fournies' + (peintes === 0 ? '' : ', ' + peintes + ' couvertures peintes'));
   ligne(liaisons + ' rangements dans un cookbook');
 }
 
