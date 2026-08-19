@@ -67,11 +67,19 @@ reconnecter.
 
 ```bash
 cp .env.example .env      # puis générer et renseigner les secrets (cf. Prérequis)
-docker compose up --build
+docker compose up -d --build                  # la pile, base vide
+docker compose --profile seed up -d --build   # la pile, avec le jeu de données
 ```
 
 - Client web : http://localhost:8080
 - API : http://localhost:4000/api/v1 (santé : `/health`)
+
+Le profil `seed` remplit une base neuve d'un jeu de données plausible : dix
+comptes, trente-quatre recettes, quatre cookbooks, des avis, des discussions et
+un planning en cours. C'est la façon de découvrir l'application sans repartir
+d'écrans vides. Tous les comptes partagent le mot de passe `Motdepasse123!` ; le
+plus fourni est `camille.roux@supmeal.fr`. Détail et remise à zéro :
+[`server/scripts/seed/`](server/scripts/seed/README.md).
 
 ## Développement local (hors Docker)
 
@@ -85,9 +93,14 @@ cd client && npm install && npm run dev
 
 ## Documentation
 
+- **Documentation technique** : [`docs/documentation-technique.md`](docs/documentation-technique.md)
+  — déploiement, architecture, modèle de données, diagrammes de séquence, sécurité
+- **Manuel utilisateur** : [`docs/manuel-utilisateur.pptx`](docs/manuel-utilisateur.pptx)
+  — la prise en main écran par écran, en diaporama
 - Conception (UML, BDD, API) : [`docs/conception/`](docs/conception/README.md)
 - Contrat d'API (OpenAPI/Swagger) : [`server/openapi.yaml`](server/openapi.yaml), servi en
   Swagger UI sur [`/api/v1/swagger`](http://localhost:4000/api/v1/swagger)
+- Mise en place OAuth2 : [Google](docs/oauth-google.md) · [GitHub](docs/oauth-github.md)
 
 ## Sécurité
 

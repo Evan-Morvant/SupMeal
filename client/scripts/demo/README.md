@@ -6,9 +6,10 @@ l'application réellement servie : ils vérifient donc ce que ni les appels
 d'API ni une relecture du code ne montrent — que l'écran affiche ce que l'API
 renvoie, que le formulaire soumet, que la garde de route redirige.
 
-Second usage, aussi important : chaque scénario produit les **captures du
-manuel utilisateur**. Elles se régénèrent d'une commande au lieu d'être
-reprises à la main après chaque retouche d'interface.
+Second usage : chaque scénario dépose ses **captures d'écran** dans
+`client/screenshots/<scénario>/`. Elles ne partent pas au dépôt et ne servent
+pas de référence ; elles montrent l'état réel de l'écran au moment du contrôle,
+ce qui est la façon la plus rapide de comprendre un scénario qui échoue.
 
 ## Lancer
 
