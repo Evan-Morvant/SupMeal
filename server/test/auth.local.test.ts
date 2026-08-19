@@ -4,7 +4,7 @@ import { createApp } from '../src/app';
 
 const app = createApp();
 const base = '/api/v1/auth';
-const creds = { email: 'alice@test.fr', password: 'motdepasse123', displayName: 'Alice' };
+const creds = { email: 'alice@test.fr', password: 'Motdepasse123!', displayName: 'Alice' };
 
 function register() {
   return request(app).post(base + '/register').send(creds);
@@ -24,11 +24,29 @@ describe('Auth local', () => {
     expect(res.status).toBe(409);
   });
 
-  it('inscription avec mot de passe trop court -> 400', async () => {
+  // Un cas par famille de caractères exigée, plus la longueur.
+  const faibles: Array<[string, string]> = [
+    ['trop court', 'Court1!'],
+    ['sans majuscule', 'motdepasse123!'],
+    ['sans minuscule', 'MOTDEPASSE123!'],
+    ['sans chiffre', 'Motdepasseabc!'],
+    ['sans caractère spécial', 'Motdepasse1234'],
+  ];
+
+  it.each(faibles)('inscription avec un mot de passe %s -> 400', async (_cas, password) => {
     const res = await request(app)
       .post(base + '/register')
-      .send({ ...creds, password: 'court' });
+      .send({ ...creds, password });
     expect(res.status).toBe(400);
+  });
+
+  it('le détail du 400 nomme la famille manquante', async () => {
+    const res = await request(app)
+      .post(base + '/register')
+      .send({ ...creds, password: 'motdepasse123!' });
+    expect(res.status).toBe(400);
+    const messages = (res.body.error.details as Array<{ message: string }>).map((d) => d.message);
+    expect(messages).toContain('Le mot de passe doit contenir une majuscule');
   });
 
   it('connexion avec bon mot de passe -> 200', async () => {

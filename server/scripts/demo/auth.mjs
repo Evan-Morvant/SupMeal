@@ -19,6 +19,27 @@ async function run() {
   });
   checkEqual(duplicate.error.code, 'EMAIL_TAKEN', 'inscription en doublon refusée en 409');
 
+  section('Robustesse du mot de passe');
+  // Un cas par famille de caractères exigée, plus la longueur.
+  const faibles = [
+    ['trop court', 'Court1!'],
+    ['sans majuscule', 'motdepasse123!'],
+    ['sans minuscule', 'MOTDEPASSE123!'],
+    ['sans chiffre', 'Motdepasseabc!'],
+    ['sans caractère spécial', 'Motdepasse1234'],
+  ];
+  for (const [rang, [cas, faible]] of faibles.entries()) {
+    const refus = await call('POST', '/auth/register', {
+      body: {
+        email: 'faible-' + Date.now() + '-' + rang + '@demo.fr',
+        password: faible,
+        displayName: 'Faible',
+      },
+      expect: 400,
+    });
+    checkEqual(refus.error.code, 'VALIDATION_ERROR', 'mot de passe ' + cas + ' refusé en 400');
+  }
+
   section('Connexion');
   const session = await call('POST', '/auth/login', {
     body: { email: alice.email, password: PASSWORD },

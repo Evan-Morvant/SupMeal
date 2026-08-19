@@ -9,7 +9,7 @@
  * réécrites après coup par `backdate.mjs` — l'API, elle, horodate au présent.
  */
 
-export const MOT_DE_PASSE = 'motdepasse123';
+export const MOT_DE_PASSE = 'Motdepasse123!';
 
 export const PERSONNES = [
   {

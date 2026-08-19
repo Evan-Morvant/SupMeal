@@ -7,7 +7,7 @@ import { PASSWORD, call, callFull, check, checkEqual, main, register, section } 
  * Usage : node scripts/demo/users.mjs
  */
 
-const NOUVEAU_MOT_DE_PASSE = 'nouveaumotdepasse456';
+const NOUVEAU_MOT_DE_PASSE = 'Nouveaumotdepasse456!';
 
 async function run() {
   const user = await register('camille');

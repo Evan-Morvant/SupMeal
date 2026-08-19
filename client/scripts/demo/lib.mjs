@@ -16,7 +16,7 @@ const HERE = dirname(fileURLToPath(import.meta.url));
 export const WEB = process.env.WEB_URL ?? 'http://localhost:5173';
 
 /** Mot de passe unique des comptes de démonstration, comme côté serveur. */
-export const PASSWORD = 'motdepasse123';
+export const PASSWORD = 'Motdepasse123!';
 
 const CHROME_CANDIDATES = [
   process.env.CHROME_PATH,

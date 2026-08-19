@@ -10,7 +10,7 @@ const bearer = (token: string) => 'Bearer ' + token;
 async function registerUser(email: string): Promise<{ id: string; email: string; token: string }> {
   const res = await request(app)
     .post('/api/v1/auth/register')
-    .send({ email, password: 'motdepasse123', displayName: email.split('@')[0] });
+    .send({ email, password: 'Motdepasse123!', displayName: email.split('@')[0] });
   const me = await request(app)
     .get('/api/v1/auth/me')
     .set('Authorization', bearer(res.body.accessToken));

@@ -15,7 +15,7 @@ export const API = process.env.API_URL ?? 'http://localhost:4000';
 export const BASE = API + '/api/v1';
 
 /** Mot de passe unique des comptes de démonstration. */
-export const PASSWORD = 'motdepasse123';
+export const PASSWORD = 'Motdepasse123!';
 
 /** Horodatage de la série, pour que deux exécutions ne se marchent pas dessus. */
 const RUN = Date.now();

@@ -9,7 +9,7 @@ const url = '/api/v1/users/me/data';
 async function registerUser(email: string): Promise<string> {
   const res = await request(app)
     .post('/api/v1/auth/register')
-    .send({ email, password: 'motdepasse123', displayName: email.split('@')[0] });
+    .send({ email, password: 'Motdepasse123!', displayName: email.split('@')[0] });
   return res.body.accessToken;
 }
 
@@ -78,7 +78,7 @@ describe('Export des données personnelles', () => {
     const brut = JSON.stringify(res.body);
     expect(brut).not.toContain('passwordHash');
     expect(brut).not.toContain('$2a$');
-    expect(brut).not.toContain('motdepasse123');
+    expect(brut).not.toContain('Motdepasse123!');
     expect(brut).not.toContain('token');
     // L'existence d'un mot de passe est une donnée du compte, pas sa valeur.
     expect(res.body.profile.hasPassword).toBe(true);

@@ -7,7 +7,7 @@ import { OAuthAccount, User } from '../src/models';
 const app = createApp();
 const authBase = '/api/v1/auth';
 const base = '/api/v1/users';
-const creds = { email: 'bob@test.fr', password: 'motdepasse123', displayName: 'Bob' };
+const creds = { email: 'bob@test.fr', password: 'Motdepasse123!', displayName: 'Bob' };
 
 /** Inscrit un utilisateur et renvoie ses tokens. */
 async function registerUser(): Promise<{ accessToken: string; refreshToken: string }> {
@@ -76,7 +76,7 @@ describe('Changement de mot de passe', () => {
     const res = await request(app)
       .put(base + '/me/password')
       .set('Authorization', bearer(accessToken))
-      .send({ currentPassword: creds.password, newPassword: 'nouveaumotdepasse1' });
+      .send({ currentPassword: creds.password, newPassword: 'Nouveaumotdepasse1!' });
     expect(res.status).toBe(204);
 
     const ancien = await request(app)
@@ -86,7 +86,7 @@ describe('Changement de mot de passe', () => {
 
     const nouveau = await request(app)
       .post(authBase + '/login')
-      .send({ email: creds.email, password: 'nouveaumotdepasse1' });
+      .send({ email: creds.email, password: 'Nouveaumotdepasse1!' });
     expect(nouveau.status).toBe(200);
   });
 
@@ -95,7 +95,7 @@ describe('Changement de mot de passe', () => {
     const res = await request(app)
       .put(base + '/me/password')
       .set('Authorization', bearer(accessToken))
-      .send({ currentPassword: 'faux', newPassword: 'nouveaumotdepasse1' });
+      .send({ currentPassword: 'faux', newPassword: 'Nouveaumotdepasse1!' });
     expect(res.status).toBe(401);
   });
 
@@ -104,16 +104,23 @@ describe('Changement de mot de passe', () => {
     const res = await request(app)
       .put(base + '/me/password')
       .set('Authorization', bearer(accessToken))
-      .send({ newPassword: 'nouveaumotdepasse1' });
+      .send({ newPassword: 'Nouveaumotdepasse1!' });
     expect(res.status).toBe(400);
   });
 
-  it('nouveau mot de passe trop court -> 400', async () => {
+  // La même politique qu'à l'inscription : le changement ne doit pas l'affaiblir.
+  it.each([
+    ['trop court', 'Court1!'],
+    ['sans majuscule', 'motdepasse123!'],
+    ['sans minuscule', 'MOTDEPASSE123!'],
+    ['sans chiffre', 'Motdepasseabc!'],
+    ['sans caractère spécial', 'Motdepasse1234'],
+  ])('nouveau mot de passe %s -> 400', async (_cas, newPassword) => {
     const { accessToken } = await registerUser();
     const res = await request(app)
       .put(base + '/me/password')
       .set('Authorization', bearer(accessToken))
-      .send({ currentPassword: creds.password, newPassword: 'court' });
+      .send({ currentPassword: creds.password, newPassword });
     expect(res.status).toBe(400);
   });
 
@@ -122,7 +129,7 @@ describe('Changement de mot de passe', () => {
     await request(app)
       .put(base + '/me/password')
       .set('Authorization', bearer(accessToken))
-      .send({ currentPassword: creds.password, newPassword: 'nouveaumotdepasse1' });
+      .send({ currentPassword: creds.password, newPassword: 'Nouveaumotdepasse1!' });
 
     const res = await request(app).post(authBase + '/refresh').send({ refreshToken });
     expect(res.status).toBe(401);
@@ -144,12 +151,12 @@ describe('Changement de mot de passe', () => {
     const res = await request(app)
       .put(base + '/me/password')
       .set('Authorization', bearer(accessToken))
-      .send({ newPassword: 'premiermotdepasse1' });
+      .send({ newPassword: 'Premiermotdepasse1!' });
     expect(res.status).toBe(204);
 
     const apres = await request(app)
       .post(authBase + '/login')
-      .send({ email: user.email, password: 'premiermotdepasse1' });
+      .send({ email: user.email, password: 'Premiermotdepasse1!' });
     expect(apres.status).toBe(200);
   });
 });

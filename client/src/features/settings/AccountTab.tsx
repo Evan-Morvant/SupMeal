@@ -4,6 +4,7 @@ import { errorMessage } from '../../api/errors';
 import type { OAuthProvider } from '../../api/types';
 import { useAuth } from '../../auth/auth-context';
 import { formatDate } from '../../lib/format';
+import { PASSWORD_RULE, passwordIssue } from '../../lib/password';
 import { Button } from '../../ui/Button';
 import { ConfirmDialog } from '../../ui/Dialog';
 import { Field, Input } from '../../ui/Field';
@@ -65,6 +66,8 @@ function PasswordSection(): JSX.Element {
   const changePassword = useChangePassword();
   const [current, setCurrent] = useState('');
   const [next, setNext] = useState('');
+  // Rien à signaler tant que le champ est vide : la règle suffit en aide.
+  const issue = next === '' ? null : passwordIssue(next);
 
   return (
     <section className={styles.section}>
@@ -98,12 +101,13 @@ function PasswordSection(): JSX.Element {
         )}
       </Field>
 
-      <Field label="Nouveau mot de passe" hint="Huit caractères au minimum.">
+      <Field label="Nouveau mot de passe" hint={PASSWORD_RULE} error={issue ?? undefined}>
         {(field) => (
           <Input
             {...field}
             type="password"
             autoComplete="new-password"
+            invalid={issue !== null}
             value={next}
             onChange={(event) => setNext(event.target.value)}
           />
@@ -112,7 +116,7 @@ function PasswordSection(): JSX.Element {
 
       <div className={styles.actions}>
         <Button
-          disabled={next.length < 8}
+          disabled={next === '' || issue !== null}
           loading={changePassword.isPending}
           onClick={() =>
             changePassword.mutate(

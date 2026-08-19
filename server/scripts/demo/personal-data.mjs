@@ -1,4 +1,14 @@
-import { call, callFull, check, checkEqual, isoDate, main, register, section } from './lib.mjs';
+import {
+  PASSWORD,
+  call,
+  callFull,
+  check,
+  checkEqual,
+  isoDate,
+  main,
+  register,
+  section,
+} from './lib.mjs';
 
 /**
  * Export des données personnelles : contenu du fichier, absence de secrets, et
@@ -46,7 +56,7 @@ async function run() {
   const brut = JSON.stringify(vide.body);
   check(!brut.includes('passwordHash'), 'le hash du mot de passe est absent');
   check(!brut.includes('$2a$'), "aucune empreinte bcrypt n'apparaît");
-  check(!brut.includes('motdepasse123'), "le mot de passe en clair non plus, évidemment");
+  check(!brut.includes(PASSWORD), "le mot de passe en clair non plus, évidemment");
   check(!brut.includes('token'), "aucun jeton n'est joint");
   checkEqual(vide.body.profile.hasPassword, true, "seule l'existence d'un mot de passe est dite");
 

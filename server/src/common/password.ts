@@ -1,4 +1,5 @@
 import bcrypt from 'bcryptjs';
+import { z } from 'zod';
 import { env } from '../config/env';
 
 /**
@@ -11,6 +12,18 @@ import { env } from '../config/env';
  * ainsi affaiblir le hachage en production par mégarde.
  */
 const SALT_ROUNDS = env.NODE_ENV === 'test' ? 4 : 12;
+
+/**
+ * Politique de robustesse, définie une seule fois : l'inscription et le
+ * changement de mot de passe l'importent toutes deux.
+ */
+export const passwordSchema = z
+  .string()
+  .min(12, 'Le mot de passe doit contenir au moins 12 caractères')
+  .regex(/[a-z]/, 'Le mot de passe doit contenir une minuscule')
+  .regex(/[A-Z]/, 'Le mot de passe doit contenir une majuscule')
+  .regex(/[0-9]/, 'Le mot de passe doit contenir un chiffre')
+  .regex(/[^A-Za-z0-9]/, 'Le mot de passe doit contenir un caractère spécial');
 
 /** Hache un mot de passe en clair (jamais stocké tel quel — contrainte du sujet). */
 export function hashPassword(plain: string): Promise<string> {

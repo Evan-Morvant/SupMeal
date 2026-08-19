@@ -54,6 +54,10 @@ main(async (page) => {
     (await page.text('main')).includes('déconnecte vos autres appareils'),
     'le changement de mot de passe prévient que les sessions sont révoquées',
   );
+  check(
+    (await page.text('main')).includes('Douze caractères au minimum'),
+    'la règle de robustesse est annoncée avant la saisie',
+  );
 
   section('Comptes liés');
   // `innerText` rend le texte tel qu'affiché : `text-transform` compris.

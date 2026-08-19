@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { passwordSchema } from '../../common/password';
 
 /** Schémas de validation des corps de requête du module users. */
 
@@ -18,7 +19,7 @@ export const updateProfileSchema = z
  */
 export const changePasswordSchema = z.object({
   currentPassword: z.string().min(1).optional(),
-  newPassword: z.string().min(8, 'Le mot de passe doit contenir au moins 8 caractères'),
+  newPassword: passwordSchema,
 });
 
 /**

@@ -1,9 +1,10 @@
 import { z } from 'zod';
+import { passwordSchema } from '../../common/password';
 
 /** Schémas de validation des corps de requête du module auth. */
 export const registerSchema = z.object({
   email: z.string().email(),
-  password: z.string().min(8, 'Le mot de passe doit contenir au moins 8 caractères'),
+  password: passwordSchema,
   displayName: z.string().min(1).max(255),
 });
 

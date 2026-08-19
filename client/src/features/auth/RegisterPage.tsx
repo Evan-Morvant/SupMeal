@@ -5,6 +5,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { z } from 'zod';
 import { errorMessage } from '../../api/errors';
 import { useAuth } from '../../auth/auth-context';
+import { PASSWORD_RULE, passwordSchema } from '../../lib/password';
 import { Button } from '../../ui/Button';
 import { Field, Input } from '../../ui/Field';
 import { Alert } from '../../ui/Feedback';
@@ -15,7 +16,7 @@ import { AuthPanel, authStyles as styles } from './AuthPanel';
 const schema = z.object({
   displayName: z.string().trim().min(1, 'Renseignez le nom qui sera affiché').max(255),
   email: z.string().min(1, 'Renseignez votre adresse e-mail').email('Adresse e-mail invalide'),
-  password: z.string().min(8, 'Le mot de passe doit contenir au moins 8 caractères'),
+  password: passwordSchema,
 });
 
 type RegisterForm = z.infer<typeof schema>;
@@ -80,11 +81,7 @@ export function RegisterPage(): JSX.Element {
           )}
         </Field>
 
-        <Field
-          label="Mot de passe"
-          hint="Huit caractères au minimum."
-          error={errors.password?.message}
-        >
+        <Field label="Mot de passe" hint={PASSWORD_RULE} error={errors.password?.message}>
           {(field) => (
             <Input
               {...field}

@@ -155,7 +155,7 @@ paths:
               required: [newPassword]
               properties:
                 currentPassword: { type: string, format: password }
-                newPassword: { type: string, format: password, minLength: 8 }
+                newPassword: { $ref: '#/components/schemas/StrongPassword' }
       responses:
         '204': { description: Modifié }
         '400': { $ref: '#/components/responses/ValidationError' }
@@ -1212,12 +1212,21 @@ components:
         accessToken: { type: string }
         refreshToken: { type: string }
         user: { $ref: '#/components/schemas/User' }
+    StrongPassword:
+      type: string
+      format: password
+      minLength: 12
+      pattern: '^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[^A-Za-z0-9]).{12,}$'
+      description: >
+        Douze caractères au minimum, dont une minuscule, une majuscule, un
+        chiffre et un caractère spécial. Chaque famille absente est signalée
+        séparément dans les `details` du 400.
     RegisterInput:
       type: object
       required: [email, password, displayName]
       properties:
         email: { type: string, format: email }
-        password: { type: string, format: password, minLength: 8 }
+        password: { $ref: '#/components/schemas/StrongPassword' }
         displayName: { type: string }
     LoginInput:
       type: object

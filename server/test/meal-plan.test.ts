@@ -10,7 +10,7 @@ const base = '/api/v1/meal-plan';
 async function registerUser(email: string): Promise<string> {
   const res = await request(app)
     .post('/api/v1/auth/register')
-    .send({ email, password: 'motdepasse123', displayName: email.split('@')[0] });
+    .send({ email, password: 'Motdepasse123!', displayName: email.split('@')[0] });
   return res.body.accessToken;
 }
 

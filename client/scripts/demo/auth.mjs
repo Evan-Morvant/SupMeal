@@ -30,12 +30,16 @@ main(async (page) => {
     'un state périmé est expliqué plutôt que renvoyé en message générique',
   );
 
-  section('Création de compte');
+  section("Formulaire d'inscription");
   await page.goto('/register');
   await page.waitFor('form');
   check(
     (await page.text('form')).includes('vous acceptez les'),
     'le formulaire d’inscription renvoie aux conditions d’utilisation',
+  );
+  check(
+    (await page.text('form')).includes('Douze caractères au minimum'),
+    'la règle de robustesse est annoncée avant la saisie',
   );
   await page.shot('02-inscription');
 
@@ -50,6 +54,21 @@ main(async (page) => {
   await page.goto('/register');
   await page.waitFor('form');
 
+  section('Mot de passe trop faible');
+  // Le formulaire applique la règle du serveur : rien n'est même envoyé.
+  await page.fill('input[autocomplete="name"]', 'Marie Dupont');
+  await page.fill('input[type="email"]', account('faible'));
+  await page.fill('input[type="password"]', 'motdepasse123');
+  await page.click('button[type="submit"]');
+  await page.waitForText('form', 'majuscule');
+  check(
+    (await page.text('form')).includes('Le mot de passe doit contenir une majuscule'),
+    'un mot de passe sans majuscule est refusé, et la raison est nommée',
+  );
+  checkEqual(await page.path(), '/register', "le refus se joue sans quitter l'inscription");
+  await page.shot('04-mot-de-passe-faible');
+
+  section('Création de compte');
   const email = account('demo');
   await page.fill('input[autocomplete="name"]', 'Marie Dupont');
   await page.fill('input[type="email"]', email);
@@ -63,7 +82,7 @@ main(async (page) => {
     (await page.text('header')).includes('Marie Dupont'),
     'l’en-tête affiche le nom du compte',
   );
-  await page.shot('04-espace-connecte');
+  await page.shot('05-espace-connecte');
 
   section('Rail replié');
   await page.click('button[aria-label$="la navigation"]');
@@ -75,7 +94,7 @@ main(async (page) => {
     'true',
     'le rail se replie sur les icônes seules',
   );
-  await page.shot('05-rail-replie');
+  await page.shot('06-rail-replie');
 
   /*
    * Le bouton de repli avait perdu ses dimensions : un fragment de selecteur
@@ -99,7 +118,7 @@ main(async (page) => {
     ),
     "la barre d'onglets remplace le rail sous 860 px",
   );
-  await page.shot('06-mobile-onglets');
+  await page.shot('07-mobile-onglets');
   await page.resize(1280, 900);
 
   section('Retour OAuth2 en échec');
