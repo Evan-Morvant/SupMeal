@@ -148,10 +148,10 @@ cd supmeal
 # 2 — Créer le fichier d'environnement
 cp .env.example .env
 
-# 3 — Engendrer les deux secrets JWT (lancer la commande deux fois)
+# 3 — Générer les secrets JWT
 openssl rand -hex 32
-# ou, sans openssl :
-node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+# ou, avec Docker :
+docker run --rm node:20-alpine node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 ```
 
 Reporter les deux valeurs obtenues dans le `.env` — et non dans le `.env.example` — sur `JWT_ACCESS_SECRET` et `JWT_REFRESH_SECRET` : ceux livrés en exemple font 23 caractères, sous le minimum de 32, l'API refuse de démarrer avec. 
@@ -234,9 +234,9 @@ cp .env.example .env
 
 ```bash
 openssl rand -hex 32
-# ou, sans openssl :
-node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 ```
+
+Sans `openssl`, la commande via Docker est donnée au § 3.1.
 
 Lancer la commande deux fois — le schéma d'environnement exige au moins
 32 caractères par secret — et reporter les valeurs, dans le .env, pas le .env.exemple attention (oui... je l'ai fait...) :
